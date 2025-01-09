@@ -26,7 +26,7 @@ export const createUser = async (
 
     // Generate JWT
     const token = jwt.sign(
-      { userId: savedUser._id }, // payload
+      { userId: savedUser._id }, // Payload
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -50,7 +50,9 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      res.status(400).json({ notFound: true, message: "User does not exist" });
+      res
+        .status(400)
+        .json({ notFound: true, message: "Incorrect email or password" }); // Non-specific to not leak if user exists
       return;
     }
 
@@ -59,7 +61,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     if (!isPasswordValid) {
       res.status(400).json({
         notFound: true,
-        message: "Incorrect password",
+        message: "Incorrect email or password", // Non-specific to not leak if user exists
       });
       return;
     }
