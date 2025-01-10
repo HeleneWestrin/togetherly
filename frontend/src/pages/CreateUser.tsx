@@ -1,5 +1,5 @@
 import { useMutation } from "react-query";
-import axiosInstance from "../../api/axiosInstance";
+import { axiosInstance } from "../services/axiosService";
 
 const createUser = async (userData: { email: string; password: string }) => {
   const response = await axiosInstance.post("/users", userData);

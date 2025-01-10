@@ -1,9 +1,10 @@
 import { useMutation, UseMutationResult } from "react-query";
-import axiosInstance from "../api/axiosInstance";
+import { axiosInstance } from "../services/axiosService";
 import { AxiosError } from "axios";
 
 interface LoginResponse {
   token: string;
+  // Add more fields when the backend returns them
 }
 
 interface ErrorResponse {
@@ -15,7 +16,9 @@ interface LoginCredentials {
   password: string;
 }
 
-const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+const loginApiCall = async (
+  credentials: LoginCredentials
+): Promise<LoginResponse> => {
   const response = await axiosInstance.post<LoginResponse>(
     "/users/login",
     credentials
@@ -28,9 +31,8 @@ export const useLogin = (): UseMutationResult<
   AxiosError<ErrorResponse>,
   LoginCredentials
 > => {
-  return useMutation(login, {
+  return useMutation(loginApiCall, {
     onSuccess: (data) => {
-      // Store the JWT token when login succeeds
       localStorage.setItem("token", data.token);
     },
     onError: (error) => {

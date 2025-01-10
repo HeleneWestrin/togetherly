@@ -1,6 +1,6 @@
 import { useQuery } from "react-query";
-import axiosInstance from "../api/axiosInstance";
 import { AxiosError } from "axios";
+import { axiosInstance } from "../services/axiosService";
 
 interface SecretData {
   secret: string;
