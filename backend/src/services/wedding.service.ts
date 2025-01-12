@@ -1,7 +1,13 @@
 import { Types } from "mongoose";
 import { Wedding } from "../models/wedding.model";
-import { User } from "../models/user.model";
-import { ForbiddenError, NotFoundError } from "../utils/errors";
+import { IUser, User } from "../models/user.model";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../utils/errors";
+import { weddingSchemas } from "../validators/schemas";
+import { z } from "zod";
 
 export class WeddingService {
   static async getWeddingsForUser(userId: string) {
@@ -137,23 +143,31 @@ export class WeddingService {
   static async updateRSVP(
     weddingId: string,
     userId: string,
-    rsvpStatus: "pending" | "confirmed" | "declined"
-  ) {
-    const user = await User.findById(userId);
-    if (!user) throw new NotFoundError("User not found");
+    rsvpStatus: unknown
+  ): Promise<IUser> {
+    try {
+      const validatedStatus = weddingSchemas.rsvpStatus.parse(rsvpStatus);
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError("User not found");
 
-    const guestDetail = user.guestDetails.find(
-      (detail) => detail.weddingId.toString() === weddingId
-    );
+      const guestDetail = user.guestDetails.find(
+        (detail) => detail.weddingId.toString() === weddingId
+      );
 
-    if (!guestDetail) {
-      throw new ForbiddenError("You are not invited to this wedding");
+      if (!guestDetail) {
+        throw new ForbiddenError("You are not invited to this wedding");
+      }
+
+      guestDetail.rsvpStatus = validatedStatus;
+      await user.save();
+
+      return user;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new ValidationError(error.errors[0].message);
+      }
+      throw error;
     }
-
-    guestDetail.rsvpStatus = rsvpStatus;
-    await user.save();
-
-    return user;
   }
 
   static async getWeddingBySlug(slug: string, userId: string) {

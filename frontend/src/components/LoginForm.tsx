@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
 import { AxiosError } from "axios";
 import Button from "./ui/Button";
@@ -6,27 +5,22 @@ import FormInput from "./ui/FormInput";
 import FormLabel from "./ui/FormLabel";
 
 export const LoginForm: React.FC = () => {
-  const navigate = useNavigate();
   const { mutate, isLoading, isError, error } = useLogin();
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    mutate(
-      {
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-      },
-      {
-        onSuccess: () => {
-          navigate("/dashboard");
-        },
-      }
-    );
+    mutate({
+      email: formData.get("email") as string,
+      password: formData.get("password") as string,
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form
+      className="w-full"
+      onSubmit={handleSubmit}
+    >
       <div className="mb-4">
         <FormLabel htmlFor="email">Email</FormLabel>
         <FormInput
@@ -39,7 +33,7 @@ export const LoginForm: React.FC = () => {
         />
       </div>
 
-      <div className="mb-4">
+      <div className="mb-6">
         <FormLabel htmlFor="password">Password</FormLabel>
         <FormInput
           id="password"
@@ -52,6 +46,7 @@ export const LoginForm: React.FC = () => {
       </div>
       <Button
         type="submit"
+        className="w-full"
         disabled={isLoading}
       >
         {isLoading ? "Logging in..." : "Login"}

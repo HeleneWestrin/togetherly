@@ -79,7 +79,7 @@ export const seedDatabase = async (): Promise<void> => {
     const wedding = await Wedding.create({
       title: "John & Jane's Wedding",
       slug: "john-janes-wedding",
-      date: new Date("2024-12-31"),
+      date: new Date("2025-12-31"),
       location: {
         address: "123 Wedding Venue St, City, Country",
         coordinates: {

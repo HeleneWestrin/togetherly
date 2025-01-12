@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import { forceLogout } from "../utils/logoutHandler";
+import { useAuthStore } from "../stores/useAuthStore";
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: "http://localhost:8080",
@@ -27,14 +28,15 @@ axiosInstance.interceptors.request.use(
 // ====================
 //  RESPONSE INTERCEPTOR
 // ====================
-axiosInstance.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  async (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      forceLogout();
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
     return Promise.reject(error);
   }
 );

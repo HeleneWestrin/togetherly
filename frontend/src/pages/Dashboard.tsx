@@ -13,20 +13,25 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <Button
-          variant="secondary"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
+    <main
+      id="main"
+      className="min-h-screen bg-gradient-landscape"
+    >
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <Button
+            variant="secondary"
+            onClick={handleLogout}
+          >
+            Log out
+          </Button>
+        </div>
+        <div className="space-y-8">
+          <WeddingList />
+        </div>
       </div>
-      <div className="space-y-8">
-        <WeddingList />
-      </div>
-    </div>
+    </main>
   );
 };
 

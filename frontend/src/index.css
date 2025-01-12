@@ -1,3 +1,41 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --gradient-svg: url("/bg-gradient.svg");
+  --gradient-svg-mobile: url("/bg-gradient-mobile.svg");
+  --gradient-fallback: linear-gradient(
+    106deg,
+    #fee497 0%,
+    #fff3bb 25%,
+    #ffecd8 50%,
+    #ffc9db 75%,
+    #e95bb5 100%
+  );
+}
+
+.bg-gradient-landscape {
+  background-image: var(--gradient-svg-mobile), var(--gradient-fallback);
+  background-size: cover;
+  background-position: center;
+
+  @screen lg {
+    background-image: var(--gradient-svg), var(--gradient-fallback);
+  }
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    @apply font-slab text-dark-800;
+  }
+
+  h4,
+  h5,
+  h6,
+  p {
+    @apply font-sans text-dark-800;
+  }
+}

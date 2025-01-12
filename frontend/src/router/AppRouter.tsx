@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
-import CreateUser from "../pages/CreateUser";
+import CreateAccount from "../pages/CreateAccount";
 import PrivateRoute from "./PrivateRouter";
 import Home from "../pages/Home";
 import WeddingDetails from "../pages/WeddingDetails";
@@ -20,8 +20,8 @@ const AppRouter: React.FC = () => {
           element={<Login />}
         />
         <Route
-          path="/create-account"
-          element={<CreateUser />}
+          path="/signup"
+          element={<CreateAccount />}
         />
 
         {/* Private routes */}

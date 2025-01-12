@@ -5,6 +5,10 @@ import { AuthenticationError } from "../utils/errors";
 
 const JWT_SECRET = env.JWT_SECRET;
 
+interface JwtPayload extends jwt.JwtPayload {
+  userId: string;
+}
+
 export const authenticateUser = (
   req: Request,
   res: Response,
@@ -12,27 +16,30 @@ export const authenticateUser = (
 ): void => {
   try {
     const authHeader = req.header("Authorization");
-    if (!authHeader) {
-      throw new AuthenticationError("Missing Authorization header");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new AuthenticationError("Invalid Authorization header format");
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = authHeader.split(" ")[1];
     if (!token) {
       throw new AuthenticationError("Bearer token missing");
     }
 
-    // Verify the token
-    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload;
-
-    // Attach userId to `req` object
-    (req as any).userId = decoded.userId;
-
-    next();
-  } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      next(new AuthenticationError("Invalid or expired token"));
-    } else {
-      next(error);
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+      if (!decoded.userId) {
+        throw new AuthenticationError("Invalid token payload");
+      }
+      (req as any).userId = decoded.userId;
+      next();
+    } catch (jwtError) {
+      throw new AuthenticationError(
+        jwtError instanceof jwt.TokenExpiredError
+          ? "Token expired"
+          : "Invalid token"
+      );
     }
+  } catch (error) {
+    next(error);
   }
 };

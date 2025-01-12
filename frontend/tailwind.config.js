@@ -2,6 +2,26 @@
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
+    fontFamily: {
+      sans: ["Inter", "sans-serif"],
+      slab: ["Montagu Slab", "serif"],
+    },
+    fontSize: {
+      xs: "0.75rem",
+      sm: "0.875rem",
+      base: "1rem",
+      md: "1.125rem",
+      lg: "1.25rem",
+      xl: "1.375rem",
+      "2xl": "1.5rem",
+      "3xl": "1.75rem",
+      "4xl": "2rem",
+      "5xl": "2.5rem",
+      "6xl": "3rem",
+      "7xl": "3.75rem",
+      "8xl": "4.5rem",
+      "9xl": "6rem",
+    },
     colors: {
       dark: {
         950: "#141919",
@@ -40,7 +60,11 @@ export default {
       transparent: "transparent",
       current: "currentColor",
     },
-    extend: {},
+    extend: {
+      backgroundImage: {
+        "gradient-landscape": "var(--gradient-svg), var(--gradient-fallback)",
+      },
+    },
   },
   plugins: [],
 };

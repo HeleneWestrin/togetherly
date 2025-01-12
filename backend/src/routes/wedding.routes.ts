@@ -2,6 +2,9 @@ import { Router } from "express";
 import { WeddingController } from "../controllers/wedding.controller";
 import { authenticateUser } from "../middleware/authentication";
 import { requireWeddingAccess } from "../middleware/weddingAuth";
+import { weddingSchemas } from "../validators/schemas";
+import { validateRequest } from "../middleware/validateRequest";
+import { z } from "zod";
 
 export const weddingRouter = Router();
 
@@ -35,9 +38,14 @@ weddingRouter.post(
   WeddingController.addGuest
 );
 
+const updateRsvpSchema = z.object({
+  rsvpStatus: weddingSchemas.rsvpStatus,
+});
+
 // Update RSVP status
 weddingRouter.patch(
   "/:weddingId/rsvp",
   authenticateUser,
+  validateRequest(updateRsvpSchema),
   WeddingController.updateRSVP
 );

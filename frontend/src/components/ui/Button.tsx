@@ -26,15 +26,11 @@ const Button = ({
   // Define Tailwind CSS classes for each variant
   const variantClasses = {
     primary: "bg-dark-800 text-white hover:bg-dark-950 hover:text-white",
-    secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed ${
-      isSelected
-        ? "disabled:bg-dark-950 disabled:border-dark-950 disabled:text-white disabled:hover:text-white"
-        : "disabled:hover:bg-transparent disabled:hover:text-dark-950 disabled:opacity-55"
-    }`,
+    secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed`,
   } as const; // 'as const' ensures type safety for the variant object
 
   // Combine base classes with variant-specific classes and any additional classes
-  const classes = `flex items-center gap-2 justify-center text-sm md:text-md lg:text-base rounded-full px-4 py-1 md:px-5 md:py-2 font-semibold transition duration-300 ease-in-out ${variantClasses[variant]} ${className}`;
+  const classes = `flex items-center gap-2 justify-center font-slab text-base md:text-md lg:text-md rounded-full px-4 py-1 md:px-5 md:py-2 lg:px-7 lg:py-3 font-medium transition duration-300 ease-in-out ${variantClasses[variant]} ${className}`;
 
   // Determine whether to render a button or anchor based on href prop
   const Component = href ? ("a" as const) : ("button" as const);

@@ -1,20 +1,17 @@
 import { Response } from "express";
+import { ApiResponse } from "../types/api.types";
 
-interface ApiResponse {
-  status: "success" | "error";
-  data?: any;
-  message?: string;
-}
-
-export const sendSuccess = (
+export const sendSuccess = <T>(
   res: Response,
-  data: any,
+  data: T,
   statusCode = 200
 ): void => {
-  res.status(statusCode).json({
+  const response: ApiResponse<T> = {
     status: "success",
     data,
-  });
+    timestamp: new Date().toISOString(),
+  };
+  res.status(statusCode).json(response);
 };
 
 export const sendError = (
@@ -22,8 +19,10 @@ export const sendError = (
   message: string,
   statusCode = 400
 ): void => {
-  res.status(statusCode).json({
+  const response: ApiResponse = {
     status: "error",
     message,
-  });
+    timestamp: new Date().toISOString(),
+  };
+  res.status(statusCode).json(response);
 };

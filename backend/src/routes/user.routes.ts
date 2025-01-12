@@ -7,10 +7,19 @@ import {
 } from "../controllers/user.controller";
 import { authenticateUser } from "../middleware/authentication";
 import { requireAdmin } from "../middleware/adminAuth";
+import { userSchemas } from "../validators/schemas";
+import { validateRequest } from "../middleware/validateRequest";
+import { z } from "zod";
 
 export const userRouter = Router();
 
-userRouter.post("/create", createUser);
+const createUserSchema = z.object({
+  email: userSchemas.email,
+  password: userSchemas.password,
+  profile: userSchemas.profile,
+});
+
+userRouter.post("/create", validateRequest(createUserSchema), createUser);
 
 userRouter.post("/login", loginUser);
 

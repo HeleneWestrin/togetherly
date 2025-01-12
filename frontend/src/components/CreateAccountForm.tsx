@@ -1,14 +1,19 @@
 import { useMutation } from "react-query";
 import { axiosInstance } from "../services/axiosService";
-import Button from "../components/ui/Button";
+import Button from "./ui/Button";
+import FormLabel from "./ui/FormLabel";
+import FormInput from "./ui/FormInput";
 
-const createUser = async (userData: { email: string; password: string }) => {
+const createAccountForm = async (userData: {
+  email: string;
+  password: string;
+}) => {
   const response = await axiosInstance.post("/users", userData);
   return response.data;
 };
 
-export default function CreateUser() {
-  const mutation = useMutation(createUser, {
+export const CreateAccountForm: React.FC = () => {
+  const mutation = useMutation(createAccountForm, {
     onSuccess: (data) => {
       alert("User created successfully!");
     },
@@ -32,25 +37,34 @@ export default function CreateUser() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input
-        name="email"
-        type="email"
-        placeholder="Email"
-        autoComplete="email"
-        required
-      />
-      <input
-        name="password"
-        type="password"
-        placeholder="Password"
-        autoComplete="new-password"
-        required
-      />
+      <div className="mb-4">
+        <FormLabel htmlFor="email">Email</FormLabel>
+        <FormInput
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Email"
+          autoComplete="email"
+          required
+        />
+      </div>
+
+      <div className="mb-4">
+        <FormLabel htmlFor="password">Password</FormLabel>
+        <FormInput
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Password"
+          autoComplete="new-password"
+          required
+        />
+      </div>
       <Button
         type="submit"
         disabled={mutation.isLoading}
       >
-        {mutation.isLoading ? "Creating..." : "Create account"}
+        {mutation.isLoading ? "Signing up..." : "Sign up"}
       </Button>
       {mutation.isError && (
         <p>
@@ -61,4 +75,4 @@ export default function CreateUser() {
       )}
     </form>
   );
-}
+};
