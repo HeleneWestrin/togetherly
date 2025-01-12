@@ -2,18 +2,25 @@ import { useQuery } from "react-query";
 import { AxiosError } from "axios";
 import { axiosInstance } from "../services/axiosService";
 
-interface SecretData {
-  secret: string;
-  userId: string;
+interface SecretResponse {
+  status: "success";
+  data: {
+    secret: string;
+    userId: string;
+  };
 }
 
-const fetchSecrets = async (): Promise<SecretData> => {
-  const response = await axiosInstance.get<SecretData>("/users/secrets");
-  return response.data;
+const fetchSecrets = async (): Promise<SecretResponse["data"]> => {
+  const response = await axiosInstance.get<SecretResponse>("/users/secrets");
+  return response.data.data;
 };
 
 export const useSecrets = () => {
-  return useQuery<SecretData, AxiosError>("secretData", fetchSecrets, {
-    retry: false,
-  });
+  return useQuery<SecretResponse["data"], AxiosError>(
+    "secretData",
+    fetchSecrets,
+    {
+      retry: false,
+    }
+  );
 };

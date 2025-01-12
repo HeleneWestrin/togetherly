@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "../hooks/useLogin";
 import { AxiosError } from "axios";
+import Button from "./ui/Button";
+import FormInput from "./ui/FormInput";
+import FormLabel from "./ui/FormLabel";
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -24,41 +27,40 @@ export const LoginForm: React.FC = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="email">Email</label>
-        <input
+      <div className="mb-4">
+        <FormLabel htmlFor="email">Email</FormLabel>
+        <FormInput
           id="email"
-          name="email"
           type="email"
-          placeholder="Email"
+          name="email"
+          placeholder="your@email.com"
           autoComplete="email"
           required
         />
       </div>
 
-      <div>
-        <label htmlFor="password">Password</label>
-        <input
+      <div className="mb-4">
+        <FormLabel htmlFor="password">Password</FormLabel>
+        <FormInput
           id="password"
           name="password"
           type="password"
-          placeholder="Password"
+          placeholder="Enter your password"
           autoComplete="current-password"
           required
         />
       </div>
-
-      <button
+      <Button
         type="submit"
         disabled={isLoading}
       >
         {isLoading ? "Logging in..." : "Login"}
-      </button>
+      </Button>
 
       {isError && (
         <p className="text-red-500 font-bold">
           {error instanceof AxiosError && error.response
-            ? error.response.data.message
+            ? (error.response.data as { message: string }).message
             : "Something went wrong."}
         </p>
       )}

@@ -3,6 +3,8 @@ import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import CreateUser from "../pages/CreateUser";
 import PrivateRoute from "./PrivateRouter";
+import Home from "../pages/Home";
+import WeddingDetails from "../pages/WeddingDetails";
 
 const AppRouter: React.FC = () => {
   return (
@@ -11,7 +13,7 @@ const AppRouter: React.FC = () => {
         {/* Public routes */}
         <Route
           path="/"
-          element={<Login />}
+          element={<Home />}
         />
         <Route
           path="/login"
@@ -28,6 +30,15 @@ const AppRouter: React.FC = () => {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/wedding/:weddingSlug"
+          element={
+            <PrivateRoute>
+              <WeddingDetails />
             </PrivateRoute>
           }
         />

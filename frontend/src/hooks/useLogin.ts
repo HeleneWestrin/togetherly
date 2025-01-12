@@ -1,10 +1,14 @@
 import { useMutation, UseMutationResult } from "react-query";
 import { axiosInstance } from "../services/axiosService";
 import { AxiosError } from "axios";
+import { useAuthStore } from "../stores/useAuthStore";
 
 interface LoginResponse {
-  token: string;
-  // Add more fields when the backend returns them
+  status: "success";
+  data: {
+    userId: string;
+    token: string;
+  };
 }
 
 interface ErrorResponse {
@@ -18,25 +22,21 @@ interface LoginCredentials {
 
 const loginApiCall = async (
   credentials: LoginCredentials
-): Promise<LoginResponse> => {
+): Promise<LoginResponse["data"]> => {
   const response = await axiosInstance.post<LoginResponse>(
     "/users/login",
     credentials
   );
-  return response.data;
+  return response.data.data;
 };
 
-export const useLogin = (): UseMutationResult<
-  LoginResponse,
-  AxiosError<ErrorResponse>,
-  LoginCredentials
-> => {
+export const useLogin = () => {
   return useMutation(loginApiCall, {
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
+      useAuthStore.getState().login(data.token);
     },
-    onError: (error) => {
-      console.error(error);
+    onError: (error: AxiosError) => {
+      console.error("Login error:", error.response?.data);
     },
   });
 };

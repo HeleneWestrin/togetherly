@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+import { AuthenticationError } from "../utils/errors";
 
-const JWT_SECRET = process.env.JWT_SECRET || "developmentSecret";
+const JWT_SECRET = env.JWT_SECRET;
 
 export const authenticateUser = (
   req: Request,
@@ -11,14 +13,12 @@ export const authenticateUser = (
   try {
     const authHeader = req.header("Authorization");
     if (!authHeader) {
-      res.status(401).json({ message: "Missing Authorization header" });
-      return;
+      throw new AuthenticationError("Missing Authorization header");
     }
 
     const token = authHeader.replace("Bearer ", "").trim();
     if (!token) {
-      res.status(401).json({ message: "Bearer token missing" });
-      return;
+      throw new AuthenticationError("Bearer token missing");
     }
 
     // Verify the token
@@ -29,6 +29,10 @@ export const authenticateUser = (
 
     next();
   } catch (error) {
-    res.status(401).json({ message: "Invalid or expired token", error });
+    if (error instanceof jwt.JsonWebTokenError) {
+      next(new AuthenticationError("Invalid or expired token"));
+    } else {
+      next(error);
+    }
   }
 };

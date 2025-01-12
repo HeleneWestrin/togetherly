@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 export const connectDB = async (): Promise<void> => {
-  const mongoUrl = process.env.MONGO_URL || "mongodb://localhost/togetherly";
+  const mongoUrl = process.env.MONGO_URI || "mongodb://localhost/togetherly";
 
   try {
     await mongoose.connect(mongoUrl);

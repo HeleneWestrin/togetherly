@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
+import { forceLogout } from "../utils/logoutHandler";
 
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: "http://localhost:8080",
@@ -31,15 +32,8 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    // Example: If the backend returns 401, you can handle forced logout,
-    // token refresh, or open a modal. This is optional.
     if (error.response?.status === 401) {
-      // Optionally, do something like:
-      // - Attempt a token refresh
-      // - Or force user logout
-      // For now, we'll just log the user out by removing token:
-      localStorage.removeItem("token");
-      // Optionally redirect to /login, or show a message, etc.
+      forceLogout();
     }
     return Promise.reject(error);
   }

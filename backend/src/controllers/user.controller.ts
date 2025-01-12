@@ -1,91 +1,55 @@
-import { Request, Response } from "express";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { User } from "../models/user.model";
-
-const JWT_SECRET = process.env.JWT_SECRET || "developmentSecret";
+import { Request, Response, NextFunction } from "express";
+import { UserService } from "../services/user.service";
+import { sendSuccess, sendError } from "../utils/responseHandlers";
+import { ValidationError } from "../utils/errors";
 
 export const createUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      throw new ValidationError("Email and password are required");
+    }
 
-    // Hash the password
-    const salt = bcrypt.genSaltSync();
-    const hashedPassword = bcrypt.hashSync(password, salt);
-
-    // Save new user
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-    });
-
-    const savedUser = await newUser.save();
-
-    // Generate JWT
-    const token = jwt.sign(
-      { userId: savedUser._id }, // Payload
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.status(201).json({
-      userId: savedUser._id,
-      token,
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      message: "Could not create user",
-      errors: error.errors,
-    });
+    const result = await UserService.createUser(email, password);
+    sendSuccess(res, result, 201);
+  } catch (error) {
+    next(error);
   }
 };
 
-export const loginUser = async (req: Request, res: Response): Promise<void> => {
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const { email, password } = req.body;
-
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      res
-        .status(400)
-        .json({ notFound: true, message: "Incorrect email or password" }); // Non-specific to not leak if user exists
-      return;
-    }
-
-    // Check password
-    const isPasswordValid = bcrypt.compareSync(password, user.password);
-    if (!isPasswordValid) {
-      res.status(400).json({
-        notFound: true,
-        message: "Incorrect email or password", // Non-specific to not leak if user exists
-      });
-      return;
-    }
-
-    // Generate JWT
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res.json({
-      userId: user._id,
-      token,
-    });
+    const result = await UserService.loginUser(email, password);
+    sendSuccess(res, result);
   } catch (error) {
-    res.status(500).json({
-      message: "Internal server error",
-      error,
-    });
+    next(error);
+  }
+};
+
+export const getUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const users = await UserService.getActiveUsers();
+    sendSuccess(res, users);
+  } catch (error) {
+    next(error);
   }
 };
 
 export const getSecrets = (req: Request, res: Response): void => {
-  res.json({
-    secret: "This is a super secret message",
-    userId: (req as any).userId,
-  });
+  const userId = (req as any).userId;
+  const secrets = UserService.getSecrets(userId);
+  sendSuccess(res, secrets);
 };

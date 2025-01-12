@@ -1,5 +1,6 @@
 import { useMutation } from "react-query";
 import { axiosInstance } from "../services/axiosService";
+import Button from "../components/ui/Button";
 
 const createUser = async (userData: { email: string; password: string }) => {
   const response = await axiosInstance.post("/users", userData);
@@ -45,12 +46,12 @@ export default function CreateUser() {
         autoComplete="new-password"
         required
       />
-      <button
+      <Button
         type="submit"
         disabled={mutation.isLoading}
       >
         {mutation.isLoading ? "Creating..." : "Create account"}
-      </button>
+      </Button>
       {mutation.isError && (
         <p>
           {mutation.error instanceof Error
