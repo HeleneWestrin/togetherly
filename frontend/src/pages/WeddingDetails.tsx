@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../services/axiosService";
+import Button from "../components/ui/Button";
+import { useAuthStore } from "../stores/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 interface Wedding {
   _id: string;
@@ -72,6 +75,14 @@ const WeddingDetails: React.FC = () => {
     enabled: !!weddingSlug,
   });
 
+  const logout = useAuthStore((state) => state.logout);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   if (isLoading) return <div className="p-6">Loading wedding details...</div>;
 
   if (error) {
@@ -92,16 +103,26 @@ const WeddingDetails: React.FC = () => {
       className="min-h-screen bg-gradient-landscape"
     >
       <div className="p-6 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">
-          {wedding.couple
-            .map((partner) => partner.profile.firstName)
-            .join(" & ")}
-        </h1>
-        <p className="mb-2 text-dark-600">
-          <span>{new Date(wedding.date).toLocaleDateString()}</span>
-          <span className="mx-2">•</span>
-          <span>{getWeddingDateStatus(wedding.date)}</span>
-        </p>
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-bold">
+              {wedding.couple
+                .map((partner) => partner.profile.firstName)
+                .join(" & ")}
+            </h1>
+            <p className="text-dark-600">
+              <span>{new Date(wedding.date).toLocaleDateString()}</span>
+              <span className="mx-2">•</span>
+              <span>{getWeddingDateStatus(wedding.date)}</span>
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={handleLogout}
+          >
+            Log out
+          </Button>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="bg-white p-4 rounded-lg shadow">

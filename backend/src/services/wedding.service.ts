@@ -38,7 +38,7 @@ export class WeddingService {
         // Guests can only see weddings they're invited to
         weddings = await Wedding.find({ guests: userId })
           .populate("couple", populateOptions)
-          .select("title slug date location couple -budget"); // Add slug, exclude budget
+          .select("title slug date location couple guests"); // Only include necessary fields
         break;
 
       default:
