@@ -1,4 +1,4 @@
-import { useMutation } from "react-query";
+import { useMutation } from "@tanstack/react-query";
 import { axiosInstance } from "../services/axiosService";
 import Button from "./ui/Button";
 import FormLabel from "./ui/FormLabel";
@@ -8,12 +8,13 @@ const createAccountForm = async (userData: {
   email: string;
   password: string;
 }) => {
-  const response = await axiosInstance.post("/users", userData);
+  const response = await axiosInstance.post("/users/create", userData);
   return response.data;
 };
 
 export const CreateAccountForm: React.FC = () => {
-  const mutation = useMutation(createAccountForm, {
+  const mutation = useMutation({
+    mutationFn: createAccountForm,
     onSuccess: (data) => {
       alert("User created successfully!");
     },
@@ -62,9 +63,9 @@ export const CreateAccountForm: React.FC = () => {
       </div>
       <Button
         type="submit"
-        disabled={mutation.isLoading}
+        disabled={mutation.isPending}
       >
-        {mutation.isLoading ? "Signing up..." : "Sign up"}
+        {mutation.isPending ? "Signing up..." : "Sign up"}
       </Button>
       {mutation.isError && (
         <p>

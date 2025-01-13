@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../services/axiosService";
 
@@ -66,9 +66,11 @@ const WeddingDetails: React.FC = () => {
     data: wedding,
     isLoading,
     error,
-  } = useQuery(["wedding", weddingSlug], () =>
-    fetchWeddingDetails(weddingSlug!)
-  );
+  } = useQuery({
+    queryKey: ["wedding", weddingSlug],
+    queryFn: () => fetchWeddingDetails(weddingSlug!),
+    enabled: !!weddingSlug,
+  });
 
   if (isLoading) return <div className="p-6">Loading wedding details...</div>;
 

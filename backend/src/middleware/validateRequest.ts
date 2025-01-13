@@ -9,11 +9,16 @@ export const validateRequest = (
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const data = await schema.parseAsync(req[location]);
-      req[location] = data; // Replace with validated data
+      req[location] = data;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        next(new ValidationError(error.errors[0].message));
+        const errorMessages = error.errors.map((err) => {
+          const field = err.path.join(".");
+          return `${field}: ${err.message}`;
+        });
+
+        next(new ValidationError(errorMessages.join(", ")));
       } else {
         next(error);
       }

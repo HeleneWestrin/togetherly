@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../services/axiosService";
 import { Link } from "react-router-dom";
 
@@ -32,7 +32,10 @@ export const WeddingList: React.FC = () => {
     data: weddings,
     isLoading,
     error,
-  } = useQuery("weddings", fetchWeddings);
+  } = useQuery({
+    queryKey: ["weddings"],
+    queryFn: fetchWeddings,
+  });
 
   if (isLoading) return <p>Loading weddings...</p>;
 

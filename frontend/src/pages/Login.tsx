@@ -11,6 +11,13 @@ const Login: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const navigate = useNavigate();
 
+  /**
+   * Effect hook to handle automatic navigation for authenticated users
+   * If user is already authenticated, redirects them based on their wedding data:
+   * - Single wedding -> Wedding details page
+   * - Multiple/No weddings -> Dashboard
+   */
+
   useEffect(() => {
     if (isAuthenticated) {
       navigateBasedOnWeddings(navigate);

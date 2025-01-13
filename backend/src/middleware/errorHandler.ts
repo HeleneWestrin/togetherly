@@ -11,6 +11,8 @@ export const errorHandler: ErrorRequestHandler = (
     res.status(err.statusCode).json({
       status: "error",
       message: err.message,
+      code: err.constructor.name,
+      path: req.path,
     });
     return;
   }
@@ -19,5 +21,7 @@ export const errorHandler: ErrorRequestHandler = (
   res.status(500).json({
     status: "error",
     message: "Internal server error",
+    code: "InternalServerError",
+    path: req.path,
   });
 };

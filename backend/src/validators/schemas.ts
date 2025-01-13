@@ -3,12 +3,14 @@ import { z } from "zod";
 export const userSchemas = {
   email: z.string().email("Invalid email format"),
   password: z.string().min(10, "Password must be at least 10 characters"),
-  profile: z.object({
-    firstName: z.string().min(1, "First name is required"),
-    lastName: z.string().min(1, "Last name is required"),
-    phoneNumber: z.string().optional(),
-    address: z.string().optional(),
-  }),
+  profile: z
+    .object({
+      firstName: z.string().min(1),
+      lastName: z.string().min(1),
+      phoneNumber: z.string().optional(),
+      address: z.string().optional(),
+    })
+    .optional(),
 };
 
 export const weddingSchemas = {

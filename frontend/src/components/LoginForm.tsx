@@ -5,8 +5,17 @@ import FormInput from "./ui/FormInput";
 import FormLabel from "./ui/FormLabel";
 
 export const LoginForm: React.FC = () => {
-  const { mutate, isLoading, isError, error } = useLogin();
+  // Destructure values from useLogin hook:
+  // - mutate: Function to trigger login request
+  // - isPending: Boolean indicating if login request is in progress
+  // - isError: Boolean indicating if there was an error
+  // - error: Error object containing details if login failed
+  const { mutate, isPending, isError, error } = useLogin();
 
+  /**
+   * Handles form submission by preventing default behavior and
+   * extracting email and password from form data to send login request
+   */
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -21,6 +30,7 @@ export const LoginForm: React.FC = () => {
       className="w-full"
       onSubmit={handleSubmit}
     >
+      {/* Email input field group */}
       <div className="mb-4">
         <FormLabel htmlFor="email">Email</FormLabel>
         <FormInput
@@ -33,6 +43,7 @@ export const LoginForm: React.FC = () => {
         />
       </div>
 
+      {/* Password input field group */}
       <div className="mb-6">
         <FormLabel htmlFor="password">Password</FormLabel>
         <FormInput
@@ -44,14 +55,18 @@ export const LoginForm: React.FC = () => {
           required
         />
       </div>
+
+      {/* Submit button that shows loading state */}
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isPending}
       >
-        {isLoading ? "Logging in..." : "Login"}
+        {isPending ? "Logging in..." : "Login"}
       </Button>
 
+      {/* Error message display
+          Shows server error message if available, otherwise shows generic error */}
       {isError && (
         <p className="text-red-500 font-bold">
           {error instanceof AxiosError && error.response

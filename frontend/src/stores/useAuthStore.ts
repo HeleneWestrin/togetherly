@@ -1,12 +1,29 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+/**
+ * Interface defining the structure of a user in the auth store
+ */
 interface User {
   id: string;
   email: string;
-  role: "admin" | "couple" | "guest";
+  role: "admin" | "couple" | "guest"; // Strict union type for user roles
 }
 
+/**
+ * Interface defining the complete auth store state and actions
+ *
+ * State properties:
+ * - token: JWT token for API authentication
+ * - user: Currently logged in user data
+ * - isAuthenticated: Quick check for auth status
+ * - isLoading: Loading state for auth operations
+ *
+ * Actions:
+ * - login: Sets user data and token
+ * - logout: Clears auth state
+ * - setLoading: Updates loading state
+ */
 interface AuthState {
   token: string | null;
   user: User | null;
@@ -17,21 +34,34 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
+/**
+ * Zustand store for managing authentication state
+ * Uses persist middleware to save auth state to localStorage
+ *
+ * Features:
+ * - Persists auth state across page reloads
+ * - Provides simple login/logout actions
+ * - Manages loading states for auth operations
+ */
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
+      // Initial state
       token: null,
       user: null,
       isAuthenticated: false,
       isLoading: false,
+
+      // Actions
       login: (token, user) => set({ token, user, isAuthenticated: true }),
       logout: () => set({ token: null, user: null, isAuthenticated: false }),
       setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
-      name: "togetherly-auth",
+      // Persistence configuration
+      name: "togetherly-auth", // Storage key in localStorage
       storage: createJSONStorage(() => localStorage),
-      // Only persist these fields:
+      // Only persist authentication-related fields
       partialize: (state) => ({
         token: state.token,
         user: state.user,

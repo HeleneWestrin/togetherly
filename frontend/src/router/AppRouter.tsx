@@ -6,11 +6,15 @@ import PrivateRoute from "./PrivateRouter";
 import Home from "../pages/Home";
 import WeddingDetails from "../pages/WeddingDetails";
 
+/**
+ * Main router component that handles all application routing
+ * Uses React Router v6 for client-side routing
+ */
 const AppRouter: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
+        {/* Public routes - accessible to all users */}
         <Route
           path="/"
           element={<Home />}
@@ -24,7 +28,8 @@ const AppRouter: React.FC = () => {
           element={<CreateAccount />}
         />
 
-        {/* Private routes */}
+        {/* Private routes - require authentication */}
+        {/* PrivateRoute component checks auth status and redirects if not logged in */}
         <Route
           path="/dashboard"
           element={
@@ -34,6 +39,8 @@ const AppRouter: React.FC = () => {
           }
         />
 
+        {/* Dynamic route with URL parameter :weddingSlug */}
+        {/* Also protected by PrivateRoute wrapper */}
         <Route
           path="/wedding/:weddingSlug"
           element={

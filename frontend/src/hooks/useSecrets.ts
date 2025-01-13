@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { axiosInstance } from "../services/axiosService";
 
@@ -16,11 +16,9 @@ const fetchSecrets = async (): Promise<SecretResponse["data"]> => {
 };
 
 export const useSecrets = () => {
-  return useQuery<SecretResponse["data"], AxiosError>(
-    "secretData",
-    fetchSecrets,
-    {
-      retry: false,
-    }
-  );
+  return useQuery<SecretResponse["data"], AxiosError>({
+    queryKey: ["secretData"],
+    queryFn: fetchSecrets,
+    retry: false,
+  });
 };
