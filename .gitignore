@@ -6,7 +6,6 @@ node_modules
 .env.test.local
 .env.production.local
 
-certs
 build
 
 npm-debug.log*
@@ -14,3 +13,5 @@ yarn-debug.log*
 yarn-error.log*
 
 package-lock.json
+frontend/certs/helene-local.io.key
+frontend/certs/helene-local.io.crt
