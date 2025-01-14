@@ -83,18 +83,3 @@ export const getUsers = async (
     next(error);
   }
 };
-
-/**
- * Retrieves secret information for authenticated user
- * Requires valid JWT token (checked in route middleware)
- *
- * @param req - Express request object (with userId added by auth middleware)
- * @param res - Express response object
- */
-export const getSecrets = (req: Request, res: Response): void => {
-  // Get userId that was added by authentication middleware
-  const userId = (req as any).userId;
-  // Fetch user-specific secret data
-  const secrets = UserService.getSecrets(userId);
-  sendSuccess(res, secrets);
-};

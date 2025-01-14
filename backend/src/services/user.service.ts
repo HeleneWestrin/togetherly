@@ -95,18 +95,6 @@ export class UserService {
   }
 
   /**
-   * Retrieves secret information for a specific user
-   * @param userId - ID of the user requesting secrets
-   * @returns Object containing secret message and userId
-   */
-  static getSecrets(userId: string) {
-    return {
-      secret: "This is a super secret message",
-      userId,
-    };
-  }
-
-  /**
    * Sanitizes user data for safe client-side consumption
    * Removes sensitive information and formats data consistently
    * @param user - Raw user document from database

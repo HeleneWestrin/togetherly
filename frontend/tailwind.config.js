@@ -4,7 +4,7 @@ export default {
   theme: {
     fontFamily: {
       sans: ["Inter", "sans-serif"],
-      slab: ["Montagu Slab", "serif"],
+      slab: ["Montagu Slab", "Roboto Slab", "Georgia", "serif"],
     },
     fontSize: {
       xs: "0.75rem",

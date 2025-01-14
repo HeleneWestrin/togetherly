@@ -27,16 +27,9 @@ export interface IUser extends Document {
   weddings: IWedding[]; // References to weddings (either as guest or couple)
   createdAt: Date;
   updatedAt: Date;
+  socialProvider?: "google";
+  socialId?: string;
 }
-
-// Separate schema for the profile section
-const profileSchema = new Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  phoneNumber: { type: String, required: false },
-  address: { type: String, required: false },
-  profilePicture: { type: String, required: false },
-});
 
 // Main user schema definition with validation rules
 const userSchema: Schema<IUser> = new mongoose.Schema(
@@ -49,8 +42,20 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: [10, "Password must be at least 10 characters long"],
+      required: [
+        function (this: IUser) {
+          return !this.socialProvider;
+        },
+        "Password is required",
+      ],
+      validate: {
+        validator: function (this: IUser, password: string) {
+          // Skip validation if using social login
+          if (this.socialProvider) return true;
+          return password.length >= 10;
+        },
+        message: "Password must be at least 10 characters long",
+      },
     },
     isActive: {
       type: Boolean,
@@ -74,13 +79,37 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
         dietaryPreferences: String,
       },
     ],
-    profile: profileSchema, // Nested profile information
+    profile: {
+      firstName: {
+        type: String,
+        required: [
+          function (this: IUser) {
+            return !this.socialProvider;
+          },
+          "First name is required",
+        ],
+      },
+      lastName: {
+        type: String,
+        required: [
+          function (this: IUser) {
+            return !this.socialProvider;
+          },
+          "Last name is required",
+        ],
+      },
+      phoneNumber: { type: String, required: false },
+      address: { type: String, required: false },
+      profilePicture: { type: String, required: false },
+    },
     weddings: [
       {
         type: Schema.Types.ObjectId,
         ref: "Wedding", // Allows population of wedding details
       },
     ],
+    socialProvider: { type: String, enum: ["google"] },
+    socialId: { type: String },
   },
   { timestamps: true } // Automatically manage createdAt and updatedAt fields
 );

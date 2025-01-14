@@ -1,8 +1,7 @@
-import { Router } from "express";
+import { Router, Request, RequestHandler } from "express";
 import {
   createUser,
   loginUser,
-  getSecrets,
   getUsers,
 } from "../controllers/user.controller";
 import { authenticateUser } from "../middleware/authentication";
@@ -10,6 +9,9 @@ import { requireAdmin } from "../middleware/adminAuth";
 import { userSchemas } from "../validators/schemas";
 import { validateRequest } from "../middleware/validateRequest";
 import { z } from "zod";
+import { AuthService } from "../services/auth.service";
+import { env } from "../config/env";
+import { IUser, User } from "../models/user.model";
 
 // Initialize Express Router for user-related routes
 export const userRouter = Router();
@@ -44,15 +46,71 @@ userRouter.post("/create", validateRequest(createUserSchema), createUser);
 userRouter.post("/login", loginUser);
 
 /**
- * GET /secrets
- * Protected route - requires valid JWT token
- * Returns sensitive data only for authenticated users
- */
-userRouter.get("/secrets", authenticateUser, getSecrets);
-
-/**
  * GET /
  * Admin-only route - requires both authentication and admin role
  * Returns list of all users in the system
  */
 userRouter.get("/", authenticateUser, requireAdmin, getUsers);
+
+/**
+ * GET /
+ * Google login route
+ * Handles Google token verification and user creation/login
+ */
+userRouter.post("/auth/google/token", (async (
+  req: Request & { body: { token: string } },
+  res,
+  next
+) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    try {
+      const payload = await AuthService.verifyGoogleToken(token);
+
+      if (!payload?.email) {
+        return res.status(400).json({ message: "Email not provided" });
+      }
+
+      // Find or create user
+      let user = await User.findOne({ email: payload.email });
+      if (!user) {
+        user = await User.create({
+          email: payload.email,
+          password: "",
+          profile: {
+            firstName: payload.given_name || "",
+            lastName: payload.family_name || "",
+          },
+          role: "couple",
+          isActive: true,
+          socialProvider: "google",
+          socialId: payload.sub,
+        });
+      }
+
+      // Generate JWT token
+      const jwtToken = AuthService.generateToken(
+        (user as IUser & { _id: { toString(): string } })._id.toString()
+      );
+
+      res.json({
+        token: jwtToken,
+        user: {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (verifyError) {
+      console.error("Token verification error:", verifyError);
+      return res.status(401).json({ message: "Invalid token" });
+    }
+  } catch (error) {
+    console.error("Server error:", error);
+    next(error);
+  }
+}) as RequestHandler);
