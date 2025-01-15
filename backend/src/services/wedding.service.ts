@@ -251,9 +251,15 @@ export class WeddingService {
     const wedding = await Wedding.findById(task.weddingId);
     if (!wedding) throw new NotFoundError("Wedding not found");
 
-    // Check if user has permission (is part of couple)
+    // Get user to check if they're an admin
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    // Check if user has permission (is admin or part of couple)
     const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    if (!isCouple) throw new ForbiddenError("Only couples can update tasks");
+    if (!isCouple && user.role !== "admin") {
+      throw new ForbiddenError("Only couples or admins can update tasks");
+    }
 
     // Update the task
     task.completed = completed;

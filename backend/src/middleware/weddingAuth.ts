@@ -27,21 +27,27 @@ export const requireWeddingAccess = async (
       const task = await Task.findById(taskId);
       if (!task) throw new ForbiddenError("Task not found");
       wedding = await Wedding.findById(task.weddingId);
+
+      // For task operations, only allow couples
+      const isCouple = wedding?.couple.some((id) => id.toString() === userId);
+      if (!isCouple) {
+        throw new ForbiddenError("Only couples can perform task operations");
+      }
     } else {
       // Find wedding by ID or slug
       wedding = slug
         ? await Wedding.findOne({ slug })
         : await Wedding.findById(weddingId);
-    }
 
-    if (!wedding) throw new ForbiddenError("Wedding not found");
+      if (!wedding) throw new ForbiddenError("Wedding not found");
 
-    // Check if user is part of the couple or a guest
-    const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    const isGuest = wedding.guests.some((id) => id.toString() === userId);
+      // For non-task operations, check if user is part of the couple or a guest
+      const isCouple = wedding.couple.some((id) => id.toString() === userId);
+      const isGuest = wedding.guests.some((id) => id.toString() === userId);
 
-    if (!isCouple && !isGuest) {
-      throw new ForbiddenError("You don't have access to this wedding");
+      if (!isCouple && !isGuest) {
+        throw new ForbiddenError("You don't have access to this wedding");
+      }
     }
 
     next();
