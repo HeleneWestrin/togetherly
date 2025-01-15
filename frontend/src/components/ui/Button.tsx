@@ -26,7 +26,7 @@ const Button = ({
   // Define Tailwind CSS classes for each variant
   const variantClasses = {
     primary: "bg-dark-800 text-white hover:bg-dark-950 hover:text-white",
-    secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed`,
+    secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-950 hover:border-dark-950 hover:text-white disabled:cursor-not-allowed`,
   } as const; // 'as const' ensures type safety for the variant object
 
   // Combine base classes with variant-specific classes and any additional classes

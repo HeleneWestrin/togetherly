@@ -10,7 +10,6 @@ import { userSchemas } from "../validators/schemas";
 import { validateRequest } from "../middleware/validateRequest";
 import { z } from "zod";
 import { AuthService } from "../services/auth.service";
-import { env } from "../config/env";
 import { IUser, User } from "../models/user.model";
 
 // Initialize Express Router for user-related routes

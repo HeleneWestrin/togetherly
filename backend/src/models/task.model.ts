@@ -5,6 +5,7 @@ export interface ITask extends Document {
   title: string;
   budget: number;
   actualCost: number;
+  completed: boolean;
   budgetItem: mongoose.Types.ObjectId; // references Budget item in Weddings collection
   dueDate: Date;
   createdAt: Date;
@@ -17,6 +18,7 @@ const taskSchema = new Schema<ITask>(
     title: { type: String, required: true },
     budget: { type: Number, required: false },
     actualCost: { type: Number, required: true, default: 0 },
+    completed: { type: Boolean, required: true, default: false },
     budgetItem: {
       type: Schema.Types.ObjectId,
       ref: "Wedding.budget.allocated",

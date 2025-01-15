@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../services/axiosService";
+import { axiosInstance } from "../../services/axiosService";
 import { Link } from "react-router-dom";
 
 interface Wedding {
@@ -22,7 +22,7 @@ interface Wedding {
 
 const fetchWeddings = async () => {
   const response = await axiosInstance.get<{ status: string; data: Wedding[] }>(
-    "/weddings"
+    "/api/weddings"
   );
   return response.data.data;
 };

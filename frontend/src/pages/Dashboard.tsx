@@ -1,37 +1,36 @@
-import { useAuthStore } from "../stores/useAuthStore";
-import { useNavigate } from "react-router-dom";
-import { WeddingList } from "../components/WeddingList";
+import { WeddingList } from "../components/wedding/WeddingList";
+import { Typography } from "../components/ui/Typography";
 import Button from "../components/ui/Button";
+import { forceLogout } from "../utils/logoutHandler";
 
 const Dashboard: React.FC = () => {
-  const logout = useAuthStore((state) => state.logout);
-  const navigate = useNavigate();
-
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    forceLogout();
   };
 
   return (
-    <main
-      id="main"
-      className="min-h-screen bg-gradient-landscape"
-    >
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <Button
-            variant="secondary"
-            onClick={handleLogout}
-          >
-            Log out
-          </Button>
+    <>
+      <main
+        id="main"
+        className="min-h-screen"
+      >
+        <div className="p-6 max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <Typography element="h1">Dashboard</Typography>
+            <Button
+              variant="secondary"
+              onClick={handleLogout}
+            >
+              Log out
+            </Button>
+          </div>
+          <div className="space-y-8">
+            <WeddingList />
+          </div>
         </div>
-        <div className="space-y-8">
-          <WeddingList />
-        </div>
-      </div>
-    </main>
+      </main>
+      <div className="bg-gradient-landscape"></div>
+    </>
   );
 };
 

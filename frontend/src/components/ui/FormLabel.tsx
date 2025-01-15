@@ -16,11 +16,11 @@ const FormLabel = ({
   return (
     <label
       htmlFor={htmlFor}
-      className={`block text-sm font-medium text-dark-700 mb-1 ${className}`}
+      className={`block text-sm md:text-base font-bold text-dark-800 leading-none ${className}`}
       {...rest}
     >
       {children}
-      {required && <span className="text-red-500 ml-1">*</span>}
+      {required && <span className="text-red-600 ml-1">*</span>}
     </label>
   );
 };

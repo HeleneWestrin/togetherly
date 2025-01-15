@@ -49,3 +49,11 @@ weddingRouter.patch(
   validateRequest(updateRsvpSchema),
   WeddingController.updateRSVP
 );
+
+// Update task status
+weddingRouter.patch(
+  "/tasks/:taskId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.updateTask
+);

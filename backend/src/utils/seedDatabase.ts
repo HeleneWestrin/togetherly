@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import { User } from "../models/user.model";
-import { Wedding } from "../models/wedding.model";
+import {
+  Wedding,
+  IBudgetItem,
+  DEFAULT_BUDGET_CATEGORIES,
+} from "../models/wedding.model";
 import { Task } from "../models/task.model";
 import bcrypt from "bcryptjs";
 
@@ -75,11 +79,11 @@ export const seedDatabase = async (): Promise<void> => {
       },
     ]);
 
-    // Create wedding with initial budget structure
+    // First create the wedding with initial structure but no budget total
     const wedding = await Wedding.create({
       title: "John & Jane's Wedding",
       slug: "john-janes-wedding",
-      date: new Date("2025-12-31"),
+      date: new Date("2025-06-17"),
       location: {
         address: "123 Wedding Venue St, City, Country",
         coordinates: {
@@ -88,24 +92,13 @@ export const seedDatabase = async (): Promise<void> => {
         },
       },
       budget: {
-        total: 50000,
-        allocated: [
-          {
-            category: "Venue",
-            spent: 18000,
-            taskIds: [],
-          },
-          {
-            category: "Catering",
-            spent: 14000,
-            taskIds: [],
-          },
-          {
-            category: "Photography",
-            spent: 4500,
-            taskIds: [],
-          },
-        ],
+        total: 0,
+        spent: 0,
+        allocated: DEFAULT_BUDGET_CATEGORIES.map((category) => ({
+          category,
+          spent: 0,
+          tasks: [],
+        })),
       },
       couple: [partner1._id, partner2._id],
       guests: [guest1._id, guest2._id],
@@ -117,41 +110,110 @@ export const seedDatabase = async (): Promise<void> => {
       throw new Error("Failed to create wedding with budget items");
     }
 
-    // Create tasks using the actual budget item IDs
-    const tasks = await Task.create([
-      {
-        weddingId: wedding._id,
-        title: "Book Wedding Venue",
-        budget: 20000,
-        actualCost: 18000,
-        budgetItem: createdWedding.budget.allocated[0]._id,
-        dueDate: new Date("2024-06-01"),
-      },
-      {
-        weddingId: wedding._id,
-        title: "Hire Catering Service",
-        budget: 15000,
-        actualCost: 14000,
-        budgetItem: createdWedding.budget.allocated[1]._id,
-        dueDate: new Date("2024-08-01"),
-      },
-      {
-        weddingId: wedding._id,
-        title: "Book Photographer",
-        budget: 5000,
-        actualCost: 4500,
-        budgetItem: createdWedding.budget.allocated[2]._id,
-        dueDate: new Date("2024-07-01"),
-      },
-    ]);
+    // Create multiple tasks for each budget category
+    const tasks = [];
+    const taskTemplates = {
+      "Venue & catering": [
+        {
+          title: "Book main venue",
+          budget: 45000,
+          spent: 44000,
+          completed: true,
+        },
+        {
+          title: "Arrange catering",
+          budget: 30000,
+          spent: 28000,
+          completed: true,
+        },
+      ],
+      "Photography & videography": [
+        {
+          title: "Hire photographer",
+          budget: 15000,
+          spent: 14500,
+          completed: true,
+        },
+        {
+          title: "Book videographer",
+          budget: 10000,
+          spent: 0,
+          completed: false,
+        },
+      ],
+      "Attire & accessories": [
+        {
+          title: "Wedding dress",
+          budget: 12000,
+          spent: 11500,
+          completed: true,
+        },
+        { title: "Suits", budget: 8000, spent: 0, completed: false },
+      ],
+      // Add similar task templates for other categories...
+    };
 
-    // Update wedding with task references
+    for (const category of DEFAULT_BUDGET_CATEGORIES) {
+      const budgetItem = createdWedding.budget.allocated.find(
+        (item) => item.category === category
+      );
+
+      if (budgetItem) {
+        const categoryTasks = (
+          taskTemplates as Record<
+            string,
+            Array<{
+              title: string;
+              budget: number;
+              spent: number;
+              completed: boolean;
+            }>
+          >
+        )[category] || [
+          {
+            title: `Plan ${category}`,
+            budget: 5000,
+            spent: 0,
+            completed: false,
+          },
+        ];
+
+        for (const taskTemplate of categoryTasks) {
+          const task = await Task.create({
+            weddingId: wedding._id,
+            title: taskTemplate.title,
+            budget: taskTemplate.budget,
+            actualCost: taskTemplate.spent,
+            completed: taskTemplate.completed,
+            budgetItem: budgetItem._id,
+            dueDate: new Date("2025-06-17"),
+          });
+          tasks.push(task);
+
+          await Wedding.findOneAndUpdate(
+            {
+              _id: wedding._id,
+              "budget.allocated._id": budgetItem._id,
+            },
+            {
+              $push: {
+                "budget.allocated.$.tasks": task._id,
+              },
+            }
+          );
+        }
+      }
+    }
+
+    // Calculate total budget from all tasks
+    const totalBudget = tasks.reduce((sum, task) => sum + task.budget, 0);
+    const totalSpent = tasks.reduce((sum, task) => sum + task.actualCost, 0);
+
+    // Update wedding with total budget and spent
     await Wedding.findByIdAndUpdate(wedding._id, {
       $set: {
-        "budget.allocated.0.taskIds": [tasks[0]._id],
-        "budget.allocated.1.taskIds": [tasks[1]._id],
-        "budget.allocated.2.taskIds": [tasks[2]._id],
-        tasks: tasks.map((task) => task._id),
+        "budget.total": totalBudget,
+        "budget.spent": totalSpent,
       },
     });
 

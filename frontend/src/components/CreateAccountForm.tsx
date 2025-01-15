@@ -11,7 +11,7 @@ const createAccountForm = async (userData: {
   email: string;
   password: string;
 }) => {
-  const response = await axiosInstance.post("/users/create", userData);
+  const response = await axiosInstance.post("/api/users/create", userData);
   return response.data;
 };
 
@@ -40,7 +40,7 @@ export const CreateAccountForm: React.FC = () => {
   const handleSocialLogin = async (token: string, provider: "google") => {
     try {
       const response = await axiosInstance.post<SocialLoginResponse>(
-        `/users/auth/${provider}/token`,
+        `/api/users/auth/${provider}/token`,
         { token }
       );
       login(response.data.token, response.data.user);

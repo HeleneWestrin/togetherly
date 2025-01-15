@@ -7,7 +7,7 @@ export const navigateBasedOnWeddings = async (
     const response = await axiosInstance.get<{
       status: string;
       data: Array<{ slug: string }>;
-    }>("/weddings");
+    }>("/api/weddings");
     const weddings = response.data.data;
 
     if (weddings.length === 1) {

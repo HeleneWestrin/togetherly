@@ -1,6 +1,7 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { Wedding } from "../models/wedding.model";
 import { IUser, User } from "../models/user.model";
+import { ITask, Task } from "../models/task.model";
 import {
   ForbiddenError,
   NotFoundError,
@@ -171,12 +172,21 @@ export class WeddingService {
   }
 
   static async getWeddingBySlug(slug: string, userId: string) {
-    const user = await User.findById(userId);
+    const user = (await User.findById(userId)) as IUser | null;
     if (!user) throw new NotFoundError("User not found");
 
+    // Populate both couple/guest info AND tasks for budget calculations
     const wedding = await Wedding.findOne({ slug })
       .populate("couple", "profile.firstName profile.lastName email")
-      .populate("guests", "profile.firstName profile.lastName email");
+      .populate("guests", "profile.firstName profile.lastName email")
+      .populate({
+        path: "budget.allocated",
+        populate: {
+          path: "tasks",
+          model: "Task",
+          select: "title completed budget actualCost",
+        },
+      });
 
     if (!wedding) throw new NotFoundError("Wedding not found");
 
@@ -190,6 +200,65 @@ export class WeddingService {
       });
     }
 
+    // Calculate budget totals and progress for each category
+    if (wedding.budget?.allocated) {
+      wedding.budget.allocated = wedding.budget.allocated.map((category) => {
+        // Type the populated tasks array properly
+        const tasks = (category.tasks || []) as unknown as Array<
+          ITask & { _id: mongoose.Types.ObjectId }
+        >;
+
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter((task) => task.completed).length;
+
+        // Create a properly typed category object
+        const transformedCategory = {
+          _id: category._id,
+          category: category.category,
+          progress: totalTasks ? (completedTasks / totalTasks) * 100 : 0,
+          estimatedCost: tasks.reduce(
+            (sum, task) => sum + (task.budget || 0),
+            0
+          ),
+          spent: tasks.reduce((sum, task) => sum + (task.actualCost || 0), 0),
+          tasks: tasks.map((task) => ({
+            _id: task._id,
+            title: task.title,
+            budget: task.budget || 0,
+            actualCost: task.actualCost,
+            completed: task.completed,
+          })),
+        };
+
+        return transformedCategory;
+      });
+
+      // Calculate overall budget totals with type safety
+      wedding.budget.spent = wedding.budget.allocated.reduce(
+        (sum, category) => sum + (category.spent || 0),
+        0
+      );
+    }
+
     return wedding;
+  }
+
+  static async updateTask(taskId: string, completed: boolean, userId: string) {
+    const task = await Task.findById(taskId);
+    if (!task) throw new NotFoundError("Task not found");
+
+    // Get the wedding to check permissions
+    const wedding = await Wedding.findById(task.weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    // Check if user has permission (is part of couple)
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
+    if (!isCouple) throw new ForbiddenError("Only couples can update tasks");
+
+    // Update the task
+    task.completed = completed;
+    await task.save();
+
+    return task;
   }
 }

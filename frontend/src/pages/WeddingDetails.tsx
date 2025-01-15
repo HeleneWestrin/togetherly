@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../services/axiosService";
 import Button from "../components/ui/Button";
-import { useAuthStore } from "../stores/useAuthStore";
-import { useNavigate } from "react-router-dom";
+import { Typography } from "../components/ui/Typography";
+import { forceLogout } from "../utils/logoutHandler";
+import BudgetOverview from "../components/wedding/BudgetOverview";
+import BudgetCategory from "../components/wedding/BudgetCategory";
 
 interface Wedding {
   _id: string;
@@ -33,16 +35,27 @@ interface Wedding {
   }>;
   budget?: {
     total: number;
+    spent: number;
     allocated: Array<{
+      _id: string;
       category: string;
-      amount: number;
+      estimatedCost: number;
+      spent: number;
+      progress: number;
+      tasks: Array<{
+        _id: string;
+        title: string;
+        budget: number;
+        actualCost: number;
+        completed: boolean;
+      }>;
     }>;
   };
 }
 
 const fetchWeddingDetails = async (slug: string) => {
   const response = await axiosInstance.get<{ status: string; data: Wedding }>(
-    `/weddings/by-slug/${slug}`
+    `/api/weddings/by-slug/${slug}`
   );
   return response.data.data;
 };
@@ -63,8 +76,14 @@ const getWeddingDateStatus = (weddingDate: string): string => {
   return `${daysUntil} days to go`;
 };
 
+const handleAddTask = (category: string) => {
+  // TODO: Implement modal or navigation to add task form
+  console.log("Add task to category:", category);
+};
+
 const WeddingDetails: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
+  const queryClient = useQueryClient();
   const {
     data: wedding,
     isLoading,
@@ -75,17 +94,46 @@ const WeddingDetails: React.FC = () => {
     enabled: !!weddingSlug,
   });
 
-  const logout = useAuthStore((state) => state.logout);
-  const navigate = useNavigate();
+  const updateTaskMutation = useMutation({
+    mutationFn: (data: { taskId: string; completed: boolean }) =>
+      axiosInstance.patch(`/api/tasks/${data.taskId}`, {
+        completed: data.completed,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+    },
+  });
+
+  const handleEditTask = (taskId: string) => {
+    const task = wedding?.budget?.allocated
+      .flatMap((cat) => cat.tasks)
+      .find((t) => t._id === taskId);
+
+    if (task) {
+      updateTaskMutation.mutate({
+        taskId,
+        completed: !task.completed,
+      });
+    }
+  };
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    forceLogout();
   };
 
   if (isLoading) return <div className="p-6">Loading wedding details...</div>;
 
   if (error) {
+    // Check if it's an axios error with status code
+    const axiosError = error as { response?: { status: number } };
+    if (
+      axiosError.response?.status === 401 ||
+      axiosError.response?.status === 403
+    ) {
+      forceLogout();
+      return null;
+    }
+
     return (
       <div className="p-6">
         <p className="text-red-600">
@@ -98,108 +146,82 @@ const WeddingDetails: React.FC = () => {
   if (!wedding) return null;
 
   return (
-    <main
-      id="main"
-      className="min-h-screen bg-gradient-landscape"
-    >
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex flex-col">
-            <h1 className="text-3xl font-bold">
-              {wedding.couple
-                .map((partner) => partner.profile.firstName)
-                .join(" & ")}
-            </h1>
-            <p className="text-dark-600">
-              <span>{new Date(wedding.date).toLocaleDateString()}</span>
-              <span className="mx-2">•</span>
-              <span>{getWeddingDateStatus(wedding.date)}</span>
-            </p>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={handleLogout}
-          >
-            Log out
-          </Button>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Event Details</h2>
-
-            <div className="space-y-1">
-              <p className="font-semibold">Location:</p>
-              <p>{wedding.location.venue}</p>
-              <p>{wedding.location.address}</p>
-              <p>
-                {wedding.location.city}, {wedding.location.country}
-              </p>
+    <>
+      <main
+        id="main"
+        className="min-h-screen"
+      >
+        <div className="p-6 max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col">
+              <Typography element="h1">
+                {wedding.couple
+                  .map((partner) => partner.profile.firstName)
+                  .join(" & ")}
+              </Typography>
+              <Typography
+                element="p"
+                className="text-dark-600"
+              >
+                <span>{new Date(wedding.date).toLocaleDateString()}</span>
+                <span className="mx-2">•</span>
+                <span>{getWeddingDateStatus(wedding.date)}</span>
+              </Typography>
             </div>
+            <Button
+              variant="secondary"
+              onClick={handleLogout}
+            >
+              Log out
+            </Button>
           </div>
 
-          {/* Couple Information */}
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">The Happy Couple</h2>
-            <div className="space-y-4">
-              {wedding.couple.map((partner) => (
-                <div key={partner._id}>
-                  <p className="font-semibold">
-                    {partner.profile.firstName} {partner.profile.lastName}
-                  </p>
-                  <p className="text-gray-600">{partner.email}</p>
+          <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
+            {/* Budget Section (only shown if available) */}
+            {wedding.budget?.total && (
+              <div className="space-y-6">
+                <BudgetOverview budget={wedding.budget} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {wedding.budget.allocated.map((category) => {
+                    return (
+                      <BudgetCategory
+                        key={category._id}
+                        category={category.category}
+                        tasks={category.tasks}
+                        progress={category.progress}
+                        estimatedCost={category.estimatedCost}
+                        spent={category.spent}
+                        onAddTask={(category) => handleAddTask(category)}
+                        onEditTask={(taskId) => handleEditTask(taskId)}
+                      />
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            )}
 
-          {/* Budget Section (only shown if available) */}
-          {wedding.budget?.total && (
+            {/* Guest List */}
             <div className="bg-white p-4 rounded-lg shadow md:col-span-2">
-              <h2 className="text-xl font-semibold mb-4">Budget</h2>
-              <p className="mb-4">
-                <span className="font-semibold">Total Budget:</span> $
-                {wedding.budget.total.toLocaleString()}
-              </p>
-              {wedding.budget.allocated?.length > 0 && (
-                <div>
-                  <h3 className="font-semibold mb-2">Allocated Budget:</h3>
-                  <div className="space-y-2">
-                    {wedding.budget.allocated?.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between"
-                      >
-                        <span>{item.category}</span>
-                        <span>${item.amount?.toLocaleString() ?? 0}</span>
-                      </div>
-                    ))}
+              <h2 className="text-xl font-semibold mb-4">Guest List</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {wedding.guests.map((guest) => (
+                  <div
+                    key={guest._id}
+                    className="p-3 bg-gray-50 rounded"
+                  >
+                    <p className="font-semibold">
+                      {guest.profile.firstName} {guest.profile.lastName}
+                    </p>
+                    <p className="text-gray-600 text-sm">{guest.email}</p>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Guest List */}
-          <div className="bg-white p-4 rounded-lg shadow md:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">Guest List</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              {wedding.guests.map((guest) => (
-                <div
-                  key={guest._id}
-                  className="p-3 bg-gray-50 rounded"
-                >
-                  <p className="font-semibold">
-                    {guest.profile.firstName} {guest.profile.lastName}
-                  </p>
-                  <p className="text-gray-600 text-sm">{guest.email}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+      <div className="bg-gradient-landscape"></div>
+    </>
   );
 };
 

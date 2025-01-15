@@ -34,7 +34,7 @@ export const LoginForm: React.FC = () => {
   const handleSocialLogin = async (token: string, provider: "google") => {
     try {
       const response = await axiosInstance.post<SocialLoginResponse>(
-        `/users/auth/${provider}/token`,
+        `/api/users/auth/${provider}/token`,
         { token }
       );
       login(response.data.token, response.data.user);
@@ -123,7 +123,7 @@ export const LoginForm: React.FC = () => {
         {isError && (
           <p
             id="login-error"
-            className="text-red-500 font-bold text-sm"
+            className="text-red-600 font-bold text-sm"
             role="alert"
           >
             {getErrorMessage(error)}

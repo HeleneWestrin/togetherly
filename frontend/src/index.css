@@ -19,6 +19,12 @@
   background-image: var(--gradient-svg-mobile), var(--gradient-fallback);
   background-size: cover;
   background-position: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
 
   @screen lg {
     background-image: var(--gradient-svg), var(--gradient-fallback);
@@ -26,16 +32,7 @@
 }
 
 @layer base {
-  h1,
-  h2,
-  h3 {
-    @apply font-slab text-dark-800;
-  }
-
-  h4,
-  h5,
-  h6,
-  p {
-    @apply font-sans text-dark-800;
+  body {
+    @apply text-dark-800;
   }
 }

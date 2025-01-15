@@ -79,4 +79,17 @@ export class WeddingController {
       next(error);
     }
   }
+
+  static async updateTask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { taskId } = req.params;
+      const { completed } = req.body;
+
+      const task = await WeddingService.updateTask(taskId, completed, userId);
+      sendSuccess(res, task);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

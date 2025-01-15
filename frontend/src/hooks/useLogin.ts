@@ -35,7 +35,7 @@ const loginApiCall = async (
   credentials: LoginCredentials
 ): Promise<LoginResponse["data"]> => {
   const response = await axiosInstance.post<LoginResponse>(
-    "/users/login",
+    "/api/users/login",
     credentials
   );
   return response.data.data;

@@ -1,10 +1,34 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { ITask } from "./task.model";
 
-interface IBudgetItem {
+export const DEFAULT_BUDGET_CATEGORIES = [
+  "Attire & accessories",
+  "Ceremony",
+  "Decor & styling",
+  "Entertainment",
+  "Invitations & stationery",
+  "Makeup & wellness",
+  "Miscellaneous",
+  "Photography & videography",
+  "Transportation",
+  "Venue & catering",
+];
+
+interface IBudgetTaskItem {
+  _id: mongoose.Types.ObjectId;
+  title: string;
+  budget: number;
+  actualCost: number;
+  completed: boolean;
+}
+
+export interface IBudgetItem {
   _id?: mongoose.Types.ObjectId;
   category: string;
+  estimatedCost: number;
   spent: number;
-  taskIds: mongoose.Types.ObjectId[]; // references Tasks collection
+  tasks: IBudgetTaskItem[];
+  progress: number;
 }
 
 interface ILocation {
@@ -22,6 +46,7 @@ export interface IWedding extends Document {
   location: ILocation;
   budget: {
     total: number;
+    spent: number;
     allocated: IBudgetItem[];
   };
   couple: mongoose.Types.ObjectId[]; // references Users collection
@@ -33,8 +58,10 @@ export interface IWedding extends Document {
 
 const budgetItemSchema = new Schema<IBudgetItem>({
   category: { type: String, required: true },
-  spent: { type: Number, required: true, default: 0 }, // dynamically calculated based on "actualCost" in tasks
-  taskIds: [{ type: Schema.Types.ObjectId, ref: "Task", required: false }],
+  estimatedCost: { type: Number, required: true, default: 0 },
+  spent: { type: Number, required: true, default: 0 },
+  tasks: [{ type: Schema.Types.ObjectId, ref: "Task", required: false }],
+  progress: { type: Number, required: true, default: 0 },
 });
 
 const locationSchema = new Schema<ILocation>({
@@ -53,7 +80,16 @@ const weddingSchema = new Schema<IWedding>(
     location: { type: locationSchema, required: true },
     budget: {
       total: { type: Number, required: true },
-      allocated: { type: [budgetItemSchema], default: [] },
+      spent: { type: Number, required: true },
+      allocated: {
+        type: [budgetItemSchema],
+        default: () =>
+          DEFAULT_BUDGET_CATEGORIES.map((category) => ({
+            category,
+            spent: 0,
+            tasks: [],
+          })),
+      },
     },
     couple: [{ type: Schema.Types.ObjectId, ref: "User", required: true }],
     guests: [{ type: Schema.Types.ObjectId, ref: "User", required: false }],
@@ -89,7 +125,7 @@ budgetItemSchema
   .virtual("calculatedSpent")
   .get(async function (this: IBudgetItem) {
     const Task = mongoose.model("Task");
-    const tasks = await Task.find({ _id: { $in: this.taskIds } });
+    const tasks = await Task.find({ _id: { $in: this.tasks } });
     return tasks.reduce((total, task) => total + (task.actualCost || 0), 0);
   });
 
