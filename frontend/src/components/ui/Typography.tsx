@@ -13,7 +13,7 @@ type TypographyStyle =
 const baseStyles: Record<TypographyStyle, string> = {
   h1: "font-slab text-3xl lg:text-4xl font-bold leading-tight",
   h2: "font-slab text-xl lg:text-2xl font-bold leading-tight",
-  h3: "font-slab text-md lg:text-lg font-bold leading-tight",
+  h3: "font-slab text-md lg:text-lg font-semibold leading-tight",
   h4: "font-sans text-md lg:text-xl font-semibold leading-tight",
   h5: "font-sans text-base lg:text-lg font-semibold leading-tight",
   p: "font-sans text-base lg:text-md leading-snug",

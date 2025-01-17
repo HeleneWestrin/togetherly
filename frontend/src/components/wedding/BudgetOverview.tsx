@@ -25,9 +25,9 @@ const BudgetOverview: React.FC<BudgetProps> = ({ budget }) => {
           <span>{budget.total.toLocaleString()} kr</span>
         </Typography>
 
-        <div className="w-full bg-pink-300 rounded-full h-3 mb-4">
+        <div className="w-full bg-pink-300 rounded-full h-4 mb-4">
           <div
-            className="bg-pink-600 h-3 rounded-full"
+            className="bg-pink-600 h-4 rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -36,7 +36,8 @@ const BudgetOverview: React.FC<BudgetProps> = ({ budget }) => {
           <div>
             <Typography
               element="p"
-              className="text-gray-600"
+              styledAs="bodySmall"
+              className="text-dark-600"
             >
               Spent
             </Typography>
@@ -50,7 +51,8 @@ const BudgetOverview: React.FC<BudgetProps> = ({ budget }) => {
           <div className="text-right">
             <Typography
               element="p"
-              className="text-gray-600"
+              styledAs="bodySmall"
+              className="text-dark-600"
             >
               Remaining
             </Typography>

@@ -2,6 +2,7 @@ import { Typography } from "../ui/Typography";
 import { ITask } from "../../types/wedding";
 import Button from "../ui/Button";
 import FormLabel from "../ui/FormLabel";
+import { Plus } from "lucide-react";
 
 interface BudgetCategoryProps {
   category: string;
@@ -12,6 +13,12 @@ interface BudgetCategoryProps {
   onAddTask: (category: string) => void;
   onEditTask: (taskId: string) => void;
 }
+
+const getProgressColor = (progress: number): string => {
+  if (progress === 0) return "bg-blue-300";
+  if (progress === 100) return "bg-green-300";
+  return "bg-yellow-300";
+};
 
 const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   category,
@@ -24,32 +31,51 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
 }) => {
   return (
     <div className="bg-white p-6 rounded-xl">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col items-start gap-1 mb-4">
         <Typography element="h3">{category}</Typography>
-        <div className="bg-yellow-100 px-3 py-1 rounded-full">
-          <Typography element="span">{progress}% done</Typography>
+        <div
+          className={`${getProgressColor(progress)} px-2 pb-0.5 rounded-full`}
+        >
+          <Typography
+            element="span"
+            styledAs="bodyExtraSmall"
+            className="font-semibold"
+          >
+            {tasks.length === 0 ? "No tasks yet" : `${progress}% done`}
+          </Typography>
         </div>
       </div>
 
       <Typography
         element="p"
-        className="text-gray-600 mb-2"
+        styledAs="bodySmall"
+        className="flex justify-between mb-2"
       >
-        Tasks: {tasks.filter((t) => t.completed).length} of {tasks.length} done
+        <span className="text-dark-850 font-bold">Tasks:</span>
+        <span className="text-dark-600">
+          {tasks.length === 0
+            ? "0 tasks"
+            : `${tasks.filter((t) => t.completed).length} of ${
+                tasks.length
+              } done`}
+        </span>
       </Typography>
 
-      <div className="w-full bg-pink-300 rounded-full h-2 mb-4">
+      <div className="w-full bg-pink-300 rounded-full h-3 mb-2">
         <div
-          className="bg-pink-600 h-2 rounded-full"
+          className="bg-pink-600 h-3 rounded-full"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       <Typography
         element="p"
-        className="text-gray-600 mb-4"
+        styledAs="bodySmall"
+        className="text-dark-600 mb-5"
       >
-        {spent.toLocaleString()} kr / {estimatedCost.toLocaleString()} kr
+        {tasks.length === 0
+          ? ""
+          : `${spent.toLocaleString()} kr / ${estimatedCost.toLocaleString()} kr`}
       </Typography>
 
       <div className="space-y-3">
@@ -59,7 +85,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
               key={task._id}
               className="flex items-center justify-between bg-gray-50 rounded-lg"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <input
                   type="checkbox"
                   title={task.title}
@@ -91,11 +117,12 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       </div>
 
       <Button
-        variant="secondary"
-        className="mt-4 w-full"
+        variant="ghost"
+        size="inline"
+        className="mt-4"
         onClick={() => onAddTask(category)}
       >
-        Add new task
+        <Plus /> Add new task <span className="sr-only">for {category}</span>
       </Button>
     </div>
   );

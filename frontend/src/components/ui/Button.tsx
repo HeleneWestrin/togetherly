@@ -1,7 +1,8 @@
 // Define props interface extending HTML button attributes
 // This allows the component to accept all standard button props plus our custom ones
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary"; // Style variant of the button
+  variant?: "primary" | "secondary" | "ghost"; // Style variant of the button
+  size?: "default" | "small" | "inline"; // Size of the button
   isSelected?: boolean; // Selected state for toggle-like behavior
   href?: string; // Optional href to render as anchor instead of button
   className?: string; // Additional CSS classes
@@ -16,6 +17,7 @@ type ButtonOrAnchorProps = ButtonProps &
 const Button = ({
   type = "button",
   variant = "primary",
+  size = "default",
   className = "",
   isSelected = false,
   href,
@@ -27,10 +29,19 @@ const Button = ({
   const variantClasses = {
     primary: "bg-dark-800 text-white hover:bg-dark-950 hover:text-white",
     secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-950 hover:border-dark-950 hover:text-white disabled:cursor-not-allowed`,
+    ghost: "bg-transparent text-dark-850 hover:text-pink-600",
   } as const; // 'as const' ensures type safety for the variant object
 
-  // Combine base classes with variant-specific classes and any additional classes
-  const classes = `flex items-center gap-2 justify-center font-slab text-base md:text-md lg:text-md rounded-full px-4 py-1 md:px-5 md:py-2 lg:px-7 lg:py-3 font-medium transition duration-300 ease-in-out ${variantClasses[variant]} ${className}`;
+  // Add size-specific classes
+  const sizeClasses = {
+    default:
+      "font-slab font-medium text-base md:text-md lg:text-md px-4 py-1 md:px-5 md:py-2 lg:px-7 lg:py-3",
+    small: "font-sans font-bold text-sm px-3 py-1 md:px-4 md:py-1.5",
+    inline: "font-sans font-bold text-sm md:text-base px-1 py-1",
+  } as const;
+
+  // Combine base classes with variant and size-specific classes
+  const classes = `flex items-center gap-2 justify-center rounded-full transition duration-300 ease-in-out ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
   // Determine whether to render a button or anchor based on href prop
   const Component = href ? ("a" as const) : ("button" as const);

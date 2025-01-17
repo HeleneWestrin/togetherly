@@ -150,7 +150,23 @@ export const seedDatabase = async (): Promise<void> => {
         },
         { title: "Suits", budget: 8000, spent: 0, completed: false },
       ],
-      // Add similar task templates for other categories...
+      Ceremony: [],
+      "Decor & styling": [
+        {
+          title: "Book florist",
+          budget: 8000,
+          spent: 7500,
+          completed: true,
+        },
+      ],
+      Entertainment: [
+        {
+          title: "Book band",
+          budget: 12000,
+          spent: 0,
+          completed: false,
+        },
+      ],
     };
 
     for (const category of DEFAULT_BUDGET_CATEGORIES) {
@@ -159,24 +175,18 @@ export const seedDatabase = async (): Promise<void> => {
       );
 
       if (budgetItem) {
-        const categoryTasks = (
-          taskTemplates as Record<
-            string,
-            Array<{
-              title: string;
-              budget: number;
-              spent: number;
-              completed: boolean;
-            }>
-          >
-        )[category] || [
-          {
-            title: `Plan ${category}`,
-            budget: 5000,
-            spent: 0,
-            completed: false,
-          },
-        ];
+        const categoryTasks =
+          (
+            taskTemplates as Record<
+              string,
+              Array<{
+                title: string;
+                budget: number;
+                spent: number;
+                completed: boolean;
+              }>
+            >
+          )[category] || [];
 
         for (const taskTemplate of categoryTasks) {
           const task = await Task.create({

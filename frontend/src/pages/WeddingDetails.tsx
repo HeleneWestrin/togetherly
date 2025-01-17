@@ -212,7 +212,7 @@ const WeddingDetails: React.FC = () => {
                     <p className="font-semibold">
                       {guest.profile.firstName} {guest.profile.lastName}
                     </p>
-                    <p className="text-gray-600 text-sm">{guest.email}</p>
+                    <p className="text-dark-600 text-sm">{guest.email}</p>
                   </div>
                 ))}
               </div>

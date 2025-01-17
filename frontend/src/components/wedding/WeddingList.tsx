@@ -56,10 +56,10 @@ export const WeddingList: React.FC = () => {
             className="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <h3 className="text-lg font-semibold">{wedding.title}</h3>
-            <p className="text-gray-600">
+            <p className="text-dark-600">
               {new Date(wedding.date).toLocaleDateString()}
             </p>
-            <p className="text-gray-600">
+            <p className="text-dark-600">
               {wedding.location.venue}, {wedding.location.city}
             </p>
             <p className="text-sm text-gray-500 mt-2">
