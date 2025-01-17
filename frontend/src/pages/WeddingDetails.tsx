@@ -179,9 +179,15 @@ const WeddingDetails: React.FC = () => {
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
             {/* Budget Section (only shown if available) */}
             {wedding.budget?.total && (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <BudgetOverview budget={wedding.budget} />
-                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-4">
+                  <Typography
+                    element="h2"
+                    className="md:col-span-2"
+                  >
+                    Categories
+                  </Typography>
                   {wedding.budget.allocated.map((category) => {
                     return (
                       <BudgetCategory
