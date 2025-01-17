@@ -64,6 +64,10 @@ export default {
       backgroundImage: {
         "gradient-landscape": "var(--gradient-svg), var(--gradient-fallback)",
       },
+      transitionTimingFunction: {
+        "in-expo": "cubic-bezier(.25,.75,.5,1.25)",
+        "out-expo": "cubic-bezier(0.19, 1, 0.22, 1)",
+      },
     },
   },
   plugins: [],

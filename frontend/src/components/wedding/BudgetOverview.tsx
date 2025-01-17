@@ -1,4 +1,5 @@
 import { Typography } from "../ui/Typography";
+import ProgressBar from "../ui/ProgressBar";
 
 interface BudgetProps {
   budget: {
@@ -14,7 +15,7 @@ const BudgetOverview: React.FC<BudgetProps> = ({ budget }) => {
   return (
     <div className="flex flex-col gap-4">
       <Typography element="h2">Budget overview</Typography>
-      <div className="bg-white p-6 rounded-xl">
+      <div className="bg-white p-6 rounded-3xl">
         <Typography
           element="h3"
           className="mb-4 flex justify-between"
@@ -25,12 +26,11 @@ const BudgetOverview: React.FC<BudgetProps> = ({ budget }) => {
           <span>{budget.total.toLocaleString()} kr</span>
         </Typography>
 
-        <div className="w-full bg-pink-300 rounded-full h-4 mb-4">
-          <div
-            className="bg-pink-600 h-4 rounded-full"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <ProgressBar
+          progress={progress}
+          height="medium"
+          className="mb-4"
+        />
 
         <div className="flex justify-between">
           <div>

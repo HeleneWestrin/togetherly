@@ -3,6 +3,8 @@ import { ITask } from "../../types/wedding";
 import Button from "../ui/Button";
 import FormLabel from "../ui/FormLabel";
 import { Plus } from "lucide-react";
+import Badge, { BadgeProps } from "../ui/Badge";
+import ProgressBar from "../ui/ProgressBar";
 
 interface BudgetCategoryProps {
   category: string;
@@ -14,10 +16,10 @@ interface BudgetCategoryProps {
   onEditTask: (taskId: string) => void;
 }
 
-const getProgressColor = (progress: number): string => {
-  if (progress === 0) return "bg-blue-300";
-  if (progress === 100) return "bg-green-300";
-  return "bg-yellow-300";
+const getProgressColor = (progress: number): BadgeProps["color"] => {
+  if (progress === 0) return "blue";
+  if (progress === 100) return "green";
+  return "yellow";
 };
 
 const BudgetCategory: React.FC<BudgetCategoryProps> = ({
@@ -30,20 +32,15 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   onEditTask,
 }) => {
   return (
-    <div className="bg-white p-6 rounded-xl">
+    <div
+      aria-live="polite"
+      className="bg-white p-6 rounded-3xl"
+    >
       <div className="flex flex-col items-start gap-1 mb-4">
         <Typography element="h3">{category}</Typography>
-        <div
-          className={`${getProgressColor(progress)} px-2 pb-0.5 rounded-full`}
-        >
-          <Typography
-            element="span"
-            styledAs="bodyExtraSmall"
-            className="font-semibold"
-          >
-            {tasks.length === 0 ? "No tasks yet" : `${progress}% done`}
-          </Typography>
-        </div>
+        <Badge color={getProgressColor(progress)}>
+          {tasks.length === 0 ? "No tasks yet" : `${progress}% done`}
+        </Badge>
       </div>
 
       <Typography
@@ -61,12 +58,10 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
         </span>
       </Typography>
 
-      <div className="w-full bg-pink-300 rounded-full h-3 mb-2">
-        <div
-          className="bg-pink-600 h-3 rounded-full"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <ProgressBar
+        progress={progress}
+        className="mb-2"
+      />
 
       <Typography
         element="p"
