@@ -22,7 +22,7 @@ const Login: React.FC = () => {
           <CreateAccountForm />
         </div>
       </div>
-      <div className="bg-gradient-landscape"></div>
+      <div className="bg-gradient-full"></div>
     </>
   );
 };

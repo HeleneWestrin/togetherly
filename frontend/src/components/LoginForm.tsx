@@ -70,10 +70,10 @@ export const LoginForm: React.FC = () => {
 
   return (
     <form
-      className="w-full space-y-6"
+      className="w-full"
       onSubmit={handleSubmit}
     >
-      <div className="space-y-3">
+      <div>
         <Button
           type="button"
           variant="secondary"
@@ -84,22 +84,21 @@ export const LoginForm: React.FC = () => {
         </Button>
       </div>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-2 text-gray-500">Or</span>
-        </div>
+      <div className="relative flex my-8 items-center justify-center">
+        <hr className="h-0.5 grow" />
+        <span className="w-12 shrink-0 text-center text-compact-bold text-dark-850">
+          or
+        </span>
+        <hr className="h-0.5 grow" />
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div>
-          <FormLabel htmlFor="email">Email</FormLabel>
           <FormInput
             id="email"
             type="email"
             name="email"
+            label="Email"
             placeholder="your@email.com"
             autoComplete="email"
             required
@@ -108,12 +107,11 @@ export const LoginForm: React.FC = () => {
         </div>
 
         <div>
-          <FormLabel htmlFor="password">Password</FormLabel>
           <FormInput
             id="password"
             name="password"
             type="password"
-            placeholder="Enter your password"
+            label="Password"
             autoComplete="current-password"
             required
             aria-describedby={isError ? "login-error" : undefined}

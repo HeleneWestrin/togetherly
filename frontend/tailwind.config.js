@@ -63,6 +63,8 @@ export default {
     extend: {
       backgroundImage: {
         "gradient-landscape": "var(--gradient-svg), var(--gradient-fallback)",
+        "gradient-portrait":
+          "var(--gradient-svg-mobile), var(--gradient-fallback)",
       },
       transitionTimingFunction: {
         "in-expo": "cubic-bezier(.25,.75,.5,1.25)",

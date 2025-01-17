@@ -121,7 +121,7 @@ const WeddingDetails: React.FC = () => {
     forceLogout();
   };
 
-  if (isLoading) return <div className="p-6">Loading wedding details...</div>;
+  if (isLoading) return <div className="p-5">Loading wedding details...</div>;
 
   if (error) {
     // Check if it's an axios error with status code
@@ -135,7 +135,7 @@ const WeddingDetails: React.FC = () => {
     }
 
     return (
-      <div className="p-6">
+      <div className="p-5">
         <p className="text-red-600">
           Error loading wedding details: {(error as Error).message}
         </p>
@@ -151,7 +151,7 @@ const WeddingDetails: React.FC = () => {
         id="main"
         className="min-h-screen"
       >
-        <div className="p-6 max-w-4xl mx-auto">
+        <div className="p-5 max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div className="flex flex-col">
               <Typography element="h1">
@@ -181,7 +181,7 @@ const WeddingDetails: React.FC = () => {
             {wedding.budget?.total && (
               <div className="space-y-6">
                 <BudgetOverview budget={wedding.budget} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-5">
                   {wedding.budget.allocated.map((category) => {
                     return (
                       <BudgetCategory
@@ -220,7 +220,7 @@ const WeddingDetails: React.FC = () => {
           </div>
         </div>
       </main>
-      <div className="bg-gradient-landscape"></div>
+      <div className="bg-gradient-full"></div>
     </>
   );
 };

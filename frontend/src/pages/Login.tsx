@@ -29,18 +29,17 @@ const Login: React.FC = () => {
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="max-w-md w-full flex flex-col items-center">
           <Rings className="w-2/7 h-auto mb-6" />
-          <Logo className="h-auto mb-4" />
           <Typography
             element="h1"
             styledAs="h2"
-            className="mb-4"
+            className="mb-8"
           >
-            Log in
+            Log in to Togetherly
           </Typography>
           <LoginForm />
         </div>
       </div>
-      <div className="bg-gradient-landscape"></div>
+      <div className="bg-gradient-full"></div>
     </>
   );
 };

@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
-      <div className="bg-gradient-landscape"></div>
+      <div className="bg-gradient-full"></div>
     </>
   );
 };

@@ -45,7 +45,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
       className={`w-full ${colors.bg} rounded-full ${heightClass} ${className}`}
     >
       <div
-        className={`${colors.fill} ${heightClass} rounded-full transition-all duration-300 ease-in-expo`}
+        className={`${colors.fill} ${heightClass} rounded-full transition-all duration-300 ease-in-out`}
         style={{ width: `${progress}%` }}
       />
     </div>

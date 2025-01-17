@@ -15,7 +15,7 @@
   );
 }
 
-.bg-gradient-landscape {
+.bg-gradient-full {
   background-image: var(--gradient-svg-mobile), var(--gradient-fallback);
   background-size: cover;
   background-position: center;
@@ -25,6 +25,7 @@
   width: 100vw;
   height: 100vh;
   z-index: -1;
+  transition: background-image 0.5s ease-in-out;
 
   @screen lg {
     background-image: var(--gradient-svg), var(--gradient-fallback);

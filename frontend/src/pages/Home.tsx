@@ -44,7 +44,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="bg-gradient-landscape"></div>
+      <div className="bg-gradient-full"></div>
     </>
   );
 };
