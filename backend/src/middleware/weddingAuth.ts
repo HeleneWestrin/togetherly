@@ -18,12 +18,21 @@ export const requireWeddingAccess = async (
     const user = await User.findById(userId);
     if (!user) throw new ForbiddenError("User not found");
 
-    // Admins have access to all weddings
+    // Admins have access to all operations
     if (user.role === "admin") return next();
 
     let wedding;
 
-    if (taskId) {
+    // For task creation, use weddingId directly
+    if (req.method === "POST" && weddingId) {
+      wedding = await Wedding.findById(weddingId);
+      if (!wedding) throw new ForbiddenError("Wedding not found");
+
+      const isCouple = wedding.couple.some((id) => id.toString() === userId);
+      if (!isCouple) {
+        throw new ForbiddenError("Only couples or admins can create tasks");
+      }
+    } else if (taskId) {
       const task = await Task.findById(taskId);
       if (!task) throw new ForbiddenError("Task not found");
       wedding = await Wedding.findById(task.weddingId);

@@ -1,11 +1,15 @@
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ITask, CreateTaskData, TaskResponse } from "../../types/wedding";
+import { createTask } from "../../services/taskService";
 import { Typography } from "../ui/Typography";
-import { ITask } from "../../types/wedding";
-import Button from "../ui/Button";
-import { Plus, ChevronDown } from "lucide-react";
+import { Button } from "../ui/Button";
 import Badge, { BadgeProps } from "../ui/Badge";
 import ProgressBar from "../ui/ProgressBar";
+import SidePanel from "../ui/SidePanel";
+import { Plus, ChevronDown } from "lucide-react";
 import TaskItem from "./TaskItem";
-import { useState } from "react";
+import TaskForm from "./TaskForm";
 
 interface BudgetCategoryProps {
   category: string;
@@ -13,8 +17,18 @@ interface BudgetCategoryProps {
   progress: number;
   estimatedCost: number;
   spent: number;
-  onAddTask: (category: string) => void;
+  onAddTask?: (
+    category: string,
+    taskData: {
+      title: string;
+      budget: number;
+      actualCost: number;
+      dueDate: string;
+    }
+  ) => void;
   onEditTask: (taskId: string) => void;
+  budgetItemId: string;
+  weddingId: string;
 }
 
 const getProgressColor = (progress: number): BadgeProps["color"] => {
@@ -29,10 +43,31 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   progress,
   estimatedCost,
   spent,
-  onAddTask,
   onEditTask,
+  budgetItemId,
+  weddingId,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isAddTaskPanelOpen, setIsAddTaskPanelOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const createTaskMutation = useMutation<
+    TaskResponse,
+    Error,
+    CreateTaskData,
+    unknown
+  >({
+    mutationFn: async (data: CreateTaskData): Promise<TaskResponse> => {
+      return createTask(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding"] });
+      setIsAddTaskPanelOpen(false);
+    },
+    onError: (error) => {
+      console.error("Failed to create task:", error);
+    },
+  });
 
   return (
     <div
@@ -41,12 +76,17 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
     >
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between"
+        className="w-full flex items-center justify-between text-left"
         aria-expanded={isExpanded}
         aria-controls={`category-content-${category}`}
       >
-        <div className="flex flex-col items-start gap-1">
-          <Typography element="h3">{category}</Typography>
+        <div className="flex flex-col items-start gap-1.5">
+          <Typography
+            element="h3"
+            className="!leading-none"
+          >
+            {category}
+          </Typography>
           <Badge color={getProgressColor(progress)}>
             {tasks.length === 0 ? "No tasks yet" : `${progress}% done`}
           </Badge>
@@ -95,7 +135,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
             >
               {tasks.length === 0
                 ? ""
-                : `${spent.toLocaleString()} kr / ${estimatedCost.toLocaleString()} kr`}
+                : `${spent.toLocaleString()} kr spent out of ${estimatedCost.toLocaleString()} kr`}
             </Typography>
 
             <div className="space-y-3">
@@ -105,6 +145,8 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                   task={task}
                   onEditTask={onEditTask}
                   tabIndex={isExpanded ? 0 : -1}
+                  budgetItemId={budgetItemId}
+                  weddingId={weddingId}
                 />
               ))}
             </div>
@@ -113,15 +155,35 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
               variant="ghost"
               size="inline"
               className="mt-4"
-              onClick={() => onAddTask(category)}
+              onClick={() => setIsAddTaskPanelOpen(true)}
               tabIndex={isExpanded ? 0 : -1}
+              aria-expanded={isAddTaskPanelOpen}
+              aria-controls="add-task-panel"
+              aria-haspopup="dialog"
             >
-              <Plus /> Add new task{" "}
+              <Plus aria-hidden="true" />
+              Add new task
               <span className="sr-only">for {category}</span>
             </Button>
           </div>
         </div>
       </div>
+
+      <SidePanel
+        isOpen={isAddTaskPanelOpen}
+        onClose={() => setIsAddTaskPanelOpen(false)}
+        title={`Add task to ${category}`}
+      >
+        <TaskForm
+          category={category}
+          budgetItemId={budgetItemId}
+          weddingId={weddingId}
+          onSubmit={createTaskMutation.mutateAsync}
+          onCancel={() => setIsAddTaskPanelOpen(false)}
+          isError={createTaskMutation.isError}
+          error={createTaskMutation.error ?? undefined}
+        />
+      </SidePanel>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useLogin } from "../hooks/useLogin";
 import { AxiosError } from "axios";
-import Button from "./ui/Button";
+import { Button } from "./ui/Button";
 import FormInput from "./ui/FormInput";
 import FormLabel from "./ui/FormLabel";
 import { useGoogleLogin } from "@react-oauth/google";

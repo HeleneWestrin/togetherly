@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../services/axiosService";
-import Button from "../components/ui/Button";
+import { Button } from "../components/ui/Button";
 import { Typography } from "../components/ui/Typography";
 import { forceLogout } from "../utils/logoutHandler";
 import BudgetOverview from "../components/wedding/BudgetOverview";
@@ -186,22 +186,21 @@ const WeddingDetails: React.FC = () => {
                     element="h2"
                     className="md:col-span-2"
                   >
-                    Categories
+                    Wedding checklist
                   </Typography>
-                  {wedding.budget.allocated.map((category) => {
-                    return (
-                      <BudgetCategory
-                        key={category._id}
-                        category={category.category}
-                        tasks={category.tasks}
-                        progress={category.progress}
-                        estimatedCost={category.estimatedCost}
-                        spent={category.spent}
-                        onAddTask={(category) => handleAddTask(category)}
-                        onEditTask={(taskId) => handleEditTask(taskId)}
-                      />
-                    );
-                  })}
+                  {wedding.budget.allocated.map((category) => (
+                    <BudgetCategory
+                      key={category._id}
+                      category={category.category}
+                      tasks={category.tasks}
+                      progress={category.progress}
+                      estimatedCost={category.estimatedCost}
+                      spent={category.spent}
+                      onEditTask={handleEditTask}
+                      budgetItemId={category._id}
+                      weddingId={wedding._id}
+                    />
+                  ))}
                 </div>
               </div>
             )}

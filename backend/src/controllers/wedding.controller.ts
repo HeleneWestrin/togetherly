@@ -92,4 +92,44 @@ export class WeddingController {
       next(error);
     }
   }
+
+  static async createTask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const task = await WeddingService.createTask(req.body, userId);
+      sendSuccess(res, task, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteTask(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { taskId } = req.params;
+      const result = await WeddingService.deleteTask(taskId, userId);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateTaskDetails(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = (req as any).userId;
+      const { taskId } = req.params;
+      const task = await WeddingService.updateTaskDetails(
+        taskId,
+        req.body,
+        userId
+      );
+      sendSuccess(res, task);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

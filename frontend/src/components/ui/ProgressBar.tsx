@@ -39,6 +39,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 }) => {
   const colors = getProgressColors(color);
   const heightClass = getHeight(height);
+  const maxValue = Math.min(progress, 100);
 
   return (
     <div
@@ -46,7 +47,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
     >
       <div
         className={`${colors.fill} ${heightClass} rounded-full transition-all duration-300 ease-in-out`}
-        style={{ width: `${progress}%` }}
+        style={{ width: `${maxValue}%` }}
       />
     </div>
   );

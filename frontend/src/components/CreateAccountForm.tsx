@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { axiosInstance } from "../services/axiosService";
-import Button from "./ui/Button";
+import { Button } from "./ui/Button";
 import FormLabel from "./ui/FormLabel";
 import FormInput from "./ui/FormInput";
 import { useGoogleLogin } from "@react-oauth/google";

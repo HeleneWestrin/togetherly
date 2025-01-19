@@ -184,7 +184,7 @@ export class WeddingService {
         populate: {
           path: "tasks",
           model: "Task",
-          select: "title completed budget actualCost",
+          select: "title completed budget actualCost dueDate",
         },
       });
 
@@ -227,6 +227,7 @@ export class WeddingService {
             budget: task.budget || 0,
             actualCost: task.actualCost,
             completed: task.completed,
+            dueDate: task.dueDate,
           })),
         };
 
@@ -265,6 +266,97 @@ export class WeddingService {
     task.completed = completed;
     await task.save();
 
+    return task;
+  }
+
+  static async createTask(
+    taskData: {
+      title: string;
+      budget: number;
+      actualCost: number;
+      dueDate: string;
+      budgetItem: string;
+      weddingId: string;
+    },
+    userId: string
+  ) {
+    const wedding = await Wedding.findById(taskData.weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
+    if (!isCouple && user.role !== "admin") {
+      throw new ForbiddenError("Only couples or admins can create tasks");
+    }
+
+    const task = await Task.create(taskData);
+
+    // Update the wedding's budget category with the new task
+    await Wedding.findOneAndUpdate(
+      {
+        _id: taskData.weddingId,
+        "budget.allocated._id": taskData.budgetItem,
+      },
+      {
+        $push: {
+          "budget.allocated.$.tasks": task._id,
+        },
+      }
+    );
+
+    return task;
+  }
+
+  static async deleteTask(taskId: string, userId: string) {
+    const task = await Task.findById(taskId);
+    if (!task) throw new NotFoundError("Task not found");
+
+    const wedding = await Wedding.findById(task.weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
+    if (!isCouple && user.role !== "admin") {
+      throw new ForbiddenError("Only couples or admins can delete tasks");
+    }
+
+    // Remove task reference from wedding
+    await Wedding.findOneAndUpdate(
+      { _id: task.weddingId },
+      { $pull: { "budget.allocated.$[].tasks": task._id } }
+    );
+
+    // Delete the task
+    await Task.findByIdAndDelete(taskId);
+
+    return { message: "Task deleted successfully" };
+  }
+
+  static async updateTaskDetails(
+    taskId: string,
+    taskData: Partial<ITask>,
+    userId: string
+  ) {
+    const task = await Task.findById(taskId);
+    if (!task) throw new NotFoundError("Task not found");
+
+    const wedding = await Wedding.findById(task.weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
+    if (!isCouple && user.role !== "admin") {
+      throw new ForbiddenError("Only couples or admins can update tasks");
+    }
+
+    Object.assign(task, taskData);
+    await task.save();
     return task;
   }
 }

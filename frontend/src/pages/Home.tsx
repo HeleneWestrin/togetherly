@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
+import { Button } from "../components/ui/Button";
 import logo from "../assets/togetherly-logo.svg";
 import { Typography } from "../components/ui/Typography";
 

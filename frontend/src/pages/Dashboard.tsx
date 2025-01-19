@@ -1,6 +1,6 @@
 import { WeddingList } from "../components/wedding/WeddingList";
 import { Typography } from "../components/ui/Typography";
-import Button from "../components/ui/Button";
+import { Button } from "../components/ui/Button";
 import { forceLogout } from "../utils/logoutHandler";
 
 const Dashboard: React.FC = () => {

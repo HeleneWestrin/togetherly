@@ -5,9 +5,30 @@ import { requireWeddingAccess } from "../middleware/weddingAuth";
 
 export const taskRouter = Router();
 
+taskRouter.post(
+  "/:weddingId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.createTask
+);
+
 taskRouter.patch(
   "/:taskId",
   authenticateUser,
   requireWeddingAccess,
   WeddingController.updateTask
+);
+
+taskRouter.delete(
+  "/:taskId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.deleteTask
+);
+
+taskRouter.put(
+  "/:taskId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.updateTaskDetails
 );
