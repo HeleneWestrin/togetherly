@@ -54,13 +54,16 @@ const BudgetOverview: React.FC<BudgetProps> = ({ budget }) => {
               styledAs="bodySmall"
               className="text-dark-600"
             >
-              Remaining
+              {remaining > 0 ? "Remaining" : "Over budget"}
             </Typography>
             <Typography
               element="p"
               className="font-semibold"
             >
-              {remaining.toLocaleString()} kr
+              {remaining > 0
+                ? remaining.toLocaleString()
+                : (remaining * -1).toLocaleString()}{" "}
+              kr
             </Typography>
           </div>
         </div>

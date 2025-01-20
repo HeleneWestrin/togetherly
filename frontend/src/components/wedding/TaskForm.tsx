@@ -25,15 +25,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
   isError,
   error,
 }) => {
-  console.log("Task received:", task);
-
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return "";
-    console.log("Original date string:", dateString);
     const date = new Date(dateString);
-    console.log("Parsed date:", date);
     const formatted = date.toISOString().split("T")[0];
-    console.log("Formatted date:", formatted);
     return formatted;
   };
 
