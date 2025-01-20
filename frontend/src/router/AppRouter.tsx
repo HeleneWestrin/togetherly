@@ -4,7 +4,7 @@ import Dashboard from "../pages/Dashboard";
 import CreateAccount from "../pages/CreateAccount";
 import PrivateRoute from "./PrivateRouter";
 import Home from "../pages/Home";
-import WeddingDetails from "../pages/WeddingDetails";
+import WeddingBudget from "../pages/WeddingBudget";
 
 /**
  * Main router component that handles all application routing
@@ -45,7 +45,7 @@ const AppRouter: React.FC = () => {
           path="/wedding/:weddingSlug"
           element={
             <PrivateRoute>
-              <WeddingDetails />
+              <WeddingBudget />
             </PrivateRoute>
           }
         />

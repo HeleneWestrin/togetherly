@@ -6,7 +6,6 @@ import { CreateTaskData, TaskResponse, ITask } from "../../types/wedding";
 
 interface TaskFormProps {
   task?: ITask;
-  category: string;
   budgetItemId: string;
   weddingId: string;
   onSubmit: (data: CreateTaskData) => Promise<TaskResponse>;
@@ -17,7 +16,6 @@ interface TaskFormProps {
 
 const TaskForm: React.FC<TaskFormProps> = ({
   task,
-  category,
   budgetItemId,
   weddingId,
   onSubmit,
@@ -53,7 +51,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = "Task name is required";
-    if (!formData.dueDate) errors.dueDate = "Due date is required";
     if (formData.budget < 0) errors.budget = "Budget cannot be negative";
     if (formData.actualCost < 0)
       errors.actualCost = "Actual cost cannot be negative";
@@ -68,6 +65,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
     setIsSubmitting(true);
     try {
+      console.log(formData);
       await onSubmit(formData);
       onCancel();
     } finally {
@@ -95,13 +93,17 @@ const TaskForm: React.FC<TaskFormProps> = ({
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           required
           error={validationErrors.title}
+          autoFocus
         />
 
         <FormInput
           id="budget"
+          isCurrency={true}
+          currencySuffix=" kr"
           name="budget"
-          type="number"
-          label="Estimated cost (kr)"
+          type="text"
+          inputMode="numeric"
+          label="Estimated cost"
           value={formData.budget}
           onChange={(e) =>
             setFormData({ ...formData, budget: Number(e.target.value) })
@@ -113,8 +115,11 @@ const TaskForm: React.FC<TaskFormProps> = ({
         <FormInput
           id="actualCost"
           name="actualCost"
-          type="number"
-          label="Actual cost (kr)"
+          isCurrency={true}
+          currencySuffix=" kr"
+          type="text"
+          inputMode="numeric"
+          label="Actual cost"
           value={formData.actualCost}
           onChange={(e) =>
             setFormData({ ...formData, actualCost: Number(e.target.value) })
@@ -131,11 +136,10 @@ const TaskForm: React.FC<TaskFormProps> = ({
           onChange={(e) =>
             setFormData({ ...formData, dueDate: e.target.value })
           }
-          required
           error={validationErrors.dueDate}
         />
 
-        <div className="flex gap-4 pt-4">
+        <div className="flex flex-col gap-4 pt-4">
           <Button
             type="submit"
             className="flex-1"

@@ -61,7 +61,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
         />
         {isOverProgress && (
           <div
-            className={`${colors.fillOver} ${heightClass} rounded-full transition-all duration-300 ease-in-out bg-[repeating-linear-gradient(-45deg,transparent,transparent_3px,rgba(255,255,255,0.24)_3px,rgba(255,255,255,0.24)_6px)]`}
+            className={`${colors.fillOver} ${heightClass} rounded-full transition-all duration-300 ease-in-out bg-[repeating-linear-gradient(-45deg,transparent,transparent_3px,rgba(255,255,255,0.32)_3px,rgba(255,255,255,0.32)_6px)]`}
             style={{ width: `${overProgress}%` }}
           />
         )}

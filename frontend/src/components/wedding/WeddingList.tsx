@@ -1,29 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../../services/axiosService";
 import { Link } from "react-router-dom";
-
-interface Wedding {
-  _id: string;
-  title: string;
-  slug: string;
-  date: string;
-  location: {
-    venue: string;
-    city: string;
-    country: string;
-  };
-  couple: Array<{
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-}
+import { WeddingListItem } from "../../types/wedding";
 
 const fetchWeddings = async () => {
-  const response = await axiosInstance.get<{ status: string; data: Wedding[] }>(
-    "/api/weddings"
-  );
+  const response = await axiosInstance.get<{
+    status: string;
+    data: WeddingListItem[];
+  }>("/api/weddings");
   return response.data.data;
 };
 

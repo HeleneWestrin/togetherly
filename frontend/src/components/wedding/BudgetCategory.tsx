@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ITask, CreateTaskData, TaskResponse } from "../../types/wedding";
+import { CreateTaskData, TaskResponse, Wedding } from "../../types/wedding";
 import { createTask } from "../../services/taskService";
 import { Typography } from "../ui/Typography";
 import { Button } from "../ui/Button";
@@ -10,25 +10,16 @@ import SidePanel from "../ui/SidePanel";
 import { Plus, ChevronDown } from "lucide-react";
 import TaskItem from "./TaskItem";
 import TaskForm from "./TaskForm";
+import { useUIStore } from "../../stores/useUIStore";
+import {
+  getTasksByCategory,
+  getCategoryProgress,
+} from "../../utils/weddingCalculations";
 
 interface BudgetCategoryProps {
   category: string;
-  tasks: ITask[];
-  progress: number;
-  estimatedCost: number;
-  spent: number;
-  onAddTask?: (
-    category: string,
-    taskData: {
-      title: string;
-      budget: number;
-      actualCost: number;
-      dueDate: string;
-    }
-  ) => void;
   onEditTask: (taskId: string) => void;
-  budgetItemId: string;
-  weddingId: string;
+  wedding: Wedding;
 }
 
 const getProgressColor = (progress: number): BadgeProps["color"] => {
@@ -37,37 +28,50 @@ const getProgressColor = (progress: number): BadgeProps["color"] => {
   return "yellow";
 };
 
-const BudgetCategory: React.FC<BudgetCategoryProps> = ({
-  category,
-  tasks = [],
-  progress,
-  estimatedCost,
-  spent,
-  onEditTask,
-  budgetItemId,
-  weddingId,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isAddTaskPanelOpen, setIsAddTaskPanelOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const createTaskMutation = useMutation<
-    TaskResponse,
-    Error,
-    CreateTaskData,
-    unknown
-  >({
-    mutationFn: async (data: CreateTaskData): Promise<TaskResponse> => {
-      return createTask(data);
+const useCreateTaskMutation = (onSuccess: () => void) => {
+  return useMutation<TaskResponse, Error, CreateTaskData>({
+    mutationFn: async (data: CreateTaskData) => {
+      return createTask({
+        ...data,
+        dueDate: data.dueDate || new Date().toISOString(),
+      });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["wedding"] });
-      setIsAddTaskPanelOpen(false);
-    },
+    onSuccess,
     onError: (error) => {
       console.error("Failed to create task:", error);
     },
   });
+};
+
+const BudgetCategory: React.FC<BudgetCategoryProps> = ({
+  category,
+  onEditTask,
+  wedding,
+}) => {
+  // All hooks at the top
+  const [isExpanded, setIsExpanded] = useState(true);
+  const { activePanels, openPanel, closePanel } = useUIStore();
+  const queryClient = useQueryClient();
+
+  const handleClosePanel = () => closePanel("addTask");
+  const createTaskMutation = useCreateTaskMutation(() => {
+    queryClient.invalidateQueries({ queryKey: ["wedding"] });
+    handleClosePanel();
+  });
+
+  // Get data after hooks
+  const tasks = getTasksByCategory(wedding, category);
+  const progress = getCategoryProgress(tasks);
+  const budgetItem = wedding.budget?.allocated.find(
+    (item) => item.category === category
+  );
+  const isAddTaskPanelOpen =
+    activePanels.addTask?.isOpen && activePanels.addTask.category === category;
+
+  if (!budgetItem) return null;
+
+  const handleOpenPanel = () =>
+    openPanel("addTask", { isOpen: true, category });
 
   return (
     <div
@@ -88,7 +92,9 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
             {category}
           </Typography>
           <Badge color={getProgressColor(progress)}>
-            {tasks.length === 0 ? "No tasks yet" : `${progress}% done`}
+            {tasks.length === 0
+              ? "No tasks yet"
+              : `${progress.toFixed(0)}% done`}
           </Badge>
         </div>
         <ChevronDown
@@ -106,7 +112,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
         }`}
         aria-hidden={!isExpanded}
       >
-        <div className="overflow-hidden">
+        <div className={`${isExpanded ? "" : "overflow-hidden"}`}>
           <div className="py-1 mt-4">
             <Typography
               element="p"
@@ -125,61 +131,61 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
 
             <ProgressBar
               progress={progress}
-              className="mb-2"
+              className="mb-6"
             />
 
-            <Typography
-              element="p"
-              styledAs="bodySmall"
-              className="text-dark-600 mb-5"
-            >
-              {tasks.length === 0
-                ? ""
-                : `${spent.toLocaleString()} kr spent out of ${estimatedCost.toLocaleString()} kr`}
-            </Typography>
-
-            <div className="space-y-3">
+            <div className="space-y-4">
               {tasks.map((task) => (
                 <TaskItem
                   key={task._id}
                   task={task}
+                  budgetItemId={budgetItem._id}
+                  weddingId={wedding._id ?? ""}
                   onEditTask={onEditTask}
-                  tabIndex={isExpanded ? 0 : -1}
-                  budgetItemId={budgetItemId}
-                  weddingId={weddingId}
                 />
               ))}
             </div>
 
+            {tasks.length !== 0 &&
+              tasks.some((task) => task.budget > 0 || task.actualCost > 0) && (
+                <>
+                  <hr className="mt-6 mb-3 border-dark-300" />
+                  <Typography
+                    element="p"
+                    styledAs="bodySmall"
+                    className="flex justify-between mb-6"
+                  >
+                    <span className="text-dark-850 font-bold">Cost: </span>
+                    <span className="text-dark-600">
+                      {`${budgetItem.spent.toLocaleString()} kr out of ${budgetItem.estimatedCost.toLocaleString()} kr`}
+                    </span>
+                  </Typography>
+                </>
+              )}
+
             <Button
-              variant="ghost"
-              size="inline"
+              variant="inline"
+              size="tiny"
               className="mt-4"
-              onClick={() => setIsAddTaskPanelOpen(true)}
-              tabIndex={isExpanded ? 0 : -1}
-              aria-expanded={isAddTaskPanelOpen}
-              aria-controls="add-task-panel"
-              aria-haspopup="dialog"
+              onClick={handleOpenPanel}
             >
               <Plus aria-hidden="true" />
               Add new task
-              <span className="sr-only">for {category}</span>
             </Button>
           </div>
         </div>
       </div>
 
       <SidePanel
-        isOpen={isAddTaskPanelOpen}
-        onClose={() => setIsAddTaskPanelOpen(false)}
+        isOpen={isAddTaskPanelOpen || false}
+        onClose={handleClosePanel}
         title={`Add task to ${category}`}
       >
         <TaskForm
-          category={category}
-          budgetItemId={budgetItemId}
-          weddingId={weddingId}
+          budgetItemId={budgetItem._id}
+          weddingId={wedding._id ?? ""}
           onSubmit={createTaskMutation.mutateAsync}
-          onCancel={() => setIsAddTaskPanelOpen(false)}
+          onCancel={handleClosePanel}
           isError={createTaskMutation.isError}
           error={createTaskMutation.error ?? undefined}
         />

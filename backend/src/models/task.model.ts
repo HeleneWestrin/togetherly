@@ -24,7 +24,7 @@ const taskSchema = new Schema<ITask>(
       ref: "Wedding.budget.allocated",
       required: true,
     },
-    dueDate: { type: Date, required: true },
+    dueDate: { type: Date, required: false },
   },
   { timestamps: true }
 );

@@ -359,4 +359,27 @@ export class WeddingService {
     await task.save();
     return task;
   }
+
+  static async updateBudget(weddingId: string, total: number, userId: string) {
+    const wedding = await Wedding.findById(weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    // Check if user has permission (is admin or part of couple)
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    if (!isCouple && user.role !== "admin") {
+      throw new ForbiddenError("Only couples or admins can update the budget");
+    }
+
+    if (total < 0) {
+      throw new ValidationError("Budget cannot be negative");
+    }
+
+    wedding.budget.total = total;
+    await wedding.save();
+
+    return wedding;
+  }
 }

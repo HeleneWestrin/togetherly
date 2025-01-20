@@ -57,3 +57,11 @@ weddingRouter.patch(
   requireWeddingAccess,
   WeddingController.updateTask
 );
+
+// Update budget
+weddingRouter.patch(
+  "/:weddingId/budget",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.updateBudget
+);

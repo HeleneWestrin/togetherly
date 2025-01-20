@@ -12,6 +12,7 @@ taskRouter.post(
   WeddingController.createTask
 );
 
+// Complete or uncomplete a task
 taskRouter.patch(
   "/:taskId",
   authenticateUser,

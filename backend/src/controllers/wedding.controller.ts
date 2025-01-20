@@ -132,4 +132,21 @@ export class WeddingController {
       next(error);
     }
   }
+
+  static async updateBudget(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId } = req.params;
+      const { total } = req.body;
+
+      const wedding = await WeddingService.updateBudget(
+        weddingId,
+        total,
+        userId
+      );
+      sendSuccess(res, wedding);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

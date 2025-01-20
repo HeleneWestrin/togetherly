@@ -6,92 +6,22 @@ import { Typography } from "../components/ui/Typography";
 import { forceLogout } from "../utils/logoutHandler";
 import BudgetOverview from "../components/wedding/BudgetOverview";
 import BudgetCategory from "../components/wedding/BudgetCategory";
+import { fetchWeddingDetails } from "../services/weddingService";
+import { getWeddingDateStatus } from "../utils/weddingCalculations";
 
-interface Wedding {
-  _id: string;
-  title: string;
-  date: string;
-  location: {
-    venue: string;
-    address: string;
-    city: string;
-    country: string;
-  };
-  couple: Array<{
-    _id: string;
-    email: string;
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-  guests: Array<{
-    _id: string;
-    email: string;
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
-  budget?: {
-    total: number;
-    spent: number;
-    allocated: Array<{
-      _id: string;
-      category: string;
-      estimatedCost: number;
-      spent: number;
-      progress: number;
-      tasks: Array<{
-        _id: string;
-        title: string;
-        budget: number;
-        actualCost: number;
-        completed: boolean;
-      }>;
-    }>;
-  };
-}
-
-const fetchWeddingDetails = async (slug: string) => {
-  const response = await axiosInstance.get<{ status: string; data: Wedding }>(
-    `/api/weddings/by-slug/${slug}`
-  );
-  return response.data.data;
-};
-
-const getDaysUntilWedding = (weddingDate: string): number => {
-  const today = new Date();
-  const wedding = new Date(weddingDate);
-  const diffTime = wedding.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
-};
-
-const getWeddingDateStatus = (weddingDate: string): string => {
-  const daysUntil = getDaysUntilWedding(weddingDate);
-
-  if (daysUntil < 0) return "Congratulations on your wedding!";
-  if (daysUntil === 0) return "Happy Wedding Day! Let the celebration begin!";
-  return `${daysUntil} days to go`;
-};
-
-const handleAddTask = (category: string) => {
-  // TODO: Implement modal or navigation to add task form
-  console.log("Add task to category:", category);
-};
-
-const WeddingDetails: React.FC = () => {
+const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
   const queryClient = useQueryClient();
+
   const {
-    data: wedding,
     isLoading,
     error,
+    data: wedding,
   } = useQuery({
     queryKey: ["wedding", weddingSlug],
     queryFn: () => fetchWeddingDetails(weddingSlug!),
     enabled: !!weddingSlug,
+    staleTime: 5 * 60 * 1000,
   });
 
   const updateTaskMutation = useMutation({
@@ -117,14 +47,9 @@ const WeddingDetails: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    forceLogout();
-  };
-
   if (isLoading) return <div className="p-5">Loading wedding details...</div>;
 
   if (error) {
-    // Check if it's an axios error with status code
     const axiosError = error as { response?: { status: number } };
     if (
       axiosError.response?.status === 401 ||
@@ -133,7 +58,6 @@ const WeddingDetails: React.FC = () => {
       forceLogout();
       return null;
     }
-
     return (
       <div className="p-5">
         <p className="text-red-600">
@@ -143,7 +67,7 @@ const WeddingDetails: React.FC = () => {
     );
   }
 
-  if (!wedding) return null;
+  if (!wedding) return <div className="p-5">No wedding data available.</div>;
 
   return (
     <>
@@ -163,24 +87,27 @@ const WeddingDetails: React.FC = () => {
                 element="p"
                 className="text-dark-600"
               >
-                <span>{new Date(wedding.date).toLocaleDateString()}</span>
+                <span>
+                  {wedding.date && new Date(wedding.date).toLocaleDateString()}
+                </span>
                 <span className="mx-2">•</span>
-                <span>{getWeddingDateStatus(wedding.date)}</span>
+                <span>
+                  {wedding.date && getWeddingDateStatus(wedding.date)}
+                </span>
               </Typography>
             </div>
             <Button
               variant="secondary"
-              onClick={handleLogout}
+              onClick={forceLogout}
             >
               Log out
             </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
-            {/* Budget Section (only shown if available) */}
             {wedding.budget?.total && (
               <div className="space-y-8">
-                <BudgetOverview budget={wedding.budget} />
+                <BudgetOverview wedding={wedding} />
                 <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-4">
                   <Typography
                     element="h2"
@@ -192,36 +119,13 @@ const WeddingDetails: React.FC = () => {
                     <BudgetCategory
                       key={category._id}
                       category={category.category}
-                      tasks={category.tasks}
-                      progress={category.progress}
-                      estimatedCost={category.estimatedCost}
-                      spent={category.spent}
                       onEditTask={handleEditTask}
-                      budgetItemId={category._id}
-                      weddingId={wedding._id}
+                      wedding={wedding}
                     />
                   ))}
                 </div>
               </div>
             )}
-
-            {/* Guest List */}
-            <div className="bg-white p-4 rounded-lg shadow md:col-span-2">
-              <h2 className="text-xl font-semibold mb-4">Guest List</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                {wedding.guests.map((guest) => (
-                  <div
-                    key={guest._id}
-                    className="p-3 bg-gray-50 rounded"
-                  >
-                    <p className="font-semibold">
-                      {guest.profile.firstName} {guest.profile.lastName}
-                    </p>
-                    <p className="text-dark-600 text-sm">{guest.email}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </main>
@@ -230,4 +134,4 @@ const WeddingDetails: React.FC = () => {
   );
 };
 
-export default WeddingDetails;
+export default WeddingBudget;

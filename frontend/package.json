@@ -14,9 +14,12 @@
     "@tanstack/react-query": "^5.64.0",
     "axios": "^1.7.9",
     "classnames": "^2.5.1",
+    "focus-trap-react": "^11.0.3",
+    "framer-motion": "^11.18.1",
     "lucide-react": "^0.471.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-number-format": "^5.4.3",
     "react-router-dom": "^7.1.1",
     "zustand": "^5.0.3"
   },

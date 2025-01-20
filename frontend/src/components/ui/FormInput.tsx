@@ -1,4 +1,5 @@
 import { InputHTMLAttributes, ChangeEvent } from "react";
+import { NumericFormat } from "react-number-format";
 import FormLabel from "./FormLabel";
 import { Typography } from "./Typography";
 
@@ -20,6 +21,9 @@ interface FormInputProps
   placeholder?: string;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   error?: string;
+  isCurrency?: boolean;
+  currencySymbol?: string; // Example: €, $
+  currencySuffix?: string; // Example: kr, Kč
 }
 
 const FormInput = ({
@@ -31,23 +35,53 @@ const FormInput = ({
   placeholder,
   onChange,
   error,
+  isCurrency = false,
+  currencySymbol = "",
+  currencySuffix = "",
   ...rest
 }: FormInputProps) => {
   return (
     <div className="flex flex-col gap-2">
       {label && <FormLabel htmlFor={id}>{label}</FormLabel>}
-      <input
-        id={id}
-        type={type}
-        name={name}
-        value={value}
-        placeholder={placeholder}
-        onChange={onChange}
-        className={`form-input w-full border-2 rounded-md ${
-          error ? "border-red-600" : "border-dark-400"
-        } bg-white px-2 py-2 focus:border-pink-600 focus:shadow-none focus:outline-none focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4`}
-        {...rest}
-      />
+
+      {isCurrency ? (
+        <NumericFormat
+          id={id}
+          name={name}
+          value={value}
+          placeholder={placeholder}
+          thousandSeparator=" "
+          decimalSeparator="."
+          prefix={currencySymbol}
+          suffix={currencySuffix}
+          onValueChange={(values) => {
+            onChange &&
+              onChange({
+                target: {
+                  name,
+                  value: values.value,
+                } as unknown as EventTarget & HTMLInputElement,
+              } as ChangeEvent<HTMLInputElement>);
+          }}
+          className={`form-input w-full border-2 rounded-md ${
+            error ? "border-red-600" : "border-dark-400"
+          } bg-white px-2 py-2 focus:border-pink-600 focus:shadow-none focus:outline-none focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4`}
+        />
+      ) : (
+        <input
+          id={id}
+          type={type}
+          name={name}
+          value={value}
+          placeholder={placeholder}
+          onChange={onChange}
+          className={`form-input w-full border-2 rounded-md ${
+            error ? "border-red-600" : "border-dark-400"
+          } bg-white px-2 py-2 focus:border-pink-600 focus:shadow-none focus:outline-none focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4`}
+          {...rest}
+        />
+      )}
+
       {error && (
         <Typography
           element="p"
