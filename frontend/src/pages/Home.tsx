@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
-import logo from "../assets/togetherly-logo.svg";
+import Logo from "../assets/togetherly-logo.svg?react";
 import { Typography } from "../components/ui/Typography";
 
 const Home: React.FC = () => {
@@ -23,9 +23,8 @@ const Home: React.FC = () => {
         </div>
 
         <div className="w-full flex items-center justify-between px-10 grow">
-          <img
-            src={logo}
-            alt="Togetherl logo"
+          <Logo
+            aria-label="Togetherly logo"
             className="h-8"
           />
           <div className="flex gap-4">

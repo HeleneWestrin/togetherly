@@ -1,22 +1,36 @@
 import { useMutation } from "@tanstack/react-query";
 import { axiosInstance } from "../services/axiosService";
 import { Button } from "./ui/Button";
-import FormLabel from "./ui/FormLabel";
 import FormInput from "./ui/FormInput";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuthStore } from "../stores/useAuthStore";
 import { AxiosError } from "axios";
 import { SocialLoginResponse } from "../types/auth";
+import { navigateBasedOnWeddings } from "../utils/navigationHelper";
+import { useNavigate } from "react-router-dom";
+
 const createAccountForm = async (userData: {
   email: string;
   password: string;
 }) => {
-  const response = await axiosInstance.post("/api/users/create", userData);
-  return response.data;
+  const response = await axiosInstance.post<{
+    status: string;
+    data: {
+      token: string;
+      user: {
+        id: string;
+        email: string;
+        role: "admin" | "couple" | "guest";
+      };
+      isNewUser: boolean;
+    };
+  }>("/api/users/create", userData);
+  return response.data.data;
 };
 
 export const CreateAccountForm: React.FC = () => {
   const { login } = useAuthStore();
+  const navigate = useNavigate();
 
   const googleLogin = useGoogleLogin({
     flow: "implicit",
@@ -43,7 +57,18 @@ export const CreateAccountForm: React.FC = () => {
         `/api/users/auth/${provider}/token`,
         { token }
       );
-      login(response.data.token, response.data.user);
+      console.log("Google login response:", response.data);
+      console.log("isNewUser value:", response.data.isNewUser);
+
+      // First login with the received token and user data
+      login(response.data.token, {
+        ...response.data.user,
+        isNewUser: response.data.isNewUser,
+      });
+
+      console.log("About to navigate with isNewUser:", response.data.isNewUser);
+      // Then navigate based on wedding data
+      await navigateBasedOnWeddings(navigate, response.data.isNewUser);
     } catch (error) {
       console.error(`${provider} login failed:`, error);
       if (error instanceof AxiosError) {
@@ -57,7 +82,14 @@ export const CreateAccountForm: React.FC = () => {
   const mutation = useMutation({
     mutationFn: createAccountForm,
     onSuccess: (data) => {
-      alert("User created successfully!");
+      console.log("Create account response:", data);
+      // First login with the received token and user data
+      login(data.token, {
+        ...data.user,
+        isNewUser: data.isNewUser,
+      });
+      // Then navigate based on wedding data
+      navigateBasedOnWeddings(navigate, data.isNewUser);
     },
     onError: (error: any) => {
       alert(
@@ -99,24 +131,22 @@ export const CreateAccountForm: React.FC = () => {
         </div>
 
         <div className="mb-4">
-          <FormLabel htmlFor="email">Email</FormLabel>
           <FormInput
             id="email"
+            label="Email"
             name="email"
             type="email"
-            placeholder="Email"
             autoComplete="email"
             required
           />
         </div>
 
         <div className="mb-4">
-          <FormLabel htmlFor="password">Password</FormLabel>
           <FormInput
             id="password"
             name="password"
             type="password"
-            placeholder="Password"
+            label="Password"
             autoComplete="new-password"
             required
           />

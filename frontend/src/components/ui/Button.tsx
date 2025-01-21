@@ -30,21 +30,20 @@ export const Button = ({
     primary: "bg-dark-800 text-white hover:bg-dark-950 hover:text-white",
     secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-950 hover:border-dark-950 hover:text-white disabled:cursor-not-allowed`,
     ghost: "bg-transparent text-dark-950 hover:bg-dark-950 hover:text-white",
-    inline: "font-sans font-bold text-sm md:text-base hover:text-pink-600",
+    inline: "text-sm md:text-base hover:text-pink-600",
     icon: "bg-dark-100 hover:bg-dark-200 text-dark-850 hover:text-dark-950",
   } as const; // 'as const' ensures type safety for the variant object
 
   // Add size-specific classes
   const sizeClasses = {
-    default:
-      "font-slab font-medium text-base md:text-md lg:text-md px-4 py-1 md:px-5 md:py-2 lg:px-7 lg:py-3",
-    small: "font-sans font-bold text-sm px-3 py-1 md:px-4 md:py-1.5",
+    default: "text-base md:text-md px-4 py-1.5 md:px-5 md:py-2 lg:px-7 lg:py-3",
+    small: "text-sm px-3 py-1 md:px-4 md:py-1.5",
     tiny: "px-1 py-1",
     icon: "p-2 rounded-full",
   } as const;
 
   // Combine base classes with variant and size-specific classes
-  const classes = `flex items-center gap-2 justify-center rounded-full transition duration-300 ease-in-out ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+  const classes = `font-sans font-semibold flex items-center gap-2 justify-center rounded-full transition duration-300 ease-in-out ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
 
   // Determine whether to render a button or anchor based on href prop
   const Component = href ? ("a" as const) : ("button" as const);

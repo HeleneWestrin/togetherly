@@ -15,6 +15,12 @@ export class UserService {
    * @returns Object containing userId and JWT token
    */
   static async createUser(email: string, password: string) {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ValidationError("Email already registered");
+    }
+
     // Hash the password before storing
     const hashedPassword = await AuthService.hashPassword(password);
     const newUser = new User({
@@ -31,13 +37,13 @@ export class UserService {
     );
 
     return {
-      userId: savedUser._id,
       token,
       user: {
         id: savedUser._id,
         email: savedUser.email,
         role: savedUser.role,
       },
+      isNewUser: true, // Always true for new user creation
     };
   }
 

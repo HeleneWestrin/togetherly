@@ -2,10 +2,11 @@ import { CreateAccountForm } from "../components/CreateAccountForm";
 import { useAuthStore } from "../stores/useAuthStore";
 import { Navigate } from "react-router-dom";
 
-const Login: React.FC = () => {
+const CreateAccount: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isNewUser = useAuthStore((state) => state.user?.isNewUser);
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !isNewUser) {
     return (
       <Navigate
         to="/dashboard"
@@ -27,4 +28,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default CreateAccount;

@@ -82,21 +82,11 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     profile: {
       firstName: {
         type: String,
-        required: [
-          function (this: IUser) {
-            return !this.socialProvider;
-          },
-          "First name is required",
-        ],
+        required: false,
       },
       lastName: {
         type: String,
-        required: [
-          function (this: IUser) {
-            return !this.socialProvider;
-          },
-          "Last name is required",
-        ],
+        required: false,
       },
       phoneNumber: { type: String, required: false },
       address: { type: String, required: false },

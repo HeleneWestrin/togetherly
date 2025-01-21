@@ -1,8 +1,15 @@
 import { axiosInstance } from "../services/axiosService";
 
 export const navigateBasedOnWeddings = async (
-  navigate: (path: string) => void
+  navigate: (path: string) => void,
+  isNewUser?: boolean
 ) => {
+  console.log("Helper: ", isNewUser);
+  if (isNewUser) {
+    navigate("/onboarding");
+    return;
+  }
+
   try {
     const response = await axiosInstance.get<{
       status: string;

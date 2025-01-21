@@ -4,11 +4,11 @@ import { useAuthStore } from "../stores/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { navigateBasedOnWeddings } from "../utils/navigationHelper";
-import Logo from "../assets/togetherly-logo.svg?react";
 import Rings from "../assets/icons/icon-rings.svg?react";
 
 const Login: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isNewUser = useAuthStore((state) => state.user?.isNewUser);
   const navigate = useNavigate();
 
   /**
@@ -20,7 +20,7 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigateBasedOnWeddings(navigate);
+      navigateBasedOnWeddings(navigate, isNewUser);
     }
   }, [isAuthenticated, navigate]);
 

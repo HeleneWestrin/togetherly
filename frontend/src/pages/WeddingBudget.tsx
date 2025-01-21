@@ -74,29 +74,7 @@ const WeddingBudget: React.FC = () => {
         id="main"
         className="min-h-screen"
       >
-        <div className="p-5 max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div className="flex flex-col">
-              <Typography element="h1">
-                {wedding.couple
-                  .map((partner) => partner.profile.firstName)
-                  .join(" & ")}
-              </Typography>
-              <Typography
-                element="p"
-                className="text-dark-600"
-              >
-                <span>
-                  {wedding.date && new Date(wedding.date).toLocaleDateString()}
-                </span>
-                <span className="mx-2">•</span>
-                <span>
-                  {wedding.date && getWeddingDateStatus(wedding.date)}
-                </span>
-              </Typography>
-            </div>
-          </div>
-
+        <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
             {wedding.budget?.total && (
               <div className="space-y-8">

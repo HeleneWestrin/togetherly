@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { ChartPie, Utensils, Users, Settings } from "lucide-react";
-import { Typography } from "../ui/Typography";
+import { ChartPie, CalendarCheck2, Users, Settings } from "lucide-react";
+import Logo from "../../assets/togetherly-logo.svg?react";
 import { Button } from "../ui/Button";
 import { forceLogout } from "../../utils/logoutHandler";
 
@@ -10,16 +10,17 @@ interface DesktopNavigationProps {
 
 const DesktopNavigation = ({ weddingSlug }: DesktopNavigationProps) => {
   return (
-    <nav className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-dark-200 p-6">
+    <nav
+      aria-label="Main navigation"
+      className="fixed left-0 top-0 bottom-0 w-80 bg-white border-r border-dark-200 p-6"
+    >
       <div className="flex flex-col h-full justify-between">
         <div>
-          <div className="mb-8">
-            <Typography
-              element="h1"
-              styledAs="h2"
-            >
-              Menu
-            </Typography>
+          <div className="mt-4 mb-10 flex justify-center">
+            <Logo
+              aria-label="Togetherly logo"
+              className="h-7"
+            />
           </div>
 
           <ul className="space-y-2">
@@ -29,9 +30,9 @@ const DesktopNavigation = ({ weddingSlug }: DesktopNavigationProps) => {
               label="Budget"
             />
             <NavItem
-              to={`/wedding/${weddingSlug}/plan`}
-              icon={<Utensils className="w-5 h-5" />}
-              label="Plan"
+              to={`/wedding/${weddingSlug}/schedule`}
+              icon={<CalendarCheck2 className="w-5 h-5" />}
+              label="Schedule"
             />
             <NavItem
               to={`/wedding/${weddingSlug}/guests`}
@@ -68,10 +69,10 @@ const NavItem = ({ to, icon, label }: NavItemProps) => {
       <NavLink
         to={to}
         className={({ isActive }) =>
-          `flex items-center gap-3 p-3 rounded-lg transition-colors ${
+          `flex items-center gap-3 py-3 px-4 rounded-full transition-colors ${
             isActive
-              ? "bg-pink-100 text-pink-600"
-              : "text-dark-600 hover:bg-dark-100"
+              ? "bg-dark-100 text-dark-950 font-semibold"
+              : "text-dark-700 hover:bg-dark-100 hover:text-dark-950"
           }`
         }
       >

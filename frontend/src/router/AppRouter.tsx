@@ -9,6 +9,7 @@ import PrivateRoute from "./PrivateRouter";
 import Home from "../pages/Home";
 import WeddingBudget from "../pages/WeddingBudget";
 import WeddingGuests from "../pages/WeddingGuests";
+import Onboarding from "../pages/Onboarding";
 /**
  * Main router component that handles all application routing
  * Uses React Router v6 for client-side routing
@@ -24,24 +25,35 @@ const AppContent = () => {
   return (
     <div
       className={`min-h-screen ${
-        isAuthenticated && isWeddingRoute ? (isMobile ? "pb-20" : "ml-64") : ""
+        isAuthenticated && isWeddingRoute ? (isMobile ? "pb-20" : "ml-80") : ""
       }`}
     >
       <Routes>
+        {/* Protected routes - require authentication */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/onboarding"
+          element={
+            <PrivateRoute>
+              <Onboarding />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Wedding-specific routes */}
         <Route
           path="/wedding/:weddingSlug/*"
           element={
             <>
               <WeddingNavigation />
               <Routes>
-                <Route
-                  path="dashboard"
-                  element={
-                    <PrivateRoute>
-                      <Dashboard />
-                    </PrivateRoute>
-                  }
-                />
                 <Route
                   path="budget"
                   element={

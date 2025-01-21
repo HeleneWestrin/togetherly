@@ -1,5 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import { Wedding } from "../models/wedding.model";
+import { DEFAULT_BUDGET_CATEGORIES, Wedding } from "../models/wedding.model";
 import { IUser, User } from "../models/user.model";
 import { ITask, Task } from "../models/task.model";
 import {
@@ -381,5 +381,69 @@ export class WeddingService {
     await wedding.save();
 
     return wedding;
+  }
+
+  static async createWeddingFromOnboarding(
+    userId: string,
+    data: {
+      coupleInfo: {
+        firstName: string;
+        lastName: string;
+        partnerFirstName: string;
+        partnerLastName: string;
+        partnerEmail: string;
+        role: string;
+      };
+      weddingInfo: {
+        date: string;
+        estimatedGuests: number;
+        estimatedBudget: number;
+      };
+    }
+  ) {
+    const { coupleInfo, weddingInfo } = data;
+
+    // Create or find partner user
+    let partnerUser;
+    if (coupleInfo.partnerEmail) {
+      partnerUser = await User.findOne({ email: coupleInfo.partnerEmail });
+      if (!partnerUser) {
+        partnerUser = await User.create({
+          email: coupleInfo.partnerEmail,
+          role: "couple",
+          profile: {
+            firstName: coupleInfo.partnerFirstName,
+            lastName: coupleInfo.partnerLastName,
+          },
+        });
+      }
+    }
+
+    // Create the wedding
+    const wedding = new Wedding({
+      title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s Wedding`,
+      date: weddingInfo.date || null,
+      location: {
+        address: "",
+        coordinates: {
+          lat: 0,
+          lng: 0,
+        },
+      },
+      budget: {
+        total: weddingInfo.estimatedBudget || 0,
+        spent: 0,
+        allocated: DEFAULT_BUDGET_CATEGORIES.map((category: string) => ({
+          category,
+          spent: 0,
+          tasks: [],
+        })),
+      },
+      couple: partnerUser ? [userId, partnerUser._id] : [userId],
+      guests: [],
+    });
+
+    const savedWedding = await wedding.save();
+    return savedWedding;
   }
 }

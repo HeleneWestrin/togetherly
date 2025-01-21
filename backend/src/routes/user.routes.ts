@@ -76,6 +76,7 @@ userRouter.post("/auth/google/token", (async (
 
       // Find or create user
       let user = await User.findOne({ email: payload.email });
+      const isNewUser = !user; // Set this before creating the user
       if (!user) {
         user = await User.create({
           email: payload.email,
@@ -103,6 +104,7 @@ userRouter.post("/auth/google/token", (async (
           email: user.email,
           role: user.role,
         },
+        isNewUser: isNewUser,
       });
     } catch (verifyError) {
       console.error("Token verification error:", verifyError);

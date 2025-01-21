@@ -5,4 +5,5 @@ export interface SocialLoginResponse {
     email: string;
     role: "admin" | "couple" | "guest";
   };
+  isNewUser: boolean;
 }

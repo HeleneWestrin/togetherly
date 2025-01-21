@@ -65,3 +65,10 @@ weddingRouter.patch(
   requireWeddingAccess,
   WeddingController.updateBudget
 );
+
+// Create wedding from onboarding
+weddingRouter.post(
+  "/onboarding",
+  authenticateUser,
+  WeddingController.createWeddingFromOnboarding
+);

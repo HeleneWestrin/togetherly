@@ -149,4 +149,21 @@ export class WeddingController {
       next(error);
     }
   }
+
+  static async createWeddingFromOnboarding(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = (req as any).userId;
+      const wedding = await WeddingService.createWeddingFromOnboarding(
+        userId,
+        req.body
+      );
+      sendSuccess(res, wedding, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

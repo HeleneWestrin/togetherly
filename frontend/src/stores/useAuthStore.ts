@@ -8,6 +8,7 @@ interface User {
   id: string;
   email: string;
   role: "admin" | "couple" | "guest"; // Strict union type for user roles
+  isNewUser?: boolean;
 }
 
 /**
@@ -53,15 +54,25 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
 
       // Actions
-      login: (token, user) => set({ token, user, isAuthenticated: true }),
+      login: (token, user) => {
+        console.log("Login action called with:", { token, user });
+        set({
+          token,
+          user: {
+            ...user,
+            isNewUser: user.isNewUser || false,
+          },
+          isAuthenticated: true,
+        });
+        console.log("New state after login:", useAuthStore.getState());
+      },
       logout: () => set({ token: null, user: null, isAuthenticated: false }),
       setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
       // Persistence configuration
-      name: "togetherly-auth", // Storage key in localStorage
+      name: "togetherly-auth",
       storage: createJSONStorage(() => localStorage),
-      // Only persist authentication-related fields
       partialize: (state) => ({
         token: state.token,
         user: state.user,

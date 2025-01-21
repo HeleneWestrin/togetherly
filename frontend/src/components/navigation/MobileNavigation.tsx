@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { ChartPie, Utensils, Users, Settings } from "lucide-react";
+import { ChartPie, CalendarCheck2, Users, Settings } from "lucide-react";
 
 interface MobileNavigationProps {
   weddingSlug: string;
@@ -7,7 +7,7 @@ interface MobileNavigationProps {
 
 const MobileNavigation = ({ weddingSlug }: MobileNavigationProps) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-dark-200 px-6 py-2 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-dark-200 rounded-t-3xl px-6 py-2 z-50">
       <ul className="flex justify-between items-center">
         <NavItem
           to={`/wedding/${weddingSlug}/budget`}
@@ -15,9 +15,9 @@ const MobileNavigation = ({ weddingSlug }: MobileNavigationProps) => {
           label="Budget"
         />
         <NavItem
-          to={`/wedding/${weddingSlug}/plan`}
-          icon={<Utensils className="w-6 h-6" />}
-          label="Plan"
+          to={`/wedding/${weddingSlug}/schedule`}
+          icon={<CalendarCheck2 className="w-6 h-6" />}
+          label="Schedule"
         />
         <NavItem
           to={`/wedding/${weddingSlug}/guests`}
