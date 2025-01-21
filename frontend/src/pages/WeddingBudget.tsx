@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../services/axiosService";
-import { Button } from "../components/ui/Button";
 import { Typography } from "../components/ui/Typography";
 import { forceLogout } from "../utils/logoutHandler";
 import BudgetOverview from "../components/wedding/BudgetOverview";
@@ -96,12 +95,6 @@ const WeddingBudget: React.FC = () => {
                 </span>
               </Typography>
             </div>
-            <Button
-              variant="secondary"
-              onClick={forceLogout}
-            >
-              Log out
-            </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
@@ -118,7 +111,7 @@ const WeddingBudget: React.FC = () => {
                   {wedding.budget.allocated.map((category) => (
                     <BudgetCategory
                       key={category._id}
-                      category={category.category}
+                      category={category}
                       onEditTask={handleEditTask}
                       wedding={wedding}
                     />

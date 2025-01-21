@@ -1,34 +1,57 @@
-export interface ITask {
+export interface Task {
   _id: string;
   title: string;
   budget: number;
   actualCost: number;
   completed: boolean;
   dueDate?: string;
-  budgetItem?: string;
-  weddingId?: string;
-}
-
-export interface CreateTaskData {
-  title: string;
-  budget: number;
-  actualCost: number;
-  dueDate?: string;
   budgetItem: string;
   weddingId: string;
 }
 
-export interface TaskResponse {
-  _id: string;
-  title: string;
-  budget: number;
-  actualCost: number;
-  dueDate?: string;
-  completed: boolean;
-  budgetItem: string;
-  weddingId: string;
+export type CreateTaskData = Omit<Task, "_id" | "completed">;
+
+export interface TaskResponse extends Task {
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BudgetCategory {
+  _id: string;
+  category: string;
+  estimatedCost: number;
+  spent: number;
+  progress: number;
+  tasks: Task[];
+}
+
+export interface WeddingLocation {
+  venue: string;
+  address: string;
+  city: string;
+  country: string;
+}
+
+export interface CoupleProfile {
+  firstName: string;
+  lastName: string;
+}
+
+export interface CoupleUser {
+  _id: string;
+  email: string;
+  profile: CoupleProfile;
+}
+
+export interface GuestProfile {
+  firstName: string;
+  lastName: string;
+}
+
+export interface GuestUser {
+  _id: string;
+  email: string;
+  profile: GuestProfile;
 }
 
 export interface Wedding {
@@ -36,45 +59,20 @@ export interface Wedding {
   slug: string;
   title: string;
   date: string;
-  location: {
-    venue: string;
-    address: string;
-    city: string;
-    country: string;
-  };
-  couple: Array<{
-    _id: string;
-    email: string;
-    profile: {
-      firstName: string;
-      lastName: string;
-    };
-  }>;
+  location: WeddingLocation;
+  couple: Array<CoupleUser>;
   budget?: {
     total: number;
     spent: number;
-    allocated: Array<{
-      _id: string;
-      category: string;
-      estimatedCost: number;
-      spent: number;
-      progress: number;
-      tasks: Array<{
-        _id: string;
-        title: string;
-        budget: number;
-        actualCost: number;
-        completed: boolean;
-        dueDate?: string;
-      }>;
-    }>;
+    allocated: Array<BudgetCategory>;
   };
+  guests?: GuestUser[];
 }
 
 export interface WeddingListItem
   extends Pick<Wedding, "_id" | "title" | "slug" | "date"> {
-  location: Pick<Wedding["location"], "venue" | "city" | "country">;
+  location: Pick<WeddingLocation, "venue" | "city" | "country">;
   couple: Array<{
-    profile: Pick<Wedding["couple"][0]["profile"], "firstName" | "lastName">;
+    profile: CoupleProfile;
   }>;
 }

@@ -1,27 +1,11 @@
-import { Typography } from "../ui/Typography";
-
-interface Guest {
-  _id: string;
-  email: string;
-  profile: {
-    firstName: string;
-    lastName: string;
-  };
-}
-
+import { GuestUser } from "../../types/wedding";
 interface GuestListProps {
-  guests: Guest[];
+  guests: GuestUser[];
 }
 
 const GuestList: React.FC<GuestListProps> = ({ guests }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow md:col-span-2">
-      <Typography
-        element="h2"
-        className="text-xl font-semibold mb-4"
-      >
-        Guest List
-      </Typography>
       <div className="grid gap-4 md:grid-cols-2">
         {guests.map((guest) => (
           <div

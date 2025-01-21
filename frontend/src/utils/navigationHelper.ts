@@ -11,7 +11,7 @@ export const navigateBasedOnWeddings = async (
     const weddings = response.data.data;
 
     if (weddings.length === 1) {
-      navigate(`/wedding/${weddings[0].slug}`);
+      navigate(`/wedding/${weddings[0].slug}/budget`);
     } else {
       navigate("/dashboard");
     }

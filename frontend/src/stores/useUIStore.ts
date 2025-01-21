@@ -11,6 +11,9 @@ interface UIState {
       isOpen: boolean;
       category: string | null;
     };
+    addGuest?: {
+      isOpen: boolean;
+    };
   };
   openPanel: (panel: keyof UIState["activePanels"], data?: any) => void;
   closePanel: (panel: keyof UIState["activePanels"]) => void;

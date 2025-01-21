@@ -1,0 +1,61 @@
+import { NavLink } from "react-router-dom";
+import { ChartPie, Utensils, Users, Settings } from "lucide-react";
+
+interface MobileNavigationProps {
+  weddingSlug: string;
+}
+
+const MobileNavigation = ({ weddingSlug }: MobileNavigationProps) => {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-dark-200 px-6 py-2 z-50">
+      <ul className="flex justify-between items-center">
+        <NavItem
+          to={`/wedding/${weddingSlug}/budget`}
+          icon={<ChartPie className="w-6 h-6" />}
+          label="Budget"
+        />
+        <NavItem
+          to={`/wedding/${weddingSlug}/plan`}
+          icon={<Utensils className="w-6 h-6" />}
+          label="Plan"
+        />
+        <NavItem
+          to={`/wedding/${weddingSlug}/guests`}
+          icon={<Users className="w-6 h-6" />}
+          label="Guests"
+        />
+        <NavItem
+          to={`/wedding/${weddingSlug}/settings`}
+          icon={<Settings className="w-6 h-6" />}
+          label="Settings"
+        />
+      </ul>
+    </nav>
+  );
+};
+
+interface NavItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+}
+
+const NavItem = ({ to, icon, label }: NavItemProps) => {
+  return (
+    <li>
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          `flex flex-col items-center gap-1 p-2 text-dark-600 ${
+            isActive ? "text-pink-600" : "hover:text-dark-800"
+          }`
+        }
+      >
+        {icon}
+        <span className="text-xs">{label}</span>
+      </NavLink>
+    </li>
+  );
+};
+
+export default MobileNavigation;

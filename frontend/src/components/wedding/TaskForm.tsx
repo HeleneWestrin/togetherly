@@ -2,16 +2,16 @@ import { useState } from "react";
 import FormInput from "../ui/FormInput";
 import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
-import { CreateTaskData, TaskResponse, ITask } from "../../types/wedding";
+import { CreateTaskData, TaskResponse, Task } from "../../types/wedding";
 
 interface TaskFormProps {
-  task?: ITask;
+  task?: Task;
   budgetItemId: string;
   weddingId: string;
   onSubmit: (data: CreateTaskData) => Promise<TaskResponse>;
   onCancel: () => void;
   isError?: boolean;
-  error?: Error;
+  error?: Error | null;
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({
@@ -20,8 +20,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
   weddingId,
   onSubmit,
   onCancel,
-  isError,
-  error,
+  isError = false,
+  error = null,
 }) => {
   const formatDateForInput = (dateString?: string) => {
     if (!dateString) return "";
@@ -65,7 +65,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
     setIsSubmitting(true);
     try {
-      console.log(formData);
       await onSubmit(formData);
       onCancel();
     } finally {

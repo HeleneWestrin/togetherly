@@ -18,7 +18,7 @@
 .bg-gradient-full {
   background-image: var(--gradient-svg-mobile), var(--gradient-fallback);
   background-size: cover;
-  background-position: center;
+  background-position: center bottom;
   position: fixed;
   top: 0;
   left: 0;

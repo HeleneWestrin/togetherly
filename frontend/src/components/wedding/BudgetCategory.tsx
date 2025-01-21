@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CreateTaskData, TaskResponse, Wedding } from "../../types/wedding";
+import {
+  CreateTaskData,
+  TaskResponse,
+  Wedding,
+  BudgetCategory as BudgetCategoryType,
+} from "../../types/wedding";
 import { createTask } from "../../services/taskService";
 import { Typography } from "../ui/Typography";
 import { Button } from "../ui/Button";
@@ -11,13 +16,10 @@ import { Plus, ChevronDown } from "lucide-react";
 import TaskItem from "./TaskItem";
 import TaskForm from "./TaskForm";
 import { useUIStore } from "../../stores/useUIStore";
-import {
-  getTasksByCategory,
-  getCategoryProgress,
-} from "../../utils/weddingCalculations";
+import { getCategoryProgress } from "../../utils/weddingCalculations";
 
 interface BudgetCategoryProps {
-  category: string;
+  category: BudgetCategoryType;
   onEditTask: (taskId: string) => void;
   wedding: Wedding;
 }
@@ -48,7 +50,6 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   onEditTask,
   wedding,
 }) => {
-  // All hooks at the top
   const [isExpanded, setIsExpanded] = useState(true);
   const { activePanels, openPanel, closePanel } = useUIStore();
   const queryClient = useQueryClient();
@@ -59,19 +60,15 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
     handleClosePanel();
   });
 
-  // Get data after hooks
-  const tasks = getTasksByCategory(wedding, category);
+  // Safely access tasks with a default empty array
+  const tasks = category?.tasks || [];
   const progress = getCategoryProgress(tasks);
-  const budgetItem = wedding.budget?.allocated.find(
-    (item) => item.category === category
-  );
   const isAddTaskPanelOpen =
-    activePanels.addTask?.isOpen && activePanels.addTask.category === category;
-
-  if (!budgetItem) return null;
+    activePanels.addTask?.isOpen &&
+    activePanels.addTask.category === category.category;
 
   const handleOpenPanel = () =>
-    openPanel("addTask", { isOpen: true, category });
+    openPanel("addTask", { isOpen: true, category: category.category });
 
   return (
     <div
@@ -82,14 +79,14 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-left"
         aria-expanded={isExpanded}
-        aria-controls={`category-content-${category}`}
+        aria-controls={`category-content-${category?.category}`}
       >
         <div className="flex flex-col items-start gap-1.5">
           <Typography
             element="h3"
             className="!leading-none"
           >
-            {category}
+            {category?.category}
           </Typography>
           <Badge color={getProgressColor(progress)}>
             {tasks.length === 0
@@ -106,7 +103,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       </button>
 
       <div
-        id={`category-content-${category}`}
+        id={`category-content-${category?.category}`}
         className={`grid transition-all duration-300 ease-in-out ${
           isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
@@ -139,14 +136,14 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                 <TaskItem
                   key={task._id}
                   task={task}
-                  budgetItemId={budgetItem._id}
-                  weddingId={wedding._id ?? ""}
+                  budgetItemId={category._id}
+                  weddingId={wedding._id}
                   onEditTask={onEditTask}
                 />
               ))}
             </div>
 
-            {tasks.length !== 0 &&
+            {tasks.length > 0 &&
               tasks.some((task) => task.budget > 0 || task.actualCost > 0) && (
                 <>
                   <hr className="mt-6 mb-3 border-dark-300" />
@@ -157,7 +154,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                   >
                     <span className="text-dark-850 font-bold">Cost: </span>
                     <span className="text-dark-600">
-                      {`${budgetItem.spent.toLocaleString()} kr out of ${budgetItem.estimatedCost.toLocaleString()} kr`}
+                      {`${category.spent.toLocaleString()} kr out of ${category.estimatedCost.toLocaleString()} kr`}
                     </span>
                   </Typography>
                 </>
@@ -179,15 +176,15 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       <SidePanel
         isOpen={isAddTaskPanelOpen || false}
         onClose={handleClosePanel}
-        title={`Add task to ${category}`}
+        title={`Add task to ${category.category}`}
       >
         <TaskForm
-          budgetItemId={budgetItem._id}
-          weddingId={wedding._id ?? ""}
+          budgetItemId={category._id}
+          weddingId={wedding._id}
           onSubmit={createTaskMutation.mutateAsync}
           onCancel={handleClosePanel}
           isError={createTaskMutation.isError}
-          error={createTaskMutation.error ?? undefined}
+          error={createTaskMutation.error}
         />
       </SidePanel>
     </div>

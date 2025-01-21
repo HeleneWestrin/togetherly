@@ -1,21 +1,16 @@
-import { Wedding } from "../types/wedding";
+import { Wedding, Task } from "../types/wedding";
+
+type CategoryTask = Pick<
+  Task,
+  "_id" | "completed" | "title" | "budget" | "actualCost" | "dueDate"
+>;
 
 export const getBudgetProgress = (wedding: Wedding) => {
   if (!wedding?.budget) return 0;
   return (wedding.budget.spent / wedding.budget.total) * 100;
 };
 
-export const getTasksByCategory = (wedding: Wedding, category: string) => {
-  if (!wedding?.budget?.allocated) return [];
-  const budgetItem = wedding.budget.allocated.find(
-    (item) => item.category === category
-  );
-  return budgetItem?.tasks || [];
-};
-
-export const getCategoryProgress = (
-  tasks: Wedding["budget"]["allocated"][0]["tasks"]
-) => {
+export const getCategoryProgress = (tasks: CategoryTask[]) => {
   return tasks.length
     ? (tasks.filter((t) => t.completed).length / tasks.length) * 100
     : 0;
