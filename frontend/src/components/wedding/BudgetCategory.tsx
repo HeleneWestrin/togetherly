@@ -70,16 +70,26 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   const handleOpenPanel = () =>
     openPanel("addTask", { isOpen: true, category: category.category });
 
+  const sanitizeCategoryName = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+  };
+
   return (
     <div
       aria-live="polite"
       className="bg-white p-6 rounded-3xl"
     >
       <button
+        id={`category-header-${sanitizeCategoryName(category?.category)}`}
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-left"
         aria-expanded={isExpanded}
-        aria-controls={`category-content-${category?.category}`}
+        aria-controls={`category-content-${sanitizeCategoryName(
+          category?.category
+        )}`}
       >
         <div className="flex flex-col items-start gap-1.5">
           <Typography
@@ -103,10 +113,13 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       </button>
 
       <div
-        id={`category-content-${category?.category}`}
+        id={`category-content-${sanitizeCategoryName(category?.category)}`}
         className={`grid transition-all duration-300 ease-in-out ${
           isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
+        aria-labelledby={`category-header-${sanitizeCategoryName(
+          category?.category
+        )}`}
         aria-hidden={!isExpanded}
       >
         <div className={`${isExpanded ? "" : "overflow-hidden"}`}>

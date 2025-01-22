@@ -33,7 +33,8 @@ export default {
         400: "#859A9A",
         300: "#A5B7B7",
         200: "#C9DADA",
-        100: "#E5F1F1",
+        100: "#E7EBEB",
+        50: "#EFF2F2",
       },
       pink: {
         700: "#B02F8B",

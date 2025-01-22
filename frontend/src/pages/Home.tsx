@@ -9,7 +9,7 @@ const Home: React.FC = () => {
   return (
     <>
       <div className="flex flex-col justify-between p-8 pb-0 min-h-screen">
-        <div className="min-h-[calc(100vh-11.5rem)] flex flex-col rounded-3xl">
+        <div className="min-h-[calc(100vh-11.5rem)] flex flex-col rounded-3xl bg-gradient">
           <div className="flex-1 flex flex-col items-center justify-center p-8">
             <div className="text-center">
               <Typography
@@ -43,7 +43,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="bg-gradient-full"></div>
     </>
   );
 };

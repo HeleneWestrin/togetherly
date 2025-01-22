@@ -32,6 +32,36 @@
   }
 }
 
+.bg-gradient {
+  background-image: var(--gradient-svg-mobile), var(--gradient-fallback);
+  background-size: cover;
+  background-position: center bottom;
+  transition: background-image 0.5s ease-in-out;
+
+  @screen lg {
+    background-image: var(--gradient-svg), var(--gradient-fallback);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+::-webkit-scrollbar-thumb {
+  background: theme("colors.pink.600");
+}
+
+::-webkit-scrollbar-track {
+  background: theme("colors.dark.100");
+  border-radius: 0.5rem;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme("colors.pink.600") theme("colors.dark.100");
+}
+
 @layer base {
   @font-face {
     font-family: "Montagu Slab";

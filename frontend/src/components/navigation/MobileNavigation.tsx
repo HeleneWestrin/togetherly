@@ -1,5 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { ChartPie, CalendarCheck2, Users, Settings } from "lucide-react";
+import {
+  ChartPie,
+  CalendarCheck2,
+  Users,
+  CircleUserRound,
+  Grip,
+} from "lucide-react";
 
 interface MobileNavigationProps {
   weddingSlug: string;
@@ -25,9 +31,14 @@ const MobileNavigation = ({ weddingSlug }: MobileNavigationProps) => {
           label="Guests"
         />
         <NavItem
-          to={`/wedding/${weddingSlug}/settings`}
-          icon={<Settings className="w-6 h-6" />}
-          label="Settings"
+          to={`/wedding/${weddingSlug}/users`}
+          icon={<CircleUserRound className="w-6 h-6" />}
+          label="Users"
+        />
+        <NavItem
+          to={`/wedding/${weddingSlug}/more`}
+          icon={<Grip className="w-6 h-6" />}
+          label="More"
         />
       </ul>
     </nav>
