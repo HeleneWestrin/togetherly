@@ -48,10 +48,19 @@ export interface GuestProfile {
   lastName: string;
 }
 
+export interface GuestDetails {
+  weddingId: string;
+  rsvpStatus: "pending" | "confirmed" | "declined";
+  dietaryPreferences?: string;
+  relationship: "wife" | "husband" | "both";
+  trivia?: string;
+}
+
 export interface GuestUser {
   _id: string;
-  email: string;
+  email?: string;
   profile: GuestProfile;
+  guestDetails: GuestDetails[];
 }
 
 export interface Wedding {

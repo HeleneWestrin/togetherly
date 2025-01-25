@@ -3,6 +3,7 @@ import { useState } from "react";
 interface RadioButtonToggleProps {
   name: string;
   legend: string;
+  srOnly?: boolean;
   options: string[];
   onChange?: (value: string) => void;
   defaultValue?: string;
@@ -14,6 +15,7 @@ interface RadioButtonToggleProps {
 const RadioButtonToggle = ({
   name,
   legend,
+  srOnly,
   options,
   onChange,
   defaultValue,
@@ -31,14 +33,20 @@ const RadioButtonToggle = ({
 
   return (
     <fieldset
-      className={`relative flex items-center justify-between p-1 border-2 border-dark-400 rounded-full ${className}`}
+      className={`relative flex items-center justify-between p-1 rounded-full ${className}`}
     >
-      <legend className="sr-only">{legend}</legend>
-      <div className="relative flex items-center justify-between w-full">
+      <legend
+        className={`text-sm md:text-base font-bold text-dark-800 leading-none mb-2 ${
+          srOnly ? "sr-only" : ""
+        }`}
+      >
+        {legend}
+      </legend>
+      <div className="relative flex items-center justify-between w-full rounded-full bg-dark-100">
         {options.map((option, index) => (
           <label
             key={`${name}-${option}-label`}
-            className="relative rounded-full z-10 flex-1 text-sm lg:text-base text-center font-semibold py-3 cursor-pointer text-dark-800 has-[input:checked]:text-white focus-within:bg-dark-950 focus-within:text-white"
+            className="relative rounded-full z-10 flex-1 text-sm lg:text-base text-center font-semibold py-3 cursor-pointer text-dark-800 has-[input:checked]:text-white focus-within:text-white transition-colors duration-300"
           >
             <input
               type="radio"

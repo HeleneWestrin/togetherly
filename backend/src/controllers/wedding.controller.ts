@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { WeddingService } from "../services/wedding.service";
 import { sendSuccess } from "../utils/responseHandlers";
+import { weddingSchemas } from "../validators/schemas";
+import { z } from "zod";
+import { ValidationError } from "../utils/errors";
 
 export class WeddingController {
   static async getWeddings(req: Request, res: Response, next: NextFunction) {
@@ -37,15 +40,22 @@ export class WeddingController {
     try {
       const userId = (req as any).userId;
       const { weddingId } = req.params;
-      const { guestEmail } = req.body;
+
+      // Validate guest data
+      const guestData = weddingSchemas.guestData.parse(req.body);
+
       const wedding = await WeddingService.addGuest(
         weddingId,
-        guestEmail,
+        guestData,
         userId
       );
       sendSuccess(res, wedding);
     } catch (error) {
-      next(error);
+      if (error instanceof z.ZodError) {
+        next(new ValidationError(error.errors[0].message));
+      } else {
+        next(error);
+      }
     }
   }
 

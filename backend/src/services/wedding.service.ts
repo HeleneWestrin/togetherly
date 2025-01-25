@@ -104,42 +104,96 @@ export class WeddingService {
     return savedWedding;
   }
 
-  static async addGuest(weddingId: string, guestEmail: string, userId: string) {
-    const wedding = await Wedding.findById(weddingId);
-    if (!wedding) throw new NotFoundError("Wedding not found");
+  static async addGuest(
+    weddingId: string,
+    guestData: {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      relationship: "wife" | "husband" | "both";
+      rsvpStatus: "pending" | "confirmed" | "declined";
+      dietaryPreferences?: string;
+      trivia?: string;
+    },
+    userId: string
+  ) {
+    try {
+      const wedding = await Wedding.findById(weddingId);
+      if (!wedding) throw new NotFoundError("Wedding not found");
 
-    // Only couples of the wedding or admins can add guests
-    const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    const user = await User.findById(userId);
-    if (!isCouple && user?.role !== "admin") {
-      throw new ForbiddenError("Only couples or admins can add guests");
-    }
+      // Only couples of the wedding or admins can add guests
+      const isCouple = wedding.couple.some((id) => id.toString() === userId);
+      const user = await User.findById(userId);
+      if (!isCouple && user?.role !== "admin") {
+        throw new ForbiddenError("Only couples or admins can add guests");
+      }
 
-    const guest = await User.findOne({ email: guestEmail });
-    if (!guest) throw new NotFoundError("Guest not found");
+      // If email is provided, check if user exists
+      let guest;
+      if (guestData.email) {
+        guest = await User.findOne({ email: guestData.email });
+      }
 
-    // Add guest to wedding if not already added
-    if (
-      !wedding.guests.some(
-        (id) => id.toString() === (guest._id as Types.ObjectId).toString()
-      )
-    ) {
-      wedding.guests.push(guest._id as Types.ObjectId);
-      await wedding.save();
-
-      // Update guest's references
-      await User.findByIdAndUpdate(guest._id, {
-        $push: {
-          weddings: wedding._id,
-          guestDetails: {
-            weddingId: wedding._id,
-            rsvpStatus: "pending",
+      // If no existing user found or no email provided, create a new one
+      if (!guest) {
+        guest = await User.create({
+          email: guestData.email || undefined,
+          role: "guest",
+          profile: {
+            firstName: guestData.firstName,
+            lastName: guestData.lastName,
           },
-        },
-      });
-    }
+          guestDetails: [
+            {
+              weddingId: wedding._id as Types.ObjectId,
+              rsvpStatus: guestData.rsvpStatus,
+              dietaryPreferences: guestData.dietaryPreferences ?? "",
+              relationship: guestData.relationship,
+              trivia: guestData.trivia ?? "",
+            },
+          ],
+        });
+      } else {
+        // Update existing user's guest details
+        const existingGuestDetail = guest.guestDetails?.find(
+          (detail) =>
+            detail.weddingId.toString() ===
+            (wedding._id as Types.ObjectId).toString()
+        );
 
-    return wedding;
+        if (!existingGuestDetail) {
+          guest.guestDetails = guest.guestDetails || [];
+          guest.guestDetails.push({
+            weddingId: wedding._id as Types.ObjectId,
+            rsvpStatus: guestData.rsvpStatus,
+            dietaryPreferences: guestData.dietaryPreferences ?? "",
+            relationship: guestData.relationship,
+            trivia: guestData.trivia ?? "",
+          });
+        } else {
+          Object.assign(existingGuestDetail, {
+            rsvpStatus: guestData.rsvpStatus,
+            dietaryPreferences: guestData.dietaryPreferences ?? "",
+            relationship: guestData.relationship,
+            trivia: guestData.trivia ?? "",
+          });
+        }
+        await guest.save();
+      }
+
+      // Add guest to wedding if not already added
+      if (
+        !wedding.guests.some((id) => id.toString() === guest._id.toString())
+      ) {
+        wedding.guests.push(guest._id as Types.ObjectId);
+        await wedding.save();
+      }
+
+      return wedding;
+    } catch (error) {
+      console.error("Error in addGuest:", error);
+      throw error;
+    }
   }
 
   static async updateRSVP(

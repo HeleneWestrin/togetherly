@@ -8,6 +8,7 @@ import { Wedding } from "./wedding.model";
 export interface User extends Document {
   email: string;
   password: string;
+  isRegistered: boolean;
   isActive: boolean;
   role: "admin" | "couple" | "guest"; // Strict type for user roles
   // Array of guest-specific details for each wedding they're invited to
@@ -15,6 +16,8 @@ export interface User extends Document {
     weddingId: mongoose.Types.ObjectId;
     rsvpStatus: "pending" | "confirmed" | "declined";
     dietaryPreferences: string;
+    relationship: "wife" | "husband" | "both";
+    trivia?: string;
   }>;
   // User's personal information
   profile: {
@@ -36,30 +39,33 @@ const userSchema: Schema<User> = new mongoose.Schema(
   {
     email: {
       type: String,
-      required: [true, "Email is required"],
-      unique: true, // Ensures email addresses are unique
-      match: [/\S+@\S+\.\S+/, "Please enter a valid email"], // Email format validation
+      unique: true,
+      sparse: true,
+      match: [/\S+@\S+\.\S+/, "Please enter a valid email"],
     },
     password: {
       type: String,
       required: [
         function (this: User) {
-          return !this.socialProvider;
+          return !this.socialProvider && this.isRegistered;
         },
-        "Password is required",
+        "Password is required for registered users",
       ],
       validate: {
         validator: function (this: User, password: string) {
-          // Skip validation if using social login
-          if (this.socialProvider) return true;
+          if (this.socialProvider || !this.isRegistered) return true;
           return password.length >= 10;
         },
         message: "Password must be at least 10 characters long",
       },
     },
+    isRegistered: {
+      type: Boolean,
+      default: false,
+    },
     isActive: {
       type: Boolean,
-      default: true, // Users are active by default
+      default: true,
     },
     role: {
       type: String,
@@ -70,13 +76,19 @@ const userSchema: Schema<User> = new mongoose.Schema(
     // Nested array for tracking wedding-specific guest information
     guestDetails: [
       {
-        weddingId: { type: Schema.Types.ObjectId, ref: "Wedding" }, // Reference to Wedding model
+        weddingId: { type: Schema.Types.ObjectId, ref: "Wedding" },
         rsvpStatus: {
           type: String,
           enum: ["pending", "confirmed", "declined"],
           default: "pending",
         },
-        dietaryPreferences: String,
+        dietaryPreferences: { type: String },
+        relationship: {
+          type: String,
+          enum: ["wife", "husband", "both"],
+          required: true,
+        },
+        trivia: { type: String },
       },
     ],
     profile: {

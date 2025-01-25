@@ -8,14 +8,13 @@ import GuestList from "../components/wedding/GuestList";
 import { fetchWeddingDetails } from "../services/weddingService";
 import { useUIStore } from "../stores/useUIStore";
 import SidePanel from "../components/ui/SidePanel";
-import FormInput from "../components/ui/FormInput";
+import AddGuestForm from "../components/wedding/AddGuestForm";
 import { useState } from "react";
 
 const WeddingGuests: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
   const queryClient = useQueryClient();
   const { activePanels, openPanel, closePanel } = useUIStore();
-  const [guestEmail, setGuestEmail] = useState("");
   const [error, setError] = useState<string>("");
 
   const {
@@ -30,19 +29,24 @@ const WeddingGuests: React.FC = () => {
   });
 
   const addGuestMutation = useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async (guestData: {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      relationship: "wife" | "husband" | "both";
+      rsvpStatus: "pending" | "confirmed" | "declined";
+      dietaryPreferences?: string;
+      trivia?: string;
+    }) => {
       const response = await axiosInstance.post(
         `/api/weddings/${wedding?._id}/guests`,
-        {
-          guestEmail: email,
-        }
+        guestData
       );
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
       closePanel("addGuest");
-      setGuestEmail("");
       setError("");
     },
     onError: (error: Error) => {
@@ -50,20 +54,10 @@ const WeddingGuests: React.FC = () => {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!guestEmail) {
-      setError("Email is required");
-      return;
-    }
-    addGuestMutation.mutate(guestEmail);
-  };
-
   const handleOpenPanel = () => openPanel("addGuest");
   const handleClosePanel = () => {
     closePanel("addGuest");
     setError("");
-    setGuestEmail("");
   };
 
   if (isLoading) return <div className="p-5">Loading wedding details...</div>;
@@ -115,47 +109,12 @@ const WeddingGuests: React.FC = () => {
         onClose={handleClosePanel}
         title="Add new guest"
       >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          {error && (
-            <Typography
-              element="p"
-              className="text-red-600"
-            >
-              {error}
-            </Typography>
-          )}
-
-          <FormInput
-            id="guestEmail"
-            name="guestEmail"
-            type="email"
-            label="Guest email"
-            value={guestEmail}
-            onChange={(e) => setGuestEmail(e.target.value)}
-            required
-            autoFocus
-          />
-
-          <div className="flex flex-col gap-4 pt-4">
-            <Button
-              type="submit"
-              disabled={addGuestMutation.isPending}
-            >
-              {addGuestMutation.isPending ? "Adding guest..." : "Add guest"}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleClosePanel}
-              disabled={addGuestMutation.isPending}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
+        <AddGuestForm
+          onSubmit={addGuestMutation.mutate}
+          onCancel={handleClosePanel}
+          isError={!!error}
+          error={error ? new Error(error) : null}
+        />
       </SidePanel>
 
       <div className="bg-gradient-full"></div>
