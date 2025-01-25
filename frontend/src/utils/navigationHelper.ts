@@ -4,10 +4,23 @@ export const navigateBasedOnWeddings = async (
   navigate: (path: string) => void,
   isNewUser?: boolean
 ) => {
-  console.log("Helper: ", isNewUser);
+  // Only check for onboarding if user is new
   if (isNewUser) {
-    navigate("/onboarding");
-    return;
+    try {
+      // Check if onboarding is already completed
+      const onboardingResponse = await axiosInstance.get(
+        "/api/onboarding/progress"
+      );
+      const onboardingData = onboardingResponse.data.data;
+
+      // Only navigate to onboarding if it's not completed
+      if (!onboardingData?.completed) {
+        navigate("/onboarding");
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking onboarding status:", error);
+    }
   }
 
   try {

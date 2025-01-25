@@ -81,8 +81,7 @@ export const seedDatabase = async (): Promise<void> => {
 
     // First create the wedding with initial structure but no budget total
     const wedding = await Wedding.create({
-      title: "John & Jane's Wedding",
-      slug: "john-janes-wedding",
+      title: `${partner1.profile.firstName} & ${partner2.profile.firstName}'s wedding`,
       date: new Date("2025-06-17"),
       location: {
         address: "123 Wedding Venue St, City, Country",
@@ -227,9 +226,23 @@ export const seedDatabase = async (): Promise<void> => {
       },
     });
 
-    // After creating the wedding, update the user's weddings array
+    // After creating the wedding, update both couple and guests' references
     await User.updateMany(
-      { _id: { $in: [partner1._id, partner2._id] } },
+      { _id: { $in: wedding.guests } },
+      {
+        $push: {
+          weddings: wedding._id,
+          guestDetails: {
+            weddingId: wedding._id,
+            rsvpStatus: "pending",
+          },
+        },
+      }
+    );
+
+    // Update couple's wedding references separately (they don't need guestDetails)
+    await User.updateMany(
+      { _id: { $in: wedding.couple } },
       { $push: { weddings: wedding._id } }
     );
 

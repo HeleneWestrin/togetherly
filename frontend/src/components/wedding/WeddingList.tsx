@@ -28,6 +28,7 @@ export const WeddingList: React.FC = () => {
 
   const formatCoupleName = (profiles: Array<{ profile: CoupleProfile }>) => {
     return profiles
+      .filter((profile) => profile && profile.profile) // Add null check
       .map(({ profile }) => `${profile.firstName} ${profile.lastName}`)
       .join(" & ");
   };
@@ -39,7 +40,7 @@ export const WeddingList: React.FC = () => {
         styledAs="h2"
         className="text-xl font-semibold mb-4"
       >
-        Your Weddings
+        Your weddings
       </Typography>
       <div className="grid gap-4 md:grid-cols-2">
         {weddings.map((wedding) => (
@@ -66,7 +67,8 @@ export const WeddingList: React.FC = () => {
               styledAs="bodySmall"
               className="text-dark-600"
             >
-              {wedding.location.venue}, {wedding.location.city}
+              {wedding.location.venue}
+              {wedding.location.city && `, ${wedding.location.city}`}
             </Typography>
             <Typography
               element="p"

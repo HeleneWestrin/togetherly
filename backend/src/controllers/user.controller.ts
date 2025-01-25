@@ -83,3 +83,22 @@ export const getUsers = async (
     next(error);
   }
 };
+
+export class UserController {
+  static async completeOnboarding(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = (req as any).userId;
+      const user = await UserService.completeOnboarding(userId);
+      sendSuccess(res, { message: "Onboarding completed successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+// Export the method directly
+export const completeOnboarding = UserController.completeOnboarding;

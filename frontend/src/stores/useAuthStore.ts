@@ -28,6 +28,7 @@ interface User {
  * - login: Sets user data and token
  * - logout: Clears auth state
  * - setLoading: Updates loading state
+ * - updateUser: Updates user data
  */
 interface AuthState {
   token: string | null;
@@ -37,6 +38,7 @@ interface AuthState {
   login: (token: string, user: User) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  updateUser: (updates: Partial<User>) => void;
 }
 
 /**
@@ -72,6 +74,10 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => set({ token: null, user: null, isAuthenticated: false }),
       setLoading: (loading) => set({ isLoading: loading }),
+      updateUser: (updates) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updates } : null,
+        })),
     }),
     {
       // Persistence configuration

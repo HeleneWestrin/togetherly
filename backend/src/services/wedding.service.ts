@@ -127,9 +127,10 @@ export class WeddingService {
       wedding.guests.push(guest._id as Types.ObjectId);
       await wedding.save();
 
-      // Add wedding reference to guest's guestDetails
+      // Update guest's references
       await User.findByIdAndUpdate(guest._id, {
         $push: {
+          weddings: wedding._id,
           guestDetails: {
             weddingId: wedding._id,
             rsvpStatus: "pending",
@@ -444,6 +445,13 @@ export class WeddingService {
     });
 
     const savedWedding = await wedding.save();
+
+    // Update both users' weddings arrays
+    await User.updateMany(
+      { _id: { $in: savedWedding.couple } },
+      { $push: { weddings: savedWedding._id } }
+    );
+
     return savedWedding;
   }
 }

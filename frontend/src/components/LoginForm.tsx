@@ -98,7 +98,6 @@ export const LoginForm: React.FC = () => {
             type="email"
             name="email"
             label="Email"
-            placeholder="your@email.com"
             autoComplete="email"
             required
             aria-describedby={isError ? "login-error" : undefined}

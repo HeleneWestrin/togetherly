@@ -1,7 +1,7 @@
 import { User } from "../models/user.model";
 import { Types } from "mongoose";
 import { AuthService } from "./auth.service";
-import { ValidationError } from "../utils/errors";
+import { ValidationError, NotFoundError } from "../utils/errors";
 
 /**
  * Service class handling user-related business logic
@@ -124,5 +124,23 @@ export class UserService {
         ),
       })),
     };
+  }
+
+  /**
+   * Updates user's status after completing onboarding
+   * @param userId - ID of the user completing onboarding
+   */
+  static async completeOnboarding(userId: string) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: { isNewUser: false } },
+      { new: true }
+    );
+
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    return user;
   }
 }

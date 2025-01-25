@@ -1,7 +1,7 @@
 import { LoginForm } from "../components/LoginForm";
 import { Typography } from "../components/ui/Typography";
 import { useAuthStore } from "../stores/useAuthStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { navigateBasedOnWeddings } from "../utils/navigationHelper";
 import Rings from "../assets/icons/icon-rings.svg?react";
@@ -20,9 +20,13 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigateBasedOnWeddings(navigate, isNewUser);
+      if (isNewUser) {
+        navigate("/onboarding");
+      } else {
+        navigateBasedOnWeddings(navigate);
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, isNewUser, navigate]);
 
   return (
     <>
@@ -37,6 +41,16 @@ const Login: React.FC = () => {
             Log in to Togetherly
           </Typography>
           <LoginForm />
+          <p className="mt-6 text-center text-dark-850">
+            Don't have an account yet?{" "}
+            <Link
+              to="/signup"
+              aria-label="Don't have an account yet? Sign up"
+              className="text-primary-600 hover:text-primary-700 font-semibold underline"
+            >
+              Sign up
+            </Link>
+          </p>
         </div>
       </div>
       <div className="bg-gradient-full"></div>

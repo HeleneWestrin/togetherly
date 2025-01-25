@@ -3,6 +3,7 @@ import {
   createUser,
   loginUser,
   getUsers,
+  completeOnboarding,
 } from "../controllers/user.controller";
 import { authenticateUser } from "../middleware/authentication";
 import { requireAdmin } from "../middleware/adminAuth";
@@ -11,6 +12,7 @@ import { validateRequest } from "../middleware/validateRequest";
 import { z } from "zod";
 import { AuthService } from "../services/auth.service";
 import { User } from "../models/user.model";
+import { UserController } from "../controllers/user.controller";
 
 // Initialize Express Router for user-related routes
 export const userRouter = Router();
@@ -115,3 +117,13 @@ userRouter.post("/auth/google/token", (async (
     next(error);
   }
 }) as RequestHandler);
+
+/**
+ * PATCH /complete-onboarding
+ * Updates user's isNewUser status after completing onboarding
+ */
+userRouter.patch(
+  "/complete-onboarding",
+  authenticateUser,
+  UserController.completeOnboarding
+);

@@ -135,6 +135,7 @@ const Onboarding: React.FC = () => {
         coupleInfo,
         weddingInfo,
       });
+
       // Mark onboarding as completed
       await updateProgressMutation.mutateAsync({
         step: 2,
@@ -142,10 +143,17 @@ const Onboarding: React.FC = () => {
         completed: true,
       });
 
+      // Update user's isNewUser status
+      await axiosInstance.patch("/api/users/complete-onboarding");
+
+      // Update local auth store
+      useAuthStore.getState().updateUser({ isNewUser: false });
+
       // Navigate to the wedding budget page using the slug from the response
       navigate(`/wedding/${response.data.slug}/budget`);
     } catch (error) {
-      console.error("Error during onboarding completion:", error);
+      console.error("Failed to update onboarding status:", error);
+      throw error;
     }
   };
 
@@ -374,21 +382,34 @@ const Onboarding: React.FC = () => {
           <FormInput
             id="estimatedGuests"
             name="estimatedGuests"
-            label="Estimated Number of Guests"
-            type="number"
+            label="Estimated number of guests"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={weddingInfo.estimatedGuests}
-            onChange={(e) =>
-              setWeddingInfo({
-                ...weddingInfo,
-                estimatedGuests: Number(e.target.value),
-              })
-            }
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || /^\d+$/.test(value)) {
+                setWeddingInfo({
+                  ...weddingInfo,
+                  estimatedGuests: value === "" ? 0 : Number(value),
+                });
+              }
+            }}
           />
           <FormInput
             id="estimatedBudget"
+            isCurrency={true}
+            currencySuffix=" kr"
             name="estimatedBudget"
-            label="Estimated Budget"
-            type="number"
+            label="Estimated budget"
+            type="text"
+            inputMode="numeric"
             value={weddingInfo.estimatedBudget}
             onChange={(e) =>
               setWeddingInfo({
@@ -407,12 +428,23 @@ const Onboarding: React.FC = () => {
                     coupleInfo,
                     weddingInfo,
                   });
+
                   // Mark onboarding as completed
                   await updateProgressMutation.mutateAsync({
                     step: 2,
                     weddingInfo,
                     completed: true,
                   });
+
+                  // Update user's isNewUser status
+                  await axiosInstance.patch("/api/users/complete-onboarding");
+
+                  // Clear localStorage
+                  clearLocalStorage();
+
+                  // Update local auth store
+                  useAuthStore.getState().updateUser({ isNewUser: false });
+
                   navigate(`/wedding/${response.data.slug}/budget`);
                 } catch (error) {
                   console.error("Error during onboarding completion:", error);

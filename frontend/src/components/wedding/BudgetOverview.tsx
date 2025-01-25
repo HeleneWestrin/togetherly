@@ -128,13 +128,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ wedding }) => {
               styledAs="bodySmall"
               className="text-dark-600"
             >
-              {remaining > 0 ? "Remaining" : "Over budget"}
+              {remaining >= 0 ? "Remaining" : "Over budget"}
             </Typography>
             <Typography
               element="p"
               className="font-semibold"
             >
-              {remaining > 0
+              {remaining >= 0
                 ? remaining.toLocaleString()
                 : (remaining * -1).toLocaleString()}{" "}
               kr

@@ -110,8 +110,11 @@ export const CreateAccountForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
+    <form
+      className="w-full"
+      onSubmit={handleSubmit}
+    >
+      <div>
         <Button
           type="button"
           variant="secondary"
@@ -120,17 +123,18 @@ export const CreateAccountForm: React.FC = () => {
         >
           Continue with Google
         </Button>
+      </div>
 
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Or</span>
-          </div>
-        </div>
+      <div className="relative flex my-8 items-center justify-center">
+        <hr className="h-0.5 grow" />
+        <span className="w-12 shrink-0 text-center text-compact-bold text-dark-850">
+          or
+        </span>
+        <hr className="h-0.5 grow" />
+      </div>
 
-        <div className="mb-4">
+      <div className="space-y-5">
+        <div>
           <FormInput
             id="email"
             label="Email"
@@ -141,7 +145,7 @@ export const CreateAccountForm: React.FC = () => {
           />
         </div>
 
-        <div className="mb-4">
+        <div>
           <FormInput
             id="password"
             name="password"
@@ -151,19 +155,26 @@ export const CreateAccountForm: React.FC = () => {
             required
           />
         </div>
-        <Button
-          type="submit"
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? "Signing up..." : "Sign up"}
-        </Button>
+
         {mutation.isError && (
-          <p>
+          <p
+            className="text-red-600 font-bold text-sm"
+            role="alert"
+          >
             {mutation.error instanceof Error
               ? mutation.error.message
               : "Something went wrong."}
           </p>
         )}
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={mutation.isPending}
+          aria-busy={mutation.isPending}
+        >
+          {mutation.isPending ? "Signing up..." : "Sign up"}
+        </Button>
       </div>
     </form>
   );
