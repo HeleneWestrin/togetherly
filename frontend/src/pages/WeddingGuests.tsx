@@ -6,7 +6,6 @@ import { Typography } from "../components/ui/Typography";
 import { forceLogout } from "../utils/logoutHandler";
 import GuestList from "../components/wedding/GuestList";
 import { fetchWeddingDetails } from "../services/weddingService";
-import { getWeddingDateStatus } from "../utils/weddingCalculations";
 import { useUIStore } from "../stores/useUIStore";
 import SidePanel from "../components/ui/SidePanel";
 import FormInput from "../components/ui/FormInput";

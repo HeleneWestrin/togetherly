@@ -10,6 +10,8 @@ import Home from "../pages/Home";
 import WeddingBudget from "../pages/WeddingBudget";
 import WeddingGuests from "../pages/WeddingGuests";
 import Onboarding from "../pages/Onboarding";
+import WeddingSchedule from "../pages/WeddingSchedule";
+import WeddingUsers from "../pages/WeddingUsers";
 /**
  * Main router component that handles all application routing
  * Uses React Router v6 for client-side routing
@@ -63,10 +65,26 @@ const AppContent = () => {
                   }
                 />
                 <Route
+                  path="schedule"
+                  element={
+                    <PrivateRoute>
+                      <WeddingSchedule />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
                   path="guests"
                   element={
                     <PrivateRoute>
                       <WeddingGuests />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="users"
+                  element={
+                    <PrivateRoute>
+                      <WeddingUsers />
                     </PrivateRoute>
                   }
                 />

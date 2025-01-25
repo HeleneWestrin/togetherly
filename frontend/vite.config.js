@@ -13,4 +13,17 @@ export default defineConfig({
     host: "helene-local.io",
     port: 1234,
   },
+  build: {
+    assetsInlineLimit: 0, // Forces assets to be separate files
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name.endsWith(".svg")) {
+            return "assets/svg/[name]-[hash][extname]";
+          }
+          return "assets/[name]-[hash][extname]";
+        },
+      },
+    },
+  },
 });
