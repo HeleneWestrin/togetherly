@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-export interface ITask extends Document {
+export interface Task extends Document {
   weddingId: mongoose.Types.ObjectId; // references Weddings collection
   title: string;
   budget: number;
@@ -12,7 +12,7 @@ export interface ITask extends Document {
   updatedAt: Date;
 }
 
-const taskSchema = new Schema<ITask>(
+const taskSchema = new Schema<Task>(
   {
     weddingId: { type: Schema.Types.ObjectId, ref: "Wedding", required: true },
     title: { type: String, required: true },
@@ -29,4 +29,4 @@ const taskSchema = new Schema<ITask>(
   { timestamps: true }
 );
 
-export const Task: Model<ITask> = mongoose.model<ITask>("Task", taskSchema);
+export const Task: Model<Task> = mongoose.model<Task>("Task", taskSchema);

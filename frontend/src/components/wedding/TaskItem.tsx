@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NumericFormat } from "react-number-format";
 import { Typography } from "../ui/Typography";
 import FormLabel from "../ui/FormLabel";
-import { ITask, CreateTaskData, TaskResponse } from "../../types/wedding";
+import { Task, CreateTaskData, TaskResponse } from "../../types/wedding";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteTask, updateTaskDetails } from "../../services/taskService";
 import { Trash2, Edit2 } from "lucide-react";
@@ -12,7 +12,7 @@ import TaskForm from "./TaskForm";
 import { useUIStore } from "../../stores/useUIStore";
 
 interface TaskItemProps {
-  task: ITask;
+  task: Task;
   onEditTask: (taskId: string) => void;
   tabIndex?: number;
   budgetItemId: string;

@@ -9,6 +9,10 @@ interface User {
   email: string;
   role: "admin" | "couple" | "guest"; // Strict union type for user roles
   isNewUser?: boolean;
+  profile?: {
+    firstName?: string;
+    lastName?: string;
+  };
 }
 
 /**

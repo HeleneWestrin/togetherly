@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-import { ITask } from "./task.model";
 
 export const DEFAULT_BUDGET_CATEGORIES = [
   "Attire & accessories",
@@ -14,7 +13,7 @@ export const DEFAULT_BUDGET_CATEGORIES = [
   "Venue & catering",
 ];
 
-interface IBudgetTaskItem {
+interface BudgetTaskItem {
   _id: mongoose.Types.ObjectId;
   title: string;
   budget: number;
@@ -22,16 +21,16 @@ interface IBudgetTaskItem {
   completed: boolean;
 }
 
-export interface IBudgetItem {
+export interface BudgetItem {
   _id?: mongoose.Types.ObjectId;
   category: string;
   estimatedCost: number;
   spent: number;
-  tasks: IBudgetTaskItem[];
+  tasks: BudgetTaskItem[];
   progress: number;
 }
 
-interface ILocation {
+interface Location {
   address: string;
   coordinates: {
     lat: number;
@@ -39,15 +38,15 @@ interface ILocation {
   };
 }
 
-export interface IWedding extends Document {
+export interface Wedding extends Document {
   title: string;
   slug: string;
   date: Date;
-  location: ILocation;
+  location: Location;
   budget: {
     total: number;
     spent: number;
-    allocated: IBudgetItem[];
+    allocated: BudgetItem[];
   };
   couple: mongoose.Types.ObjectId[]; // references Users collection
   guests: mongoose.Types.ObjectId[]; // references Users collection (guests are a user role)
@@ -56,7 +55,7 @@ export interface IWedding extends Document {
   updatedAt: Date;
 }
 
-const budgetItemSchema = new Schema<IBudgetItem>({
+const budgetItemSchema = new Schema<BudgetItem>({
   category: { type: String, required: true },
   estimatedCost: { type: Number, required: true, default: 0 },
   spent: { type: Number, required: true, default: 0 },
@@ -64,20 +63,30 @@ const budgetItemSchema = new Schema<IBudgetItem>({
   progress: { type: Number, required: true, default: 0 },
 });
 
-const locationSchema = new Schema<ILocation>({
-  address: { type: String, required: true },
+const locationSchema = new Schema<Location>({
+  address: { type: String, required: false },
   coordinates: {
-    lat: { type: Number, required: true },
-    lng: { type: Number, required: true },
+    lat: { type: Number, required: false },
+    lng: { type: Number, required: false },
   },
 });
 
-const weddingSchema = new Schema<IWedding>(
+const weddingSchema = new Schema<Wedding>(
   {
     title: { type: String, required: true },
     slug: { type: String, unique: true },
-    date: { type: Date, required: true },
-    location: { type: locationSchema, required: true },
+    date: { type: Date, required: false },
+    location: {
+      type: locationSchema,
+      required: false,
+      default: {
+        address: "",
+        coordinates: {
+          lat: 0,
+          lng: 0,
+        },
+      },
+    },
     budget: {
       total: { type: Number, required: true },
       spent: { type: Number, required: true },
@@ -123,13 +132,13 @@ weddingSchema.pre("save", async function (next) {
 // Virtual to calculate spent dynamically based on task "actualCost"
 budgetItemSchema
   .virtual("calculatedSpent")
-  .get(async function (this: IBudgetItem) {
+  .get(async function (this: BudgetItem) {
     const Task = mongoose.model("Task");
     const tasks = await Task.find({ _id: { $in: this.tasks } });
     return tasks.reduce((total, task) => total + (task.actualCost || 0), 0);
   });
 
-export const Wedding: Model<IWedding> = mongoose.model<IWedding>(
+export const Wedding: Model<Wedding> = mongoose.model<Wedding>(
   "Wedding",
   weddingSchema
 );

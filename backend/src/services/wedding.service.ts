@@ -1,7 +1,7 @@
 import mongoose, { Types } from "mongoose";
 import { DEFAULT_BUDGET_CATEGORIES, Wedding } from "../models/wedding.model";
-import { IUser, User } from "../models/user.model";
-import { ITask, Task } from "../models/task.model";
+import { User } from "../models/user.model";
+import { Task } from "../models/task.model";
 import {
   ForbiddenError,
   NotFoundError,
@@ -145,7 +145,7 @@ export class WeddingService {
     weddingId: string,
     userId: string,
     rsvpStatus: unknown
-  ): Promise<IUser> {
+  ): Promise<User> {
     try {
       const validatedStatus = weddingSchemas.rsvpStatus.parse(rsvpStatus);
       const user = await User.findById(userId);
@@ -172,7 +172,7 @@ export class WeddingService {
   }
 
   static async getWeddingBySlug(slug: string, userId: string) {
-    const user = (await User.findById(userId)) as IUser | null;
+    const user = (await User.findById(userId)) as User | null;
     if (!user) throw new NotFoundError("User not found");
 
     // Populate both couple/guest info AND tasks for budget calculations
@@ -205,7 +205,7 @@ export class WeddingService {
       wedding.budget.allocated = wedding.budget.allocated.map((category) => {
         // Type the populated tasks array properly
         const tasks = (category.tasks || []) as unknown as Array<
-          ITask & { _id: mongoose.Types.ObjectId }
+          Task & { _id: mongoose.Types.ObjectId }
         >;
 
         const totalTasks = tasks.length;
@@ -338,7 +338,7 @@ export class WeddingService {
 
   static async updateTaskDetails(
     taskId: string,
-    taskData: Partial<ITask>,
+    taskData: Partial<Task>,
     userId: string
   ) {
     const task = await Task.findById(taskId);
@@ -421,7 +421,7 @@ export class WeddingService {
 
     // Create the wedding
     const wedding = new Wedding({
-      title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s Wedding`,
+      title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s wedding`,
       date: weddingInfo.date || null,
       location: {
         address: "",

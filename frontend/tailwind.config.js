@@ -72,6 +72,9 @@ export default {
       current: "currentColor",
     },
     extend: {
+      boxShadow: {
+        "pink-border": "0 0 0 2px var(--pink-600)",
+      },
       backgroundImage: {
         "gradient-landscape": "var(--gradient-svg), var(--gradient-fallback)",
         "gradient-portrait":
@@ -84,4 +87,20 @@ export default {
     },
   },
   plugins: [],
+  safelist: [
+    "peer/one",
+    "peer/two",
+    "peer/three",
+    "peer-checked/one:text-white",
+    "peer-checked/two:text-white",
+    "peer-checked/three:text-white",
+    "peer-focus-visible/one:border-2",
+    "peer-focus-visible/two:border-2",
+    "peer-focus-visible/three:border-2",
+    "peer-focus-visible/one:border-pink-600",
+    "peer-focus-visible/two:border-pink-600",
+    "peer-focus-visible/three:border-pink-600",
+    "peer-checked/two:translate-x-[100%]",
+    "peer-checked/three:translate-x-[200%]",
+  ],
 };

@@ -10,7 +10,7 @@ import { userSchemas } from "../validators/schemas";
 import { validateRequest } from "../middleware/validateRequest";
 import { z } from "zod";
 import { AuthService } from "../services/auth.service";
-import { IUser, User } from "../models/user.model";
+import { User } from "../models/user.model";
 
 // Initialize Express Router for user-related routes
 export const userRouter = Router();
@@ -94,7 +94,7 @@ userRouter.post("/auth/google/token", (async (
 
       // Generate JWT token
       const jwtToken = AuthService.generateToken(
-        (user as IUser & { _id: { toString(): string } })._id.toString()
+        (user as User & { _id: { toString(): string } })._id.toString()
       );
 
       res.json({

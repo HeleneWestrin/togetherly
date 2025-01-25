@@ -5,6 +5,7 @@ import { userRouter } from "./routes/user.routes";
 import { errorHandler } from "./middleware/errorHandler";
 import { weddingRouter } from "./routes/wedding.routes";
 import { taskRouter } from "./routes/task.routes";
+import { onboardingRouter } from "./routes/onboarding.routes";
 
 export const app = express();
 
@@ -25,6 +26,9 @@ app.use("/api/weddings", weddingRouter);
 
 // Task routes
 app.use("/api/tasks", taskRouter);
+
+// Onboarding routes
+app.use("/api/onboarding", onboardingRouter);
 
 // Error handler should be last
 app.use(errorHandler);

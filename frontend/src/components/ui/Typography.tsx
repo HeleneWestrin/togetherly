@@ -5,6 +5,7 @@ type TypographyElement = "h1" | "h2" | "h3" | "h4" | "h5" | "p" | "span";
 type TypographyStyle =
   | TypographyElement
   | "h1Large"
+  | "h2Large"
   | "bodyLarge"
   | "bodyDefault"
   | "bodySmall"
@@ -19,7 +20,9 @@ const baseStyles: Record<TypographyStyle, string> = {
   p: "font-sans text-base lg:text-md leading-snug",
   span: "",
   h1Large:
-    "font-slab text-dark-800 text-3xl md:text-4xl lg:text-6xl font-medium leading-tight",
+    "font-slab text-dark-800 text-3xl md:text-4xl lg:text-5sxl xl:text-6xl font-medium leading-none",
+  h2Large:
+    "font-slab text-dark-800 text-2xl md:text-2xl lg:text-3xl xl:text-4xl font-medium leading-none",
   bodyLarge: "font-sans text-lg md:text-xl leading-snug",
   bodyDefault: "font-sans text-base md:text-lg leading-snug",
   bodySmall: "font-sans text-sm md:text-base leading-snug",

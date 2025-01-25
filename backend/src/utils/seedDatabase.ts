@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { User } from "../models/user.model";
 import {
   Wedding,
-  IBudgetItem,
+  BudgetItem,
   DEFAULT_BUDGET_CATEGORIES,
 } from "../models/wedding.model";
 import { Task } from "../models/task.model";

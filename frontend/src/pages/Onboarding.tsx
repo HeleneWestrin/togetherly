@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "../services/axiosService";
 import { Typography } from "../components/ui/Typography";
 import { Button } from "../components/ui/Button";
 import FormInput from "../components/ui/FormInput";
 import { useAuthStore } from "../stores/useAuthStore";
+import WeddingRings from "../assets/illustrations/wedding-rings-divider.svg?react";
+import RadioButtonToggle from "../components/ui/RadioButtonToggle";
+import { ArrowRightIcon, CheckIcon } from "lucide-react";
 
 interface CoupleInfo {
   firstName: string;
@@ -14,33 +17,137 @@ interface CoupleInfo {
   partnerLastName: string;
   partnerEmail: string;
   role: "Wife" | "Husband" | "";
+  partnerRole: "Wife" | "Husband" | "";
 }
 
 interface WeddingInfo {
   date: string;
   estimatedGuests: number;
   estimatedBudget: number;
+  location?: string;
 }
+
+const STORAGE_KEYS = {
+  COUPLE_INFO: "onboarding_couple_info",
+  WEDDING_INFO: "onboarding_wedding_info",
+} as const;
 
 const Onboarding: React.FC = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState(1);
   const user = useAuthStore((state) => state.user);
 
-  const [coupleInfo, setCoupleInfo] = useState<CoupleInfo>({
-    firstName: user?.profile?.firstName || "",
-    lastName: user?.profile?.lastName || "",
-    partnerFirstName: "",
-    partnerLastName: "",
-    partnerEmail: "",
-    role: "",
+  // Fetch existing onboarding progress
+  const { data: onboardingData, isLoading } = useQuery({
+    queryKey: ["onboardingProgress"],
+    queryFn: async () => {
+      const response = await axiosInstance.get("/api/onboarding/progress");
+      return response.data.data;
+    },
   });
 
-  const [weddingInfo, setWeddingInfo] = useState<WeddingInfo>({
-    date: "",
-    estimatedGuests: 0,
-    estimatedBudget: 0,
+  // State initialization with backend data
+  const [step, setStep] = useState(1);
+  const [coupleInfo, setCoupleInfo] = useState<CoupleInfo>(() => {
+    const savedInfo = localStorage.getItem(STORAGE_KEYS.COUPLE_INFO);
+    return savedInfo
+      ? JSON.parse(savedInfo)
+      : {
+          firstName: user?.profile?.firstName || "",
+          lastName: user?.profile?.lastName || "",
+          partnerFirstName: "",
+          partnerLastName: "",
+          partnerEmail: "",
+          role: "",
+          partnerRole: "",
+        };
   });
+  const [weddingInfo, setWeddingInfo] = useState<WeddingInfo>(() => {
+    const savedInfo = localStorage.getItem(STORAGE_KEYS.WEDDING_INFO);
+    return savedInfo
+      ? JSON.parse(savedInfo)
+      : {
+          date: "",
+          estimatedGuests: 0,
+          estimatedBudget: 0,
+        };
+  });
+
+  // Initialize state from backend data
+  useEffect(() => {
+    if (onboardingData) {
+      setStep(onboardingData.step);
+      if (onboardingData.coupleInfo) {
+        setCoupleInfo(onboardingData.coupleInfo);
+      }
+      if (onboardingData.weddingInfo) {
+        setWeddingInfo(onboardingData.weddingInfo);
+      }
+    }
+  }, [onboardingData]);
+
+  // Save to localStorage whenever form data changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.COUPLE_INFO, JSON.stringify(coupleInfo));
+  }, [coupleInfo]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEYS.WEDDING_INFO,
+      JSON.stringify(weddingInfo)
+    );
+  }, [weddingInfo]);
+
+  // Clear localStorage after successful submission
+  const clearLocalStorage = () => {
+    localStorage.removeItem(STORAGE_KEYS.COUPLE_INFO);
+    localStorage.removeItem(STORAGE_KEYS.WEDDING_INFO);
+  };
+
+  // Mutation to update progress
+  const updateProgressMutation = useMutation({
+    mutationFn: async (data: {
+      step: number;
+      coupleInfo?: CoupleInfo;
+      weddingInfo?: WeddingInfo;
+      completed?: boolean;
+    }) => {
+      const response = await axiosInstance.put(
+        "/api/onboarding/progress",
+        data
+      );
+      return response.data;
+    },
+  });
+
+  const handleCoupleInfoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateProgressMutation.mutateAsync({
+      step: 2,
+      coupleInfo,
+    });
+    setStep(2);
+  };
+
+  const handleWeddingInfoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await createWeddingMutation.mutateAsync({
+        coupleInfo,
+        weddingInfo,
+      });
+      // Mark onboarding as completed
+      await updateProgressMutation.mutateAsync({
+        step: 2,
+        weddingInfo,
+        completed: true,
+      });
+
+      // Navigate to the wedding budget page using the slug from the response
+      navigate(`/wedding/${response.data.slug}/budget`);
+    } catch (error) {
+      console.error("Error during onboarding completion:", error);
+    }
+  };
 
   const createWeddingMutation = useMutation({
     mutationFn: async (data: {
@@ -54,91 +161,158 @@ const Onboarding: React.FC = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      navigate(`/wedding/${data.slug}/budget`);
+      clearLocalStorage(); // Clear stored data after successful submission
     },
   });
 
-  const handleCoupleInfoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep(2);
-  };
-
-  const handleWeddingInfoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createWeddingMutation.mutate({ coupleInfo, weddingInfo });
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   if (step === 1) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full space-y-8">
-          <Typography element="h1">Tell us about the couple</Typography>
+      <div className="min-h-screen flex flex-col lg:flex-row relative">
+        <div className="lg:flex-1 lg:p-6 xl:p-12">
+          <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
+            <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
+              <div className="w-8 h-8 rounded-full bg-pink-600 text-white font-bold flex items-center justify-center z-10">
+                1
+              </div>
+              <div className="w-8 h-8 rounded-full bg-white border-2 border-dark-800 font-bold flex items-center justify-center z-10">
+                2
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center grow w-full">
+              <WeddingRings className="w-5/6 lg:w-3/5 mb-8" />
+              <Typography
+                element="h1"
+                styledAs="h1Large"
+                className="text-center mb-3 lg:mb-6"
+              >
+                Welcome to Togetherly!
+              </Typography>
+              <Typography
+                element="p"
+                styledAs="bodyLarge"
+                className="text-center"
+              >
+                ...and congratulations to your upcoming wedding!
+              </Typography>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 px-6 py-10 lg:px-6 xl:px-12 lg:py-16 xl:py-24 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
+          <Typography
+            element="h2"
+            styledAs="h2Large"
+          >
+            Let's get started 🩷
+          </Typography>
           <form
             onSubmit={handleCoupleInfoSubmit}
-            className="space-y-6"
+            className="space-y-16"
           >
-            <FormInput
-              label="Your First Name"
-              value={coupleInfo.firstName}
-              onChange={(e) =>
-                setCoupleInfo({ ...coupleInfo, firstName: e.target.value })
-              }
-              required
-            />
-            <FormInput
-              label="Your Last Name"
-              value={coupleInfo.lastName}
-              onChange={(e) =>
-                setCoupleInfo({ ...coupleInfo, lastName: e.target.value })
-              }
-              required
-            />
-            <FormInput
-              label="Partner's First Name"
-              value={coupleInfo.partnerFirstName}
-              onChange={(e) =>
-                setCoupleInfo({
-                  ...coupleInfo,
-                  partnerFirstName: e.target.value,
-                })
-              }
-              required
-            />
-            <FormInput
-              label="Partner's Last Name"
-              value={coupleInfo.partnerLastName}
-              onChange={(e) =>
-                setCoupleInfo({
-                  ...coupleInfo,
-                  partnerLastName: e.target.value,
-                })
-              }
-              required
-            />
-            <FormInput
-              label="Partner's Email (Optional)"
-              type="email"
-              value={coupleInfo.partnerEmail}
-              onChange={(e) =>
-                setCoupleInfo({ ...coupleInfo, partnerEmail: e.target.value })
-              }
-            />
-            <select
-              value={coupleInfo.role}
-              onChange={(e) =>
-                setCoupleInfo({
-                  ...coupleInfo,
-                  role: e.target.value as "Wife" | "Husband",
-                })
-              }
-              className="w-full p-2 border rounded"
-              required
+            <div>
+              <Typography
+                element="h3"
+                className="mb-6"
+              >
+                Who are you?
+              </Typography>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 xl:gap-4 mb-4">
+                <FormInput
+                  id="firstName"
+                  name="firstName"
+                  label="First name"
+                  value={coupleInfo.firstName}
+                  onChange={(e) =>
+                    setCoupleInfo({ ...coupleInfo, firstName: e.target.value })
+                  }
+                  required
+                />
+                <FormInput
+                  id="lastName"
+                  label="Last name"
+                  name="lastName"
+                  value={coupleInfo.lastName}
+                  onChange={(e) =>
+                    setCoupleInfo({ ...coupleInfo, lastName: e.target.value })
+                  }
+                  required
+                />
+                <RadioButtonToggle
+                  name="role"
+                  legend="Who are you in the wedding?"
+                  options={["Wife", "Husband"]}
+                  value={coupleInfo.role}
+                  onChange={(value) =>
+                    setCoupleInfo({
+                      ...coupleInfo,
+                      role: value as "Wife" | "Husband",
+                    })
+                  }
+                  className="self-end"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Typography
+                element="h3"
+                className="mb-6"
+              >
+                Who's your partner?
+              </Typography>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 xl:gap-4 mb-4">
+                <FormInput
+                  id="partnerFirstName"
+                  name="partnerFirstName"
+                  label="First name"
+                  value={coupleInfo.partnerFirstName}
+                  onChange={(e) =>
+                    setCoupleInfo({
+                      ...coupleInfo,
+                      partnerFirstName: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <FormInput
+                  id="partnerLastName"
+                  name="partnerLastName"
+                  label="Last name"
+                  value={coupleInfo.partnerLastName}
+                  onChange={(e) =>
+                    setCoupleInfo({
+                      ...coupleInfo,
+                      partnerLastName: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <RadioButtonToggle
+                  name="partnerRole"
+                  legend="Who is your partner in the wedding?"
+                  options={["Wife", "Husband"]}
+                  value={coupleInfo.partnerRole}
+                  onChange={(value) =>
+                    setCoupleInfo({
+                      ...coupleInfo,
+                      partnerRole: value as "Wife" | "Husband",
+                    })
+                  }
+                  className="self-end"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
             >
-              <option value="">Select Your Role</option>
-              <option value="Wife">Wife</option>
-              <option value="Husband">Husband</option>
-            </select>
-            <Button type="submit">Next Step</Button>
+              Continue to the last step{" "}
+              <ArrowRightIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+            </Button>
           </form>
         </div>
       </div>
@@ -146,14 +320,50 @@ const Onboarding: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        <Typography element="h1">Wedding Details</Typography>
+    <div className="min-h-screen flex flex-col lg:flex-row relative">
+      <div className="lg:flex-1 lg:p-6 xl:p-12">
+        <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
+          <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
+            <div className="w-8 h-8 rounded-full bg-dark-800 text-white font-bold flex items-center justify-center z-10">
+              <CheckIcon className="w-4 h-4 lg:w-5 lg:h-5" />
+            </div>
+            <div className="w-8 h-8 rounded-full bg-pink-600 text-white font-bold flex items-center justify-center z-10">
+              2
+            </div>
+          </div>
+          <div className="flex flex-col items-center justify-center grow w-full">
+            <WeddingRings className="w-5/6 lg:w-3/5 mb-8" />
+            <Typography
+              element="h1"
+              styledAs="h1Large"
+              className="text-center mb-3 lg:mb-6"
+            >
+              Almost there!
+            </Typography>
+            <Typography
+              element="p"
+              styledAs="bodyLarge"
+              className="text-center"
+            >
+              Let us know a few details about your big day
+            </Typography>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 px-6 py-10 lg:px-6 xl:px-12 lg:py-16 xl:py-24 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
+        <Typography
+          element="h2"
+          styledAs="h2Large"
+        >
+          Wedding details ✨
+        </Typography>
         <form
           onSubmit={handleWeddingInfoSubmit}
-          className="space-y-6"
+          className="space-y-16"
         >
           <FormInput
+            id="date"
+            name="date"
             label="Wedding Date"
             type="date"
             value={weddingInfo.date}
@@ -162,6 +372,8 @@ const Onboarding: React.FC = () => {
             }
           />
           <FormInput
+            id="estimatedGuests"
+            name="estimatedGuests"
             label="Estimated Number of Guests"
             type="number"
             value={weddingInfo.estimatedGuests}
@@ -173,6 +385,8 @@ const Onboarding: React.FC = () => {
             }
           />
           <FormInput
+            id="estimatedBudget"
+            name="estimatedBudget"
             label="Estimated Budget"
             type="number"
             value={weddingInfo.estimatedBudget}
@@ -184,15 +398,36 @@ const Onboarding: React.FC = () => {
             }
           />
           <div className="flex gap-4">
-            <Button type="submit">Complete Setup</Button>
             <Button
               type="button"
               variant="secondary"
-              onClick={() =>
-                createWeddingMutation.mutate({ coupleInfo, weddingInfo })
-              }
+              onClick={async () => {
+                try {
+                  const response = await createWeddingMutation.mutateAsync({
+                    coupleInfo,
+                    weddingInfo,
+                  });
+                  // Mark onboarding as completed
+                  await updateProgressMutation.mutateAsync({
+                    step: 2,
+                    weddingInfo,
+                    completed: true,
+                  });
+                  navigate(`/wedding/${response.data.slug}/budget`);
+                } catch (error) {
+                  console.error("Error during onboarding completion:", error);
+                }
+              }}
+              className="w-full"
             >
               Skip for now
+            </Button>
+            <Button
+              type="submit"
+              className="w-full"
+            >
+              Complete setup{" "}
+              <ArrowRightIcon className="w-5 h-5 lg:w-6 lg:h-6" />
             </Button>
           </div>
         </form>

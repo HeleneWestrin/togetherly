@@ -56,6 +56,11 @@
   border-radius: 0.5rem;
 }
 
+::selection {
+  background: theme("colors.pink.700");
+  color: theme("colors.white");
+}
+
 /* For Firefox */
 * {
   scrollbar-width: thin;

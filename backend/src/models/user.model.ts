@@ -1,11 +1,11 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
-import { IWedding } from "./wedding.model";
+import { Wedding } from "./wedding.model";
 
 /**
  * Interface defining the User document structure
  * Extends mongoose.Document to include MongoDB document methods
  */
-export interface IUser extends Document {
+export interface User extends Document {
   email: string;
   password: string;
   isActive: boolean;
@@ -24,7 +24,7 @@ export interface IUser extends Document {
     address: string;
     profilePicture: string;
   };
-  weddings: IWedding[]; // References to weddings (either as guest or couple)
+  weddings: Wedding[]; // References to weddings (either as guest or couple)
   createdAt: Date;
   updatedAt: Date;
   socialProvider?: "google";
@@ -32,7 +32,7 @@ export interface IUser extends Document {
 }
 
 // Main user schema definition with validation rules
-const userSchema: Schema<IUser> = new mongoose.Schema(
+const userSchema: Schema<User> = new mongoose.Schema(
   {
     email: {
       type: String,
@@ -43,13 +43,13 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
     password: {
       type: String,
       required: [
-        function (this: IUser) {
+        function (this: User) {
           return !this.socialProvider;
         },
         "Password is required",
       ],
       validate: {
-        validator: function (this: IUser, password: string) {
+        validator: function (this: User, password: string) {
           // Skip validation if using social login
           if (this.socialProvider) return true;
           return password.length >= 10;
@@ -105,4 +105,4 @@ const userSchema: Schema<IUser> = new mongoose.Schema(
 );
 
 // Create and export the User model
-export const User: Model<IUser> = mongoose.model<IUser>("User", userSchema);
+export const User: Model<User> = mongoose.model<User>("User", userSchema);

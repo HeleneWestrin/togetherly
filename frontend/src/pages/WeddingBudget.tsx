@@ -6,7 +6,6 @@ import { forceLogout } from "../utils/logoutHandler";
 import BudgetOverview from "../components/wedding/BudgetOverview";
 import BudgetCategory from "../components/wedding/BudgetCategory";
 import { fetchWeddingDetails } from "../services/weddingService";
-import { getWeddingDateStatus } from "../utils/weddingCalculations";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -22,6 +21,11 @@ const WeddingBudget: React.FC = () => {
     enabled: !!weddingSlug,
     staleTime: 5 * 60 * 1000,
   });
+
+  console.log("Wedding Slug:", weddingSlug);
+  console.log("Wedding Data:", wedding);
+  console.log("Loading:", isLoading);
+  console.log("Error:", error);
 
   const updateTaskMutation = useMutation({
     mutationFn: (data: { taskId: string; completed: boolean }) =>
@@ -76,7 +80,7 @@ const WeddingBudget: React.FC = () => {
       >
         <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
-            {wedding.budget?.total && (
+            {wedding.budget && (
               <div className="space-y-8">
                 <BudgetOverview wedding={wedding} />
                 <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-4">
