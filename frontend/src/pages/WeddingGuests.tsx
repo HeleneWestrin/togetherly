@@ -102,7 +102,7 @@ const WeddingGuests: React.FC = () => {
           buttonText="Add guest"
         />
         <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
+          <div className="grid grid-cols-1 gap-y-4 lg:gap-y-6">
             <div className="flex justify-between items-center">
               <Typography element="h2">Guests</Typography>
             </div>

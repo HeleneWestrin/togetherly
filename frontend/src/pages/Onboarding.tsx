@@ -374,12 +374,18 @@ const Onboarding: React.FC = () => {
           <FormInput
             id="date"
             name="date"
-            label="Wedding Date"
+            label="Wedding date"
             type="date"
+            min={new Date().toISOString().split("T")[0]}
+            max="2100-12-31"
             value={weddingInfo.date}
-            onChange={(e) =>
-              setWeddingInfo({ ...weddingInfo, date: e.target.value })
-            }
+            onChange={(e) => {
+              const inputDate = e.target.value;
+              // Basic validation for YYYY-MM-DD format
+              if (/^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
+                setWeddingInfo({ ...weddingInfo, date: inputDate });
+              }
+            }}
           />
           <FormInput
             id="estimatedGuests"
@@ -389,8 +395,14 @@ const Onboarding: React.FC = () => {
             inputMode="numeric"
             pattern="[0-9]*"
             value={weddingInfo.estimatedGuests}
-            onKeyPress={(e) => {
-              if (!/[0-9]/.test(e.key)) {
+            onKeyDown={(e) => {
+              if (
+                !/[0-9]/.test(e.key) &&
+                e.key !== "Backspace" &&
+                e.key !== "Delete" &&
+                e.key !== "ArrowLeft" &&
+                e.key !== "ArrowRight"
+              ) {
                 e.preventDefault();
               }
             }}

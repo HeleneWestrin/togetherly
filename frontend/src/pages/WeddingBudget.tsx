@@ -113,8 +113,6 @@ const WeddingBudget: React.FC = () => {
     );
   }
 
-  if (!wedding) return <div className="p-5">No wedding data available.</div>;
-
   return (
     <>
       <main
@@ -134,7 +132,12 @@ const WeddingBudget: React.FC = () => {
         />
         <div className="px-5 lg:px-8 py-6 lg:py-8 2xl:py-12 max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
-            {wedding.budget && (
+            {!wedding && (
+              <div className="p-3 bg-gray-50 rounded">
+                <Typography element="p">No wedding data available.</Typography>
+              </div>
+            )}
+            {wedding && wedding.budget && (
               <div className="space-y-8">
                 <BudgetOverview
                   wedding={wedding}
@@ -178,7 +181,7 @@ const WeddingBudget: React.FC = () => {
             inputMode="numeric"
             isCurrency={true}
             currencySuffix=" kr"
-            value={wedding.budget?.total ?? 0}
+            value={wedding?.budget?.total ?? 0}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewBudget(Number(e.target.value))
             }
