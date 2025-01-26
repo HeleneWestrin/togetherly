@@ -12,21 +12,21 @@ type TypographyStyle =
   | "bodyExtraSmall";
 
 const baseStyles: Record<TypographyStyle, string> = {
-  h1: "font-slab text-3xl lg:text-4xl font-semibold leading-tight",
-  h2: "font-slab text-xl lg:text-2xl font-semibold leading-tight",
-  h3: "font-slab text-md lg:text-lg font-medium leading-tight",
-  h4: "font-sans text-md lg:text-xl font-semibold leading-tight",
-  h5: "font-sans text-base lg:text-lg font-semibold leading-tight",
-  p: "font-sans text-base lg:text-md leading-snug",
+  h1: "font-slab text-3xl 2xl:text-4xl font-semibold leading-tight",
+  h2: "font-slab text-xl 2xl:text-2xl font-semibold leading-tight",
+  h3: "font-slab text-md 2xl:text-lg font-medium leading-tight",
+  h4: "font-sans text-md 2xl:text-xl font-semibold leading-tight",
+  h5: "font-sans text-base 2xl:text-lg font-semibold leading-tight",
+  p: "font-sans text-base 2xl:text-md leading-snug",
   span: "",
   h1Large:
-    "font-slab text-dark-800 text-3xl md:text-4xl lg:text-5sxl xl:text-6xl font-medium leading-none",
+    "font-slab text-dark-800 text-3xl md:text-4xl lg:text-5xl 2xl:text-6xl font-medium leading-none",
   h2Large:
-    "font-slab text-dark-800 text-2xl md:text-2xl lg:text-3xl xl:text-4xl font-medium leading-none",
-  bodyLarge: "font-sans text-lg md:text-xl leading-snug",
-  bodyDefault: "font-sans text-base md:text-md leading-snug",
-  bodySmall: "font-sans text-sm md:text-base leading-snug",
-  bodyExtraSmall: "font-sans text-xs md:text-sm leading-snug",
+    "font-slab text-dark-800 text-2xl md:text-2xl lg:text-3xl 2xl:text-4xl font-medium leading-none",
+  bodyLarge: "font-sans text-lg 2xl:text-xl leading-snug",
+  bodyDefault: "font-sans text-base 2xl:text-md leading-snug",
+  bodySmall: "font-sans text-sm 2xl:text-base leading-snug",
+  bodyExtraSmall: "font-sans text-xs 2xl:text-sm leading-snug",
 };
 
 interface TypographyProps extends HTMLAttributes<HTMLElement> {

@@ -48,11 +48,11 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: theme("colors.pink.600");
+  background: theme("colors.dark.950");
 }
 
 ::-webkit-scrollbar-track {
-  background: theme("colors.dark.100");
+  background: theme("colors.white");
   border-radius: 0.5rem;
 }
 
@@ -64,7 +64,7 @@
 /* For Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: theme("colors.pink.600") theme("colors.dark.100");
+  scrollbar-color: theme("colors.dark.950") theme("colors.white");
 }
 
 @layer base {

@@ -9,7 +9,9 @@ export interface Task {
   weddingId: string;
 }
 
-export type CreateTaskData = Omit<Task, "_id" | "completed">;
+export type CreateTaskData = Omit<Task, "_id" | "completed"> & {
+  dueDate?: string;
+};
 
 export interface TaskResponse extends Task {
   createdAt: string;

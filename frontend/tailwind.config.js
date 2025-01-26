@@ -71,6 +71,13 @@ export default {
       transparent: "transparent",
       current: "currentColor",
     },
+    screens: {
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1440px",
+    },
     extend: {
       boxShadow: {
         "pink-border": "0 0 0 2px var(--pink-600)",

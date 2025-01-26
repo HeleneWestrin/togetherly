@@ -4,7 +4,7 @@ interface CreateTaskData {
   title: string;
   budget: number;
   actualCost: number;
-  dueDate: string;
+  dueDate?: string;
   budgetItem: string; // ID of the budget category
   weddingId: string;
 }
@@ -14,7 +14,7 @@ interface TaskResponse {
   title: string;
   budget: number;
   actualCost: number;
-  dueDate: string;
+  dueDate?: string;
   completed: boolean;
   budgetItem: string;
   weddingId: string;

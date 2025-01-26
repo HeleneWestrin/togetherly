@@ -35,7 +35,7 @@ const useCreateTaskMutation = (onSuccess: () => void) => {
     mutationFn: async (data: CreateTaskData) => {
       return createTask({
         ...data,
-        dueDate: data.dueDate || new Date().toISOString(),
+        dueDate: data.dueDate,
       });
     },
     onSuccess,

@@ -1,55 +1,20 @@
 import { useState, useEffect } from "react";
 import { Typography } from "../ui/Typography";
 import ProgressBar from "../ui/ProgressBar";
-import { Button } from "../ui/Button";
-import { Edit2 } from "lucide-react";
-import SidePanel from "../ui/SidePanel";
-import FormInput from "../ui/FormInput";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "../../services/axiosService";
-import { useUIStore } from "../../stores/useUIStore";
 import { getBudgetProgress } from "../../utils/weddingCalculations";
 import { Wedding } from "../../types/wedding";
 
 interface BudgetOverviewProps {
   wedding: Wedding;
-  onEditBudget: () => void;
+  onUpdateBudget: (total: number) => void;
 }
 
 const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   wedding,
-  onEditBudget,
+  onUpdateBudget,
 }) => {
-  const { activePanels, closePanel } = useUIStore();
-  const [newBudget, setNewBudget] = useState(wedding?.budget?.total || 0);
-  const [error, setError] = useState<string>("");
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    if (wedding?.budget?.total) {
-      setNewBudget(wedding.budget.total);
-    }
-  }, [wedding?.budget?.total]);
-
-  const updateBudgetMutation = useMutation({
-    mutationFn: async (total: number) => {
-      const response = await axiosInstance.patch(
-        `/api/weddings/${wedding?._id}/budget`,
-        {
-          total,
-        }
-      );
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["wedding"] });
-      closePanel("editBudget");
-    },
-    onError: (error: Error) => {
-      setError(error.message);
-    },
-  });
-
   const progress = getBudgetProgress(wedding);
   const remaining = wedding.budget
     ? wedding.budget.total - wedding.budget.spent
@@ -66,15 +31,6 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   const isOverSpent = remaining < 0;
   const isOverEstimatedBudget =
     totalEstimatedCost > (wedding?.budget?.total ?? 0);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newBudget < 0) {
-      setError("Budget cannot be negative");
-      return;
-    }
-    updateBudgetMutation.mutate(newBudget);
-  };
 
   if (!wedding?.budget) return null;
 
@@ -169,57 +125,6 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           </div>
         )}
       </div>
-
-      <SidePanel
-        isOpen={activePanels.editBudget || false}
-        onClose={() => closePanel("editBudget")}
-        title="Update total budget"
-      >
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          {error && (
-            <Typography
-              element="p"
-              className="text-red-600"
-            >
-              {error}
-            </Typography>
-          )}
-
-          <FormInput
-            id="budget"
-            isCurrency={true}
-            currencySuffix=" kr"
-            name="budget"
-            type="text"
-            inputMode="numeric"
-            label="Total budget"
-            value={newBudget}
-            onChange={(e) => setNewBudget(Number(e.target.value))}
-            required
-            autoFocus
-          />
-
-          <div className="flex flex-col gap-4 pt-4">
-            <Button
-              type="submit"
-              disabled={updateBudgetMutation.isPending}
-            >
-              {updateBudgetMutation.isPending ? "Updating..." : "Update budget"}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={closePanel}
-              disabled={updateBudgetMutation.isPending}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </SidePanel>
     </div>
   );
 };

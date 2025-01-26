@@ -8,7 +8,7 @@ const WeddingHeader: React.FC<{
   onClick?: () => void;
 }> = ({ title, buttonText, iconBefore, iconAfter, onClick }) => {
   return (
-    <div className="flex justify-between items-center sticky top-0 bg-white py-4 px-6 rounded-br-3xl rounded-bl-3xl lg:rounded-none border-b border-dark-200">
+    <div className="flex justify-between items-center sticky top-0 bg-white py-4 px-6 rounded-br-3xl rounded-bl-3xl md:rounded-none border-b border-dark-200 z-30">
       <Typography
         element="h1"
         className="relative top-[-1px]"
