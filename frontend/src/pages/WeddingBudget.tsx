@@ -6,10 +6,14 @@ import { forceLogout } from "../utils/logoutHandler";
 import BudgetOverview from "../components/wedding/BudgetOverview";
 import BudgetCategory from "../components/wedding/BudgetCategory";
 import { fetchWeddingDetails } from "../services/weddingService";
+import WeddingHeader from "../components/wedding/WeddingHeader";
+import { Edit2 } from "lucide-react";
+import { useUIStore } from "../stores/useUIStore";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
   const queryClient = useQueryClient();
+  const { openPanel } = useUIStore();
 
   const {
     isLoading,
@@ -21,11 +25,6 @@ const WeddingBudget: React.FC = () => {
     enabled: !!weddingSlug,
     staleTime: 5 * 60 * 1000,
   });
-
-  console.log("Wedding Slug:", weddingSlug);
-  console.log("Wedding Data:", wedding);
-  console.log("Loading:", isLoading);
-  console.log("Error:", error);
 
   const updateTaskMutation = useMutation({
     mutationFn: (data: { taskId: string; completed: boolean }) =>
@@ -48,6 +47,10 @@ const WeddingBudget: React.FC = () => {
         completed: !task.completed,
       });
     }
+  };
+
+  const handleEditBudget = () => {
+    openPanel("editBudget");
   };
 
   if (isLoading) return <div className="p-5">Loading wedding details...</div>;
@@ -78,11 +81,25 @@ const WeddingBudget: React.FC = () => {
         id="main"
         className="min-h-screen"
       >
+        <WeddingHeader
+          title="Budget"
+          iconBefore={
+            <Edit2
+              width={16}
+              height={16}
+            />
+          }
+          buttonText="Edit budget"
+          onClick={handleEditBudget}
+        />
         <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
             {wedding.budget && (
               <div className="space-y-8">
-                <BudgetOverview wedding={wedding} />
+                <BudgetOverview
+                  wedding={wedding}
+                  onEditBudget={handleEditBudget}
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-4">
                   <Typography
                     element="h2"

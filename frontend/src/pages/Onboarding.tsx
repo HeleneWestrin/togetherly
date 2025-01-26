@@ -251,6 +251,7 @@ const Onboarding: React.FC = () => {
                 <RadioButtonToggle
                   name="role"
                   legend="Who are you in the wedding?"
+                  srOnly={true}
                   options={["Wife", "Husband"]}
                   value={coupleInfo.role}
                   onChange={(value) =>
@@ -301,6 +302,7 @@ const Onboarding: React.FC = () => {
                 <RadioButtonToggle
                   name="partnerRole"
                   legend="Who is your partner in the wedding?"
+                  srOnly={true}
                   options={["Wife", "Husband"]}
                   value={coupleInfo.partnerRole}
                   onChange={(value) =>

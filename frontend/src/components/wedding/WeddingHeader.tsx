@@ -1,27 +1,32 @@
+import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
-import { getWeddingDateStatus } from "../../utils/weddingCalculations";
-
-interface WeddingHeaderProps {
-  couple: Array<{ profile: { firstName: string } }>;
-  date: string | null;
-}
-
-const WeddingHeader: React.FC<WeddingHeaderProps> = ({ couple, date }) => {
+const WeddingHeader: React.FC<{
+  title: string;
+  buttonText?: string;
+  iconBefore?: React.ReactNode;
+  iconAfter?: React.ReactNode;
+  onClick?: () => void;
+}> = ({ title, buttonText, iconBefore, iconAfter, onClick }) => {
   return (
-    <div className="flex justify-between items-center mb-8">
-      <div className="flex flex-col">
-        <Typography element="h1">
-          {couple.map((partner) => partner.profile.firstName).join(" & ")}
-        </Typography>
-        <Typography
-          element="p"
-          className="text-dark-600"
+    <div className="flex justify-between items-center sticky top-0 bg-white py-4 px-6 rounded-br-3xl rounded-bl-3xl lg:rounded-none border-b border-dark-200">
+      <Typography
+        element="h1"
+        className="relative top-[-1px]"
+      >
+        {title}
+      </Typography>
+      {buttonText && (
+        <Button
+          variant="primary"
+          size="small"
+          onClick={onClick}
+          className="flex items-center gap-2"
         >
-          <span>{date && new Date(date).toLocaleDateString()}</span>
-          <span className="mx-2">•</span>
-          <span>{date && getWeddingDateStatus(date)}</span>
-        </Typography>
-      </div>
+          {iconBefore}
+          {buttonText}
+          {iconAfter}
+        </Button>
+      )}
     </div>
   );
 };

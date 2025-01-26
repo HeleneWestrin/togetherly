@@ -72,11 +72,6 @@ const SidePanel: React.FC<SidePanelProps> = ({
               aria-hidden="true"
             />
 
-            {/* 
-              Actual sliding panel. 
-              We'll choose either the desktop or mobile variants 
-              depending on current viewport.
-            */}
             <motion.div
               ref={panelRef}
               className="
@@ -84,7 +79,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
                 bg-white
                 shadow-lg
                 md:top-0 md:bottom-0 md:right-0 md:w-96
-                max-md:left-0 max-md:right-0 max-md:bottom-0 max-md:h-[90vh] max-md:rounded-t-3xl
+                max-md:left-0 max-md:right-0 max-md:bottom-0 max-md:h-auto max-md:rounded-t-3xl
                 overflow-hidden
               "
               variants={isMobile ? mobileVariants : desktopVariants}
@@ -115,7 +110,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
 
               {/* Content */}
               <div
-                className="p-6 overflow-y-auto h-[calc(100vh-5rem)] max-md:h-[calc(90vh-5rem)]"
+                className="p-6 overflow-y-auto"
                 role="region"
                 aria-labelledby="panel-title"
               >

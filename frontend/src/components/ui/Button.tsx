@@ -37,7 +37,7 @@ export const Button = ({
   // Add size-specific classes
   const sizeClasses = {
     default: "font-slab text-base md:text-md px-5 py-4 md:px-6 lg:px-7",
-    small: "text-sm px-3 py-1 md:px-4 md:py-1.5",
+    small: "text-sm px-3 py-1.5 md:px-4 md:py-2",
     tiny: "px-1 py-1",
     icon: "p-2 rounded-full",
   } as const;

@@ -24,7 +24,7 @@ const baseStyles: Record<TypographyStyle, string> = {
   h2Large:
     "font-slab text-dark-800 text-2xl md:text-2xl lg:text-3xl xl:text-4xl font-medium leading-none",
   bodyLarge: "font-sans text-lg md:text-xl leading-snug",
-  bodyDefault: "font-sans text-base md:text-lg leading-snug",
+  bodyDefault: "font-sans text-base md:text-md leading-snug",
   bodySmall: "font-sans text-sm md:text-base leading-snug",
   bodyExtraSmall: "font-sans text-xs md:text-sm leading-snug",
 };

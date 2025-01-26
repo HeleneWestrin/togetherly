@@ -10,6 +10,9 @@ import bcrypt from "bcryptjs";
 
 export const seedDatabase = async (): Promise<void> => {
   try {
+    // Drop the email index first
+    await User.collection.dropIndex("email_1");
+
     // Clear existing data
     await Promise.all([
       User.deleteMany({}),

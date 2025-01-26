@@ -10,6 +10,7 @@ import { useUIStore } from "../stores/useUIStore";
 import SidePanel from "../components/ui/SidePanel";
 import AddGuestForm from "../components/wedding/AddGuestForm";
 import { useState } from "react";
+import WeddingHeader from "../components/wedding/WeddingHeader";
 
 const WeddingGuests: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -38,9 +39,16 @@ const WeddingGuests: React.FC = () => {
       dietaryPreferences?: string;
       trivia?: string;
     }) => {
+      const cleanedData = {
+        ...guestData,
+        email: guestData.email?.trim() || undefined,
+        dietaryPreferences: guestData.dietaryPreferences?.trim() || undefined,
+        trivia: guestData.trivia?.trim() || undefined,
+      };
+
       const response = await axiosInstance.post(
         `/api/weddings/${wedding?._id}/guests`,
-        guestData
+        cleanedData
       );
       return response.data;
     },
@@ -88,16 +96,15 @@ const WeddingGuests: React.FC = () => {
         id="main"
         className="min-h-screen"
       >
+        <WeddingHeader
+          title="Guest list"
+          onClick={handleOpenPanel}
+          buttonText="Add guest"
+        />
         <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
             <div className="flex justify-between items-center">
-              <Typography element="h1">Guest list</Typography>
-              <Button
-                variant="primary"
-                onClick={handleOpenPanel}
-              >
-                Add guest
-              </Button>
+              <Typography element="h2">Guests</Typography>
             </div>
             {wedding.guests && <GuestList guests={wedding.guests} />}
           </div>
@@ -110,7 +117,7 @@ const WeddingGuests: React.FC = () => {
         title="Add new guest"
       >
         <AddGuestForm
-          onSubmit={addGuestMutation.mutate}
+          onSubmit={(data) => addGuestMutation.mutateAsync(data)}
           onCancel={handleClosePanel}
           isError={!!error}
           error={error ? new Error(error) : null}

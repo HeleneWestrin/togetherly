@@ -10,12 +10,17 @@ import { axiosInstance } from "../../services/axiosService";
 import { useUIStore } from "../../stores/useUIStore";
 import { getBudgetProgress } from "../../utils/weddingCalculations";
 import { Wedding } from "../../types/wedding";
+
 interface BudgetOverviewProps {
   wedding: Wedding;
+  onEditBudget: () => void;
 }
 
-const BudgetOverview: React.FC<BudgetOverviewProps> = ({ wedding }) => {
-  const { activePanels, openPanel, closePanel } = useUIStore();
+const BudgetOverview: React.FC<BudgetOverviewProps> = ({
+  wedding,
+  onEditBudget,
+}) => {
+  const { activePanels, closePanel } = useUIStore();
   const [newBudget, setNewBudget] = useState(wedding?.budget?.total || 0);
   const [error, setError] = useState<string>("");
   const queryClient = useQueryClient();
@@ -71,30 +76,19 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ wedding }) => {
     updateBudgetMutation.mutate(newBudget);
   };
 
-  const handleOpenPanel = () => openPanel("editBudget");
-  const handleClosePanel = () => closePanel("editBudget");
-
   if (!wedding?.budget) return null;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-between items-center">
         <Typography element="h2">Budget overview</Typography>
-        <Button
-          variant="ghost"
-          size="small"
-          onClick={handleOpenPanel}
-        >
-          <Edit2 className="h-4 w-4" />
-          Edit budget
-        </Button>
       </div>
       <div className="bg-white p-6 rounded-3xl">
         <Typography
           element="h3"
           className="mb-4 flex justify-between"
         >
-          <span className="font-semibold font-sans text-dark-600 text-base md:text-lg">
+          <span className="font-medium tracking-normal font-sans text-dark-700 text-base md:text-lg">
             Total budget:
           </span>{" "}
           <span>{wedding.budget.total.toLocaleString()} kr</span>
@@ -178,7 +172,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ wedding }) => {
 
       <SidePanel
         isOpen={activePanels.editBudget || false}
-        onClose={handleClosePanel}
+        onClose={() => closePanel("editBudget")}
         title="Update total budget"
       >
         <form
@@ -218,7 +212,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ wedding }) => {
             <Button
               type="button"
               variant="secondary"
-              onClick={handleClosePanel}
+              onClick={closePanel}
               disabled={updateBudgetMutation.isPending}
             >
               Cancel

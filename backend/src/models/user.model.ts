@@ -41,7 +41,13 @@ const userSchema: Schema<User> = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
+      required: false,
       match: [/\S+@\S+\.\S+/, "Please enter a valid email"],
+      set: function (value: string | null | undefined) {
+        // If value is empty string, null, or undefined, return undefined
+        // This will cause the field to be omitted entirely
+        return value?.trim() || undefined;
+      },
     },
     password: {
       type: String,

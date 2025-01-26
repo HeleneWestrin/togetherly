@@ -128,16 +128,19 @@ export class WeddingService {
         throw new ForbiddenError("Only couples or admins can add guests");
       }
 
-      // If email is provided, check if user exists
+      // Clean the email field - if it's empty or just whitespace, make it undefined
+      const cleanedEmail = guestData.email?.trim() || undefined;
+
+      // If email is provided and not empty, check if user exists
       let guest;
-      if (guestData.email) {
-        guest = await User.findOne({ email: guestData.email });
+      if (cleanedEmail) {
+        guest = await User.findOne({ email: cleanedEmail });
       }
 
       // If no existing user found or no email provided, create a new one
       if (!guest) {
-        guest = await User.create({
-          email: guestData.email || undefined,
+        // Create user data object without email field
+        const userData: any = {
           role: "guest",
           profile: {
             firstName: guestData.firstName,
@@ -147,12 +150,19 @@ export class WeddingService {
             {
               weddingId: wedding._id as Types.ObjectId,
               rsvpStatus: guestData.rsvpStatus,
-              dietaryPreferences: guestData.dietaryPreferences ?? "",
+              dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
               relationship: guestData.relationship,
-              trivia: guestData.trivia ?? "",
+              trivia: guestData.trivia?.trim() || "",
             },
           ],
-        });
+        };
+
+        // Only add email field if it exists and is not empty
+        if (cleanedEmail) {
+          userData.email = cleanedEmail;
+        }
+
+        guest = await User.create(userData);
       } else {
         // Update existing user's guest details
         const existingGuestDetail = guest.guestDetails?.find(
@@ -166,16 +176,16 @@ export class WeddingService {
           guest.guestDetails.push({
             weddingId: wedding._id as Types.ObjectId,
             rsvpStatus: guestData.rsvpStatus,
-            dietaryPreferences: guestData.dietaryPreferences ?? "",
+            dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
             relationship: guestData.relationship,
-            trivia: guestData.trivia ?? "",
+            trivia: guestData.trivia?.trim() || "",
           });
         } else {
           Object.assign(existingGuestDetail, {
             rsvpStatus: guestData.rsvpStatus,
-            dietaryPreferences: guestData.dietaryPreferences ?? "",
+            dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
             relationship: guestData.relationship,
-            trivia: guestData.trivia ?? "",
+            trivia: guestData.trivia?.trim() || "",
           });
         }
         await guest.save();
