@@ -22,7 +22,7 @@ const WeddingBudget: React.FC = () => {
   const [error, setError] = useState<string>("");
 
   const {
-    isLoading,
+    isLoading: isWeddingLoading,
     error: queryError,
     data: wedding,
   } = useQuery({
@@ -93,8 +93,6 @@ const WeddingBudget: React.FC = () => {
     updateBudgetMutation.mutate(newBudget);
   };
 
-  if (isLoading) return <div className="p-5">Loading wedding details...</div>;
-
   if (queryError) {
     const axiosError = queryError as { response?: { status: number } };
     if (
@@ -156,6 +154,7 @@ const WeddingBudget: React.FC = () => {
                       category={category}
                       onEditTask={handleEditTask}
                       wedding={wedding}
+                      isLoading={isWeddingLoading}
                     />
                   ))}
                 </div>
@@ -185,7 +184,7 @@ const WeddingBudget: React.FC = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewBudget(Number(e.target.value))
             }
-            required
+            autoFocus
           />
           {error && (
             <Typography

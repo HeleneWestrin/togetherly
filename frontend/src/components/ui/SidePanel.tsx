@@ -65,9 +65,21 @@ const SidePanel: React.FC<SidePanelProps> = ({
             aria-modal="true"
             role="dialog"
           >
-            {/* Overlay */}
+            {/* Base Overlay */}
             <div
-              className="absolute inset-0 bg-dark-800/70 backdrop-blur-sm !m-0"
+              className="absolute inset-0 bg-dark-800/70 !m-0"
+              onClick={onClose}
+              aria-hidden="true"
+            />
+
+            {/* Separate Blur Overlay */}
+            <motion.div
+              className="absolute inset-0 max-md:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.25 }}
+              style={{ backdropFilter: "blur(4px)" }}
               onClick={onClose}
               aria-hidden="true"
             />

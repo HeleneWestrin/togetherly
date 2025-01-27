@@ -12,6 +12,7 @@ import WeddingGuests from "../pages/WeddingGuests";
 import Onboarding from "../pages/Onboarding";
 import WeddingSchedule from "../pages/WeddingSchedule";
 import WeddingUsers from "../pages/WeddingUsers";
+import ScrollToTop from "../components/ScrollToTop";
 /**
  * Main router component that handles all application routing
  * Uses React Router v6 for client-side routing
@@ -34,6 +35,7 @@ const AppContent = () => {
           : ""
       }`}
     >
+      <ScrollToTop />
       <Routes>
         {/* Protected routes - require authentication */}
         <Route

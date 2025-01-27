@@ -10,6 +10,7 @@ import { Button } from "../ui/Button";
 import SidePanel from "../ui/SidePanel";
 import TaskForm from "./TaskForm";
 import { useUIStore } from "../../stores/useUIStore";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface TaskItemProps {
   task: Task;
@@ -103,27 +104,56 @@ const TaskItem: React.FC<TaskItemProps> = ({
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="icon"
-            size="icon"
-            onClick={handleOpenPanel}
-          >
-            <Edit2 className="h-4 w-4" />
-            <span className="sr-only">Edit task</span>
-          </Button>
-          <Button
-            variant="icon"
-            size="icon"
-            onClick={() => deleteTaskMutation.mutate(task._id)}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete task</span>
-          </Button>
+          <Tooltip.Provider delayDuration={200}>
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <Button
+                  variant="icon"
+                  size="icon"
+                  onClick={handleOpenPanel}
+                >
+                  <Edit2 className="h-4 w-4" />
+                  <span className="sr-only">Edit task</span>
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="rounded-md bg-dark-950 px-3 py-1.5 text-xs font-semibold text-white"
+                  sideOffset={5}
+                >
+                  Edit task
+                  <Tooltip.Arrow className="fill-dark-950" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+
+            <Tooltip.Root>
+              <Tooltip.Trigger asChild>
+                <Button
+                  variant="icon"
+                  size="icon"
+                  onClick={() => deleteTaskMutation.mutate(task._id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete task</span>
+                </Button>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="rounded-md bg-dark-950 px-3 py-1.5 text-xs font-semibold text-white"
+                  sideOffset={5}
+                >
+                  Delete task
+                  <Tooltip.Arrow className="fill-dark-950" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         </div>
       </div>
 
       <SidePanel
-        isOpen={isEditPanelOpen}
+        isOpen={isEditPanelOpen || false}
         onClose={handleClosePanel}
         title="Edit task"
       >

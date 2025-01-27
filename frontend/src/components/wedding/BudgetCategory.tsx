@@ -17,11 +17,13 @@ import TaskItem from "./TaskItem";
 import TaskForm from "./TaskForm";
 import { useUIStore } from "../../stores/useUIStore";
 import { getCategoryProgress } from "../../utils/weddingCalculations";
+import BudgetCategorySkeleton from "./BudgetCategorySkeleton";
 
 interface BudgetCategoryProps {
   category: BudgetCategoryType;
   onEditTask: (taskId: string) => void;
   wedding: Wedding;
+  isLoading?: boolean;
 }
 
 const getProgressColor = (progress: number): BadgeProps["color"] => {
@@ -49,7 +51,12 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   category,
   onEditTask,
   wedding,
+  isLoading,
 }) => {
+  if (isLoading) {
+    return <BudgetCategorySkeleton />;
+  }
+
   const [isExpanded, setIsExpanded] = useState(true);
   const { activePanels, openPanel, closePanel } = useUIStore();
   const queryClient = useQueryClient();
