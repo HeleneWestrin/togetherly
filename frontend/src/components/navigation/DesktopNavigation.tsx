@@ -36,14 +36,14 @@ const DesktopNavigation = ({ weddingSlug }: DesktopNavigationProps) => {
               label="Budget"
             />
             <NavItem
-              to={`/wedding/${weddingSlug}/schedule`}
-              icon={<CalendarCheck2 className="w-6 h-6" />}
-              label="Schedule"
-            />
-            <NavItem
               to={`/wedding/${weddingSlug}/guests`}
               icon={<Users className="w-6 h-6" />}
               label="Guests"
+            />
+            <NavItem
+              to={`/wedding/${weddingSlug}/schedule`}
+              icon={<CalendarCheck2 className="w-6 h-6" />}
+              label="Schedule"
             />
             <NavItem
               to={`/wedding/${weddingSlug}/users`}

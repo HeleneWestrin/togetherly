@@ -217,4 +217,43 @@ export class WeddingController {
       next(error);
     }
   }
+
+  static async inviteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId } = req.params;
+      const inviteData = req.body;
+
+      const result = await WeddingService.inviteUser(
+        weddingId,
+        inviteData,
+        userId
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateGuestsRSVP(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId } = req.params;
+      const { guestIds, rsvpStatus } = req.body;
+
+      const wedding = await WeddingService.updateGuestsRSVP(
+        weddingId,
+        guestIds,
+        rsvpStatus,
+        userId
+      );
+      sendSuccess(res, wedding);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

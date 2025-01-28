@@ -52,8 +52,8 @@ const Onboarding: React.FC = () => {
     return savedInfo
       ? JSON.parse(savedInfo)
       : {
-          firstName: user?.profile?.firstName || "",
-          lastName: user?.profile?.lastName || "",
+          firstName: "",
+          lastName: "",
           partnerFirstName: "",
           partnerLastName: "",
           partnerEmail: "",
@@ -71,6 +71,17 @@ const Onboarding: React.FC = () => {
           estimatedBudget: 0,
         };
   });
+
+  // Add this new useEffect to update form when user data changes
+  useEffect(() => {
+    if (user?.profile) {
+      setCoupleInfo((current) => ({
+        ...current,
+        firstName: user?.profile?.firstName || current.firstName,
+        lastName: user?.profile?.lastName || current.lastName,
+      }));
+    }
+  }, [user?.profile]);
 
   // Initialize state from backend data
   useEffect(() => {
@@ -180,7 +191,7 @@ const Onboarding: React.FC = () => {
   if (step === 1) {
     return (
       <div className="min-h-screen flex flex-col lg:flex-row relative">
-        <div className="lg:flex-1 lg:p-6 xl:p-12">
+        <div className="lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
           <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
             <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
               <div className="w-8 h-8 rounded-full bg-pink-600 text-white font-bold flex items-center justify-center z-10">
@@ -209,7 +220,7 @@ const Onboarding: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="flex-1 px-6 py-10 lg:px-6 xl:px-12 lg:py-16 xl:py-24 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
+        <div className="flex-1 px-6 py-10 lg:px-6 xl:px-8 2xl:px-12 lg:py-16 xl:py-20 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
           <Typography
             element="h2"
             styledAs="h2Large"
@@ -227,7 +238,7 @@ const Onboarding: React.FC = () => {
               >
                 Who are you?
               </Typography>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 xl:gap-4 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 xl:gap-4 mb-4">
                 <FormInput
                   id="firstName"
                   name="firstName"
@@ -337,7 +348,7 @@ const Onboarding: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row relative">
-      <div className="lg:flex-1 lg:p-6 xl:p-12">
+      <div className="lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
         <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
           <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
             <div className="w-8 h-8 rounded-full bg-dark-800 text-white font-bold flex items-center justify-center z-10">
@@ -366,7 +377,7 @@ const Onboarding: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="flex-1 px-6 py-10 lg:px-6 xl:px-12 lg:py-16 xl:py-24 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
+      <div className="flex-1 px-6 py-10 lg:px-6 xl:px-12 lg:py-16 xl:py-20 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
         <Typography
           element="h2"
           styledAs="h2Large"

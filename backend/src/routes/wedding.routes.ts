@@ -8,6 +8,11 @@ import { z } from "zod";
 
 export const weddingRouter = Router();
 
+const updateGuestsRsvpSchema = z.object({
+  guestIds: z.array(z.string()),
+  rsvpStatus: weddingSchemas.rsvpStatus,
+});
+
 // Get all weddings (filtered by user role)
 weddingRouter.get("/", authenticateUser, WeddingController.getWeddings);
 
@@ -38,6 +43,14 @@ weddingRouter.post(
   WeddingController.addGuest
 );
 
+// Update RSVP status for multiple guests
+weddingRouter.patch(
+  "/:weddingId/guests/rsvp",
+  authenticateUser,
+  validateRequest(updateGuestsRsvpSchema),
+  WeddingController.updateGuestsRSVP
+);
+
 // Update guest details
 weddingRouter.patch(
   "/:weddingId/guests/:guestId",
@@ -46,24 +59,12 @@ weddingRouter.patch(
   WeddingController.updateGuest
 );
 
-const updateRsvpSchema = z.object({
-  rsvpStatus: weddingSchemas.rsvpStatus,
-});
-
 // Delete guests
 weddingRouter.delete(
   "/:weddingId/guests",
   authenticateUser,
   requireWeddingAccess,
   WeddingController.deleteGuests
-);
-
-// Update RSVP status
-weddingRouter.patch(
-  "/:weddingId/rsvp",
-  authenticateUser,
-  validateRequest(updateRsvpSchema),
-  WeddingController.updateRSVP
 );
 
 // Update task status
@@ -87,4 +88,12 @@ weddingRouter.post(
   "/onboarding",
   authenticateUser,
   WeddingController.createWeddingFromOnboarding
+);
+
+// Invite user to wedding
+weddingRouter.post(
+  "/:weddingId/users/invite",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.inviteUser
 );

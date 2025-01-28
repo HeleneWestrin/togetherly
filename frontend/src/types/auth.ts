@@ -4,6 +4,10 @@ export interface SocialLoginResponse {
     id: string;
     email: string;
     role: "admin" | "couple" | "guest";
+    profile?: {
+      firstName?: string;
+      lastName?: string;
+    };
   };
   isNewUser: boolean;
 }

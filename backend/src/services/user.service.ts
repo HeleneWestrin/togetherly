@@ -28,6 +28,7 @@ export class UserService {
       password: hashedPassword,
       role: "couple",
       isActive: true,
+      isRegistered: true,
     });
 
     // Save user to database and generate authentication token
@@ -55,13 +56,13 @@ export class UserService {
    * @throws ValidationError if credentials are invalid
    */
   static async loginUser(email: string, password: string) {
-    // Find user by email
-    const user = await User.findOne({ email });
+    const user = (await User.findOne({ email })) as
+      | (User & { _id: Types.ObjectId })
+      | null;
     if (!user) {
       throw new ValidationError("Incorrect email or password");
     }
 
-    // Verify password matches
     const isPasswordValid = await AuthService.comparePasswords(
       password,
       user.password
@@ -70,10 +71,13 @@ export class UserService {
       throw new ValidationError("Incorrect email or password");
     }
 
-    // Generate new authentication token
-    const token = AuthService.generateToken(
-      (user._id as Types.ObjectId).toString()
-    );
+    // Set isRegistered to true on first successful login
+    if (!user.isRegistered) {
+      user.isRegistered = true;
+      await user.save();
+    }
+
+    const token = AuthService.generateToken(user._id.toString());
     return { userId: user._id, token };
   }
 
@@ -114,6 +118,7 @@ export class UserService {
       lastName: user.profile?.lastName,
       role: user.role,
       isActive: user.isActive,
+      isRegistered: user.isRegistered,
       weddings: user.weddings?.map((wedding: any) => ({
         id: wedding._id,
         title: wedding.title,

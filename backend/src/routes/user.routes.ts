@@ -3,7 +3,6 @@ import {
   createUser,
   loginUser,
   getUsers,
-  completeOnboarding,
 } from "../controllers/user.controller";
 import { authenticateUser } from "../middleware/authentication";
 import { requireAdmin } from "../middleware/adminAuth";
@@ -78,7 +77,7 @@ userRouter.post("/auth/google/token", (async (
 
       // Find or create user
       let user = await User.findOne({ email: payload.email });
-      const isNewUser = !user; // Set this before creating the user
+      const isNewUser = !user;
       if (!user) {
         user = await User.create({
           email: payload.email,
@@ -89,6 +88,7 @@ userRouter.post("/auth/google/token", (async (
           },
           role: "couple",
           isActive: true,
+          isRegistered: true,
           socialProvider: "google",
           socialId: payload.sub,
         });
@@ -105,6 +105,10 @@ userRouter.post("/auth/google/token", (async (
           id: user._id,
           email: user.email,
           role: user.role,
+          profile: {
+            firstName: user.profile?.firstName,
+            lastName: user.profile?.lastName,
+          },
         },
         isNewUser: isNewUser,
       });

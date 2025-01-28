@@ -90,12 +90,15 @@ export default {
         "full-minus-nav-2xl": "calc(100% - 20rem)",
       },
       boxShadow: {
-        "pink-border": "0 0 0 2px var(--pink-600)",
+        "pink-focus": "0 0 0 4px rgb(223 88 185 / 0.2)",
       },
       backgroundImage: {
         "gradient-landscape": "var(--gradient-svg), var(--gradient-fallback)",
         "gradient-portrait":
           "var(--gradient-svg-mobile), var(--gradient-fallback)",
+      },
+      leading: {
+        tightest: "1.15",
       },
       transitionTimingFunction: {
         "in-expo": "cubic-bezier(.25,.75,.5,1.25)",

@@ -60,7 +60,7 @@ const WeddingGuests: React.FC = () => {
         firstName: guestData.firstName?.trim() || "",
         lastName: guestData.lastName?.trim() || "",
         email: guestData.email?.trim() || undefined,
-        relationship: guestData.relationship || "both",
+        relationship: guestData.relationship || "wife",
         rsvpStatus: guestData.rsvpStatus || "pending",
         dietaryPreferences: guestData.dietaryPreferences?.trim() || undefined,
         role: guestData.role || "Guest",
@@ -173,7 +173,7 @@ const WeddingGuests: React.FC = () => {
   const updateRSVPMutation = useMutation({
     mutationFn: async (data: {
       guestIds: string[];
-      status: "pending" | "confirmed" | "declined";
+      rsvpStatus: "pending" | "confirmed" | "declined";
     }) => {
       if (!wedding?._id) {
         throw new Error("Wedding ID is required");
@@ -219,9 +219,10 @@ const WeddingGuests: React.FC = () => {
 
   const handleUpdateRSVP = (
     guestIds: string[],
-    status: "pending" | "confirmed" | "declined"
+    rsvpStatus: "pending" | "confirmed" | "declined"
   ) => {
-    updateRSVPMutation.mutate({ guestIds, status });
+    console.log("Selected guest IDs:", guestIds);
+    updateRSVPMutation.mutate({ guestIds, rsvpStatus });
   };
 
   if (isLoading) return <div className="p-5">Loading wedding details...</div>;

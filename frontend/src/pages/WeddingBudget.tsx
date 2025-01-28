@@ -128,7 +128,7 @@ const WeddingBudget: React.FC = () => {
           buttonText="Edit budget"
           onClick={handleEditBudget}
         />
-        <div className="px-5 lg:px-8 py-6 lg:py-8 2xl:py-12 max-w-4xl mx-auto">
+        <div className="px-5 lg:px-8 py-6 lg:py-8 2xl:py-12 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
             {!wedding && (
               <div className="p-3 bg-gray-50 rounded">
@@ -141,10 +141,10 @@ const WeddingBudget: React.FC = () => {
                   wedding={wedding}
                   onUpdateBudget={updateBudgetMutation.mutate}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
                   <Typography
                     element="h2"
-                    className="md:col-span-2"
+                    className="lg:col-span-2"
                   >
                     Wedding checklist
                   </Typography>

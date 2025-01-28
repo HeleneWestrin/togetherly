@@ -44,11 +44,14 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
     firstName: guest?.profile.firstName || "",
     lastName: guest?.profile.lastName || "",
     email: guest?.email || "",
-    relationship: guest?.guestDetails[0]?.relationship || "both",
+    relationship: guest?.guestDetails[0]?.relationship || "wife",
     rsvpStatus: guest?.guestDetails[0]?.rsvpStatus || "pending",
     dietaryPreferences: guest?.guestDetails[0]?.dietaryPreferences || "",
     role: guest?.guestDetails[0]?.role || "Guest",
   });
+
+  const submitButtonText = guest ? "Save changes" : "Add guest";
+  const loadingText = guest ? "Saving changes..." : "Adding guest...";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,7 +211,7 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
           variant="primary"
           disabled={isSubmitting}
         >
-          {guest ? "Save changes" : "Add Guest"}
+          {isSubmitting ? loadingText : submitButtonText}
         </Button>
         <Button
           type="button"

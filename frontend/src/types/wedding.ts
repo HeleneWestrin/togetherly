@@ -39,10 +39,13 @@ export interface CoupleProfile {
   lastName: string;
 }
 
+export type UserStatus = "Active" | "Pending" | "Invited";
+
 export interface CoupleUser {
   _id: string;
-  email: string;
+  email?: string;
   profile: CoupleProfile;
+  isRegistered?: boolean;
 }
 
 export interface GuestProfile {
@@ -74,6 +77,7 @@ export interface GuestUser {
   email?: string;
   profile: GuestProfile;
   guestDetails: GuestDetails[];
+  isRegistered?: boolean;
 }
 
 export interface Wedding {

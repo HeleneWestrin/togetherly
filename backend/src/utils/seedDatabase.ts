@@ -240,7 +240,7 @@ export const seedDatabase = async (): Promise<void> => {
           guestDetails: {
             weddingId: wedding._id,
             rsvpStatus: "pending",
-            relationship: "both",
+            relationship: "wife",
             role: "Guest",
             dietaryPreferences: "No preferences",
             trivia: "Loves dancing",

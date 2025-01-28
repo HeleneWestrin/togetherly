@@ -18,6 +18,10 @@ interface UIState {
       isOpen: boolean;
       guestId: string | null;
     };
+    inviteUser?: {
+      isOpen: boolean;
+      email: string;
+    };
   };
   openPanel: (panel: keyof UIState["activePanels"], data?: any) => void;
   closePanel: (panel: keyof UIState["activePanels"]) => void;

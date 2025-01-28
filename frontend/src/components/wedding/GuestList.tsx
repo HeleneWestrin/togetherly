@@ -113,18 +113,21 @@ const GuestList: React.FC<GuestListProps> = ({
   return (
     <div>
       {selectedGuests.length > 0 && (
-        <div className="bg-white shadow-sm border-t border-dark-200 flex items-center justify-between pt-3 pb-9 px-5 md:p-3 bottom-14 fixed md:bottom-0 left-0 w-full md:w-full-minus-nav md:ml-desktop-nav 2xl:w-full-minus-nav-2xl 2xl:ml-desktop-nav-2xl">
-          <Typography element="p">
+        <div className="bg-white border-t border-dark-200 flex flex-wrap gap-3 items-center justify-between pt-4 pb-10 px-5 md:py-3 md:px-5 bottom-14 fixed md:bottom-0 left-0 w-full md:w-full-minus-nav md:ml-desktop-nav 2xl:w-full-minus-nav-2xl 2xl:ml-desktop-nav-2xl">
+          <Typography
+            element="p"
+            className="font-semibold leading-none"
+          >
             {selectedGuests.length} guest{selectedGuests.length > 1 ? "s" : ""}{" "}
             selected
           </Typography>
-          <div className="flex gap-2">
+          <div className="flex flex-row flex-wrap md:justify-end gap-2">
             <Button
               variant="secondary"
               size="small"
               onClick={() => onUpdateRSVP(selectedGuests, "confirmed")}
             >
-              Mark as Attending
+              Mark as attending
             </Button>
             <Button
               variant="secondary"
@@ -141,7 +144,7 @@ const GuestList: React.FC<GuestListProps> = ({
         <table className="w-full">
           <thead className="bg-dark-100">
             <tr className="border-b border-dark-300">
-              <th className="px-7 py-5 text-left">
+              <th className="px-5 lg:px-7 py-3 lg:py-5 text-left">
                 <FormCheckbox
                   label=""
                   size="small"
@@ -158,7 +161,7 @@ const GuestList: React.FC<GuestListProps> = ({
               ].map((header, index) => (
                 <th
                   key={header}
-                  className="p-3 text-left text-base font-semibold text-gray-800 cursor-pointer"
+                  className="p-3 text-left text-sm lg:text-base font-semibold text-gray-800 cursor-pointer"
                   onClick={() => {
                     if (index < 4) {
                       // Don't sort on Actions column
@@ -168,7 +171,7 @@ const GuestList: React.FC<GuestListProps> = ({
                     }
                   }}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 whitespace-nowrap">
                     {header}
                     {sortField === header.toLowerCase().replace(" ", "") &&
                       (sortDirection === "asc" ? (
@@ -181,7 +184,7 @@ const GuestList: React.FC<GuestListProps> = ({
               ))}
             </tr>
           </thead>
-          <tbody className="text-dark-600">
+          <tbody className="text-sm lg:text-base text-dark-600">
             {sortedGuests.map((guest) => {
               const guestDetails = guest.guestDetails?.[0] || {};
 
@@ -190,7 +193,7 @@ const GuestList: React.FC<GuestListProps> = ({
                   key={guest._id}
                   className="border-b border-dark-300 last:border-b-0"
                 >
-                  <td className="px-7 py-4">
+                  <td className="px-5 lg:px-7 py-2 lg:py-4">
                     <FormCheckbox
                       label=""
                       size="small"
@@ -200,7 +203,7 @@ const GuestList: React.FC<GuestListProps> = ({
                       }
                     />
                   </td>
-                  <td className="px-3 py-4">
+                  <td className="px-3 py-2 lg:py-4">
                     <div>
                       <p className="text-dark-800 font-medium">
                         {guest.profile?.firstName || ""}{" "}
@@ -228,6 +231,7 @@ const GuestList: React.FC<GuestListProps> = ({
                         variant="icon"
                         size="icon"
                         tooltip="Edit guest"
+                        aria-label={`Edit guest ${guest.profile?.firstName} ${guest.profile?.lastName}`}
                         onClick={() => onEditGuest(guest)}
                       >
                         <Edit2 className="w-4 h-4" />
@@ -236,6 +240,7 @@ const GuestList: React.FC<GuestListProps> = ({
                         variant="icon"
                         size="icon"
                         tooltip="Delete guest"
+                        aria-label={`Delete guest ${guest.profile?.firstName} ${guest.profile?.lastName}`}
                         onClick={() => handleDeleteGuests([guest._id])}
                       >
                         <Trash2 className="w-4 h-4" />

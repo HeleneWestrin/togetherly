@@ -42,7 +42,7 @@ const RadioButtonToggle = <T extends string>({
           {legend}
         </legend>
       )}
-      <div className="relative flex items-center justify-between w-full rounded-full bg-dark-100">
+      <div className="relative flex items-center justify-between w-full rounded-full bg-dark-100 border-2 border-transparent has-[input:focus-visible]:border-pink-700 has-[input:focus-visible]:shadow-pink-focus">
         {options.map((option, index) => (
           <label
             key={`${name}-${option.value}-label`}

@@ -16,7 +16,8 @@ export class WeddingService {
     if (!user) throw new NotFoundError("User not found");
 
     let weddings;
-    const populateOptions = "profile.firstName profile.lastName email";
+    const populateOptions =
+      "profile.firstName profile.lastName email isRegistered";
 
     switch (user.role) {
       case "admin":
@@ -54,8 +55,14 @@ export class WeddingService {
     if (!user) throw new NotFoundError("User not found");
 
     const wedding = await Wedding.findById(weddingId)
-      .populate("couple", "profile.firstName profile.lastName email")
-      .populate("guests", "profile.firstName profile.lastName email");
+      .populate(
+        "couple",
+        "profile.firstName profile.lastName email isRegistered"
+      )
+      .populate(
+        "guests",
+        "profile.firstName profile.lastName email isRegistered"
+      );
 
     if (!wedding) throw new NotFoundError("Wedding not found");
 
@@ -256,10 +263,13 @@ export class WeddingService {
 
     // Populate both couple/guest info AND tasks for budget calculations
     const wedding = await Wedding.findOne({ slug })
-      .populate("couple", "profile.firstName profile.lastName email")
+      .populate(
+        "couple",
+        "profile.firstName profile.lastName email isRegistered"
+      )
       .populate(
         "guests",
-        "profile.firstName profile.lastName email guestDetails"
+        "profile.firstName profile.lastName email isRegistered guestDetails"
       )
       .populate({
         path: "budget.allocated",
@@ -485,23 +495,17 @@ export class WeddingService {
   ) {
     const { coupleInfo, weddingInfo } = data;
 
-    // Create or find partner user
-    let partnerUser;
-    if (coupleInfo.partnerEmail) {
-      partnerUser = await User.findOne({ email: coupleInfo.partnerEmail });
-      if (!partnerUser) {
-        partnerUser = await User.create({
-          email: coupleInfo.partnerEmail,
-          role: "couple",
-          profile: {
-            firstName: coupleInfo.partnerFirstName,
-            lastName: coupleInfo.partnerLastName,
-          },
-        });
-      }
-    }
+    // Create partner user shell regardless of email
+    const partnerUser = await User.create({
+      email: coupleInfo.partnerEmail, // This might be undefined, which is fine
+      role: "couple",
+      profile: {
+        firstName: coupleInfo.partnerFirstName,
+        lastName: coupleInfo.partnerLastName,
+      },
+    });
 
-    // Create the wedding
+    // Create the wedding with both users
     const wedding = new Wedding({
       title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s wedding`,
       date: weddingInfo.date || null,
@@ -521,7 +525,7 @@ export class WeddingService {
           tasks: [],
         })),
       },
-      couple: partnerUser ? [userId, partnerUser._id] : [userId],
+      couple: [userId, partnerUser._id], // Always include both users
       guests: [],
     });
 
@@ -652,5 +656,150 @@ export class WeddingService {
       console.error("Error in deleteGuests:", error);
       throw error;
     }
+  }
+
+  static async inviteUser(
+    weddingId: string,
+    inviteData: {
+      email: string;
+      role: "couple" | "guest";
+      weddingRole:
+        | "Maid of Honor"
+        | "Best Man"
+        | "Bridesmaid"
+        | "Groomsman"
+        | "Parent"
+        | "Other";
+    },
+    userId: string
+  ) {
+    // Validate wedding access
+    const wedding = await Wedding.findById(weddingId).populate("couple");
+    if (!wedding) {
+      throw new NotFoundError("Wedding not found");
+    }
+
+    // Check if user has permission to invite
+    const isCouple = wedding.couple.some(
+      (partner) => partner._id.toString() === userId
+    );
+    if (!isCouple) {
+      throw new ForbiddenError("Only couples can invite users");
+    }
+
+    // Check if email already exists
+    const existingUser = (await User.findOne({ email: inviteData.email })) as
+      | (User & { _id: Types.ObjectId })
+      | null;
+
+    if (existingUser) {
+      // If user exists, add them to the wedding
+      if (inviteData.role === "couple") {
+        // Add to couple array if not already there
+        if (
+          !wedding.couple.some(
+            (id) => id.toString() === existingUser._id.toString()
+          )
+        ) {
+          wedding.couple.push(existingUser._id);
+        }
+      } else {
+        // Add to guests array if not already there
+        if (!wedding.guests?.includes(existingUser._id)) {
+          wedding.guests = wedding.guests || [];
+          wedding.guests.push(existingUser._id);
+
+          // Update guest details
+          existingUser.guestDetails = existingUser.guestDetails || [];
+          existingUser.guestDetails.push({
+            weddingId: wedding._id as Types.ObjectId,
+            role: inviteData.weddingRole,
+            rsvpStatus: "pending",
+            relationship: "wife", // Default value
+            dietaryPreferences: "",
+            trivia: "",
+          });
+          await existingUser.save();
+        }
+      }
+    } else {
+      // Create new user shell
+      const newUser = await User.create({
+        email: inviteData.email,
+        role: inviteData.role,
+        guestDetails:
+          inviteData.role === "guest"
+            ? [
+                {
+                  weddingId: wedding._id,
+                  role: inviteData.weddingRole,
+                  rsvpStatus: "pending",
+                  relationship: "wife", // Default value
+                  dietaryPreferences: "",
+                  trivia: "",
+                },
+              ]
+            : undefined,
+      });
+
+      // Add to appropriate array
+      if (inviteData.role === "couple") {
+        wedding.couple.push(newUser._id as Types.ObjectId);
+      } else {
+        wedding.guests = wedding.guests || [];
+        wedding.guests.push(newUser._id as Types.ObjectId);
+      }
+    }
+
+    await wedding.save();
+
+    // TODO: Send invitation email
+
+    return wedding;
+  }
+
+  static async updateGuestsRSVP(
+    weddingId: string,
+    guestIds: string[],
+    rsvpStatus: "pending" | "confirmed" | "declined",
+    userId: string
+  ) {
+    const wedding = await Wedding.findById(weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    // Check if user has permission (is admin or part of couple)
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    if (!isCouple && user.role !== "admin") {
+      throw new ForbiddenError(
+        "Only couples or admins can update guest RSVP status"
+      );
+    }
+
+    // Update RSVP status for all selected guests
+    await User.updateMany(
+      {
+        _id: { $in: guestIds },
+        "guestDetails.weddingId": wedding._id,
+      },
+      {
+        $set: {
+          "guestDetails.$.rsvpStatus": rsvpStatus,
+        },
+      }
+    );
+
+    // Return updated wedding with populated guests
+    return Wedding.findById(weddingId)
+      .populate(
+        "couple",
+        "profile.firstName profile.lastName email isRegistered"
+      )
+      .populate(
+        "guests",
+        "profile.firstName profile.lastName email isRegistered guestDetails"
+      );
   }
 }
