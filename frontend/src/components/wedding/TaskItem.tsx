@@ -104,51 +104,25 @@ const TaskItem: React.FC<TaskItemProps> = ({
           </div>
         </div>
         <div className="flex gap-2">
-          <Tooltip.Provider delayDuration={200}>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <Button
-                  variant="icon"
-                  size="icon"
-                  onClick={handleOpenPanel}
-                >
-                  <Edit2 className="h-4 w-4" />
-                  <span className="sr-only">Edit task</span>
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="rounded-md bg-dark-950 px-3 py-1.5 text-xs font-semibold text-white"
-                  sideOffset={5}
-                >
-                  Edit task
-                  <Tooltip.Arrow className="fill-dark-950" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
+          <Button
+            variant="icon"
+            size="icon"
+            tooltip="Edit task"
+            onClick={handleOpenPanel}
+          >
+            <Edit2 className="h-4 w-4" />
+            <span className="sr-only">Edit task</span>
+          </Button>
 
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <Button
-                  variant="icon"
-                  size="icon"
-                  onClick={() => deleteTaskMutation.mutate(task._id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Delete task</span>
-                </Button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="rounded-md bg-dark-950 px-3 py-1.5 text-xs font-semibold text-white"
-                  sideOffset={5}
-                >
-                  Delete task
-                  <Tooltip.Arrow className="fill-dark-950" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+          <Button
+            variant="icon"
+            size="icon"
+            tooltip="Delete task"
+            onClick={() => deleteTaskMutation.mutate(task._id)}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Delete task</span>
+          </Button>
         </div>
       </div>
 

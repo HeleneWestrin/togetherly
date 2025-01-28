@@ -111,6 +111,17 @@ export class WeddingService {
       lastName: string;
       email?: string;
       relationship: "wife" | "husband" | "both";
+      role:
+        | "Guest"
+        | "Maid of Honor"
+        | "Best Man"
+        | "Bridesmaid"
+        | "Groomsman"
+        | "Flower girl"
+        | "Ring bearer"
+        | "Parent"
+        | "Family"
+        | "Other";
       rsvpStatus: "pending" | "confirmed" | "declined";
       dietaryPreferences?: string;
       trivia?: string;
@@ -152,6 +163,7 @@ export class WeddingService {
               rsvpStatus: guestData.rsvpStatus,
               dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
               relationship: guestData.relationship,
+              role: guestData.role,
               trivia: guestData.trivia?.trim() || "",
             },
           ],
@@ -178,6 +190,7 @@ export class WeddingService {
             rsvpStatus: guestData.rsvpStatus,
             dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
             relationship: guestData.relationship,
+            role: guestData.role,
             trivia: guestData.trivia?.trim() || "",
           });
         } else {
@@ -185,6 +198,7 @@ export class WeddingService {
             rsvpStatus: guestData.rsvpStatus,
             dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
             relationship: guestData.relationship,
+            role: guestData.role,
             trivia: guestData.trivia?.trim() || "",
           });
         }
@@ -243,7 +257,10 @@ export class WeddingService {
     // Populate both couple/guest info AND tasks for budget calculations
     const wedding = await Wedding.findOne({ slug })
       .populate("couple", "profile.firstName profile.lastName email")
-      .populate("guests", "profile.firstName profile.lastName email")
+      .populate(
+        "guests",
+        "profile.firstName profile.lastName email guestDetails"
+      )
       .populate({
         path: "budget.allocated",
         populate: {
@@ -517,5 +534,123 @@ export class WeddingService {
     );
 
     return savedWedding;
+  }
+
+  static async updateGuest(
+    weddingId: string,
+    guestId: string,
+    guestData: {
+      profile: {
+        firstName: string;
+        lastName: string;
+      };
+      email?: string;
+      guestDetails: Array<{
+        relationship: "wife" | "husband" | "both";
+        rsvpStatus: "pending" | "confirmed" | "declined";
+        dietaryPreferences?: string;
+        role:
+          | "Guest"
+          | "Maid of Honor"
+          | "Best Man"
+          | "Bridesmaid"
+          | "Groomsman"
+          | "Flower girl"
+          | "Ring bearer"
+          | "Parent"
+          | "Family"
+          | "Other";
+      }>;
+    },
+    userId: string
+  ) {
+    try {
+      const wedding = await Wedding.findById(weddingId);
+      if (!wedding) throw new NotFoundError("Wedding not found");
+
+      // Only couples of the wedding or admins can update guests
+      const isCouple = wedding.couple.some((id) => id.toString() === userId);
+      const user = await User.findById(userId);
+      if (!isCouple && user?.role !== "admin") {
+        throw new ForbiddenError("Only couples or admins can update guests");
+      }
+
+      const guest = await User.findById(guestId);
+      if (!guest) throw new NotFoundError("Guest not found");
+
+      // Update the guest's profile and email
+      guest.profile = {
+        ...guest.profile,
+        ...guestData.profile,
+      };
+      if (guestData.email) guest.email = guestData.email;
+
+      // Update or add guest details for this wedding
+      const guestDetailIndex = guest.guestDetails.findIndex(
+        (detail) => detail.weddingId.toString() === weddingId
+      );
+
+      if (guestDetailIndex >= 0) {
+        // Update existing guest details
+        guest.guestDetails[guestDetailIndex] = {
+          ...guest.guestDetails[guestDetailIndex],
+          ...guestData.guestDetails[0],
+          weddingId: wedding._id as Types.ObjectId,
+          dietaryPreferences:
+            guestData.guestDetails[0].dietaryPreferences || "",
+          trivia: "", // Add default trivia field
+        };
+      } else {
+        // Add new guest details
+        guest.guestDetails.push({
+          ...guestData.guestDetails[0],
+          weddingId: wedding._id as Types.ObjectId,
+          dietaryPreferences:
+            guestData.guestDetails[0].dietaryPreferences || "",
+          trivia: "", // Add default trivia field
+        });
+      }
+
+      await guest.save();
+      return wedding;
+    } catch (error) {
+      console.error("Error in updateGuest:", error);
+      throw error;
+    }
+  }
+
+  static async deleteGuests(
+    weddingId: string,
+    guestIds: string[],
+    userId: string
+  ) {
+    try {
+      const wedding = await Wedding.findById(weddingId);
+      if (!wedding) throw new NotFoundError("Wedding not found");
+
+      // Only couples of the wedding or admins can delete guests
+      const isCouple = wedding.couple.some((id) => id.toString() === userId);
+      const user = await User.findById(userId);
+      if (!isCouple && user?.role !== "admin") {
+        throw new ForbiddenError("Only couples or admins can delete guests");
+      }
+
+      // Remove guests from wedding
+      wedding.guests = wedding.guests.filter(
+        (guestId) => !guestIds.includes(guestId.toString())
+      );
+      await wedding.save();
+
+      // Remove wedding from guests' guestDetails
+      await User.updateMany(
+        { _id: { $in: guestIds } },
+        { $pull: { guestDetails: { weddingId: wedding._id } } }
+      );
+
+      return wedding;
+    } catch (error) {
+      console.error("Error in deleteGuests:", error);
+      throw error;
+    }
   }
 }

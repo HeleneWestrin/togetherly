@@ -1,18 +1,17 @@
 import { useState } from "react";
 
-interface RadioButtonToggleProps {
+interface RadioButtonToggleProps<T extends string> {
   name: string;
-  legend: string;
+  legend?: string;
   srOnly?: boolean;
-  options: string[];
-  onChange?: (value: string) => void;
-  defaultValue?: string;
+  options: { label: string; value: T }[];
+  onChange?: (value: T) => void;
+  defaultValue?: T;
   className?: string;
-  value?: string;
-  checked?: boolean;
+  value?: T;
 }
 
-const RadioButtonToggle = ({
+const RadioButtonToggle = <T extends string>({
   name,
   legend,
   srOnly,
@@ -21,13 +20,12 @@ const RadioButtonToggle = ({
   defaultValue,
   className,
   value,
-  checked,
-}: RadioButtonToggleProps) => {
+}: RadioButtonToggleProps<T>) => {
   const [selectedIndex, setSelectedIndex] = useState(
     value
-      ? options.indexOf(value)
+      ? options.findIndex((opt) => opt.value === value)
       : defaultValue
-      ? options.indexOf(defaultValue)
+      ? options.findIndex((opt) => opt.value === defaultValue)
       : 0
   );
 
@@ -35,32 +33,34 @@ const RadioButtonToggle = ({
     <fieldset
       className={`relative flex items-center justify-between p-1 rounded-full ${className}`}
     >
-      <legend
-        className={`text-sm md:text-base font-bold text-dark-800 leading-none mb-2 ${
-          srOnly ? "sr-only" : ""
-        }`}
-      >
-        {legend}
-      </legend>
+      {legend && (
+        <legend
+          className={`text-sm md:text-base font-bold text-dark-800 leading-none mb-2 ${
+            srOnly ? "sr-only" : ""
+          }`}
+        >
+          {legend}
+        </legend>
+      )}
       <div className="relative flex items-center justify-between w-full rounded-full bg-dark-100">
         {options.map((option, index) => (
           <label
-            key={`${name}-${option}-label`}
+            key={`${name}-${option.value}-label`}
             className="relative rounded-full z-10 flex-1 text-sm lg:text-base text-center font-semibold py-3 cursor-pointer text-dark-800 has-[input:checked]:text-white focus-within:text-white transition-colors duration-300"
           >
             <input
               type="radio"
               name={name}
-              id={`${name}-${option}`}
-              value={option}
+              id={`${name}-${option.value}`}
+              value={option.value}
               className="sr-only"
-              checked={value ? value === option : index === selectedIndex}
+              checked={value ? value === option.value : index === selectedIndex}
               onChange={(e) => {
-                onChange?.(e.target.value);
+                onChange?.(e.target.value as T);
                 setSelectedIndex(index);
               }}
             />
-            {option}
+            {option.label}
           </label>
         ))}
         <div

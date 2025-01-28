@@ -41,7 +41,7 @@ const Login: React.FC = () => {
             Log in to Togetherly
           </Typography>
           <LoginForm />
-          <p className="mt-6 text-center text-dark-850">
+          <p className="mt-6 text-center text-dark-800">
             Don't have an account yet?{" "}
             <Link
               to="/signup"

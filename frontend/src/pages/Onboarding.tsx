@@ -252,7 +252,10 @@ const Onboarding: React.FC = () => {
                   name="role"
                   legend="Who are you in the wedding?"
                   srOnly={true}
-                  options={["Wife", "Husband"]}
+                  options={[
+                    { label: "Wife", value: "wife" },
+                    { label: "Husband", value: "husband" },
+                  ]}
                   value={coupleInfo.role}
                   onChange={(value) =>
                     setCoupleInfo({
@@ -303,7 +306,10 @@ const Onboarding: React.FC = () => {
                   name="partnerRole"
                   legend="Who is your partner in the wedding?"
                   srOnly={true}
-                  options={["Wife", "Husband"]}
+                  options={[
+                    { label: "Wife", value: "wife" },
+                    { label: "Husband", value: "husband" },
+                  ]}
                   value={coupleInfo.partnerRole}
                   onChange={(value) =>
                     setCoupleInfo({

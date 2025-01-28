@@ -45,6 +45,8 @@ export default {
       red: {
         700: "#992C20",
         600: "#E45A39",
+        500: "#F28B7D",
+        400: "#F8ACA2",
         300: "#FFD7D7",
         100: "#FFEBEB",
       },
@@ -79,6 +81,14 @@ export default {
       "2xl": "1440px",
     },
     extend: {
+      spacing: {
+        "desktop-nav": "16rem",
+        "desktop-nav-2xl": "20rem",
+      },
+      width: {
+        "full-minus-nav": "calc(100% - 16rem)",
+        "full-minus-nav-2xl": "calc(100% - 20rem)",
+      },
       boxShadow: {
         "pink-border": "0 0 0 2px var(--pink-600)",
       },

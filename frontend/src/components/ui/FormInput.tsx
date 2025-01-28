@@ -7,7 +7,6 @@ interface FormInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
   type?:
     | "text"
-    | "textarea"
     | "number"
     | "tel"
     | "url"

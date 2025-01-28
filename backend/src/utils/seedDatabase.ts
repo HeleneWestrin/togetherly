@@ -58,9 +58,9 @@ export const seedDatabase = async (): Promise<void> => {
       },
     ]);
 
-    // Create guests
-    const [guest1, guest2] = await User.create([
-      {
+    // Create guests first
+    const [guest1, guest2] = (await Promise.all([
+      User.create({
         email: "guest1@example.com",
         password: hashedPassword,
         role: "guest",
@@ -69,8 +69,9 @@ export const seedDatabase = async (): Promise<void> => {
           lastName: "Wilson",
           phoneNumber: "123-456-7892",
         },
-      },
-      {
+        guestDetails: [],
+      }),
+      User.create({
         email: "guest2@example.com",
         password: hashedPassword,
         role: "guest",
@@ -79,10 +80,11 @@ export const seedDatabase = async (): Promise<void> => {
           lastName: "Johnson",
           phoneNumber: "123-456-7893",
         },
-      },
-    ]);
+        guestDetails: [],
+      }),
+    ])) as [User, User];
 
-    // First create the wedding with initial structure but no budget total
+    // Then create the wedding with the guest references
     const wedding = await Wedding.create({
       title: `${partner1.profile.firstName} & ${partner2.profile.firstName}'s wedding`,
       date: new Date("2025-06-17"),
@@ -229,16 +231,30 @@ export const seedDatabase = async (): Promise<void> => {
       },
     });
 
-    // After creating the wedding, update both couple and guests' references
+    // Update guest details after wedding creation
     await User.updateMany(
-      { _id: { $in: wedding.guests } },
+      { _id: { $in: [guest1._id, guest2._id] } },
       {
         $push: {
           weddings: wedding._id,
           guestDetails: {
             weddingId: wedding._id,
             rsvpStatus: "pending",
+            relationship: "both",
+            role: "Guest",
+            dietaryPreferences: "No preferences",
+            trivia: "Loves dancing",
           },
+        },
+      }
+    );
+
+    // After creating the wedding, update both couple and guests' references
+    await User.updateMany(
+      { _id: { $in: wedding.guests } },
+      {
+        $push: {
+          weddings: wedding._id,
         },
       }
     );

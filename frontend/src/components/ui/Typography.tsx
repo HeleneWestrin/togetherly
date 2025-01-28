@@ -9,7 +9,8 @@ type TypographyStyle =
   | "bodyLarge"
   | "bodyDefault"
   | "bodySmall"
-  | "bodyExtraSmall";
+  | "bodyExtraSmall"
+  | "label";
 
 const baseStyles: Record<TypographyStyle, string> = {
   h1: "font-slab text-3xl 2xl:text-4xl font-semibold leading-tight",
@@ -27,6 +28,7 @@ const baseStyles: Record<TypographyStyle, string> = {
   bodyDefault: "font-sans text-base 2xl:text-md leading-snug",
   bodySmall: "font-sans text-sm 2xl:text-base leading-snug",
   bodyExtraSmall: "font-sans text-xs 2xl:text-sm leading-snug",
+  label: "text-sm md:text-base font-bold text-dark-800 leading-none",
 };
 
 interface TypographyProps extends HTMLAttributes<HTMLElement> {

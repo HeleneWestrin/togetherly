@@ -18,7 +18,7 @@ const DesktopNavigation = ({ weddingSlug }: DesktopNavigationProps) => {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed left-0 top-0 bottom-0 w-64 2xl:w-80 bg-white border-r border-dark-200 p-6 overflow-y-auto"
+      className="fixed left-0 top-0 bottom-0 w-desktop-nav 2xl:w-desktop-nav-2xl bg-white border-r border-dark-200 p-6 overflow-y-auto"
     >
       <div className="flex flex-col gap-6 h-full justify-between">
         <div>

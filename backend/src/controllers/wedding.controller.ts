@@ -36,45 +36,6 @@ export class WeddingController {
     }
   }
 
-  static async addGuest(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = (req as any).userId;
-      const { weddingId } = req.params;
-
-      // Validate guest data
-      const guestData = weddingSchemas.guestData.parse(req.body);
-
-      const wedding = await WeddingService.addGuest(
-        weddingId,
-        guestData,
-        userId
-      );
-      sendSuccess(res, wedding);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        next(new ValidationError(error.errors[0].message));
-      } else {
-        next(error);
-      }
-    }
-  }
-
-  static async updateRSVP(req: Request, res: Response, next: NextFunction) {
-    try {
-      const userId = (req as any).userId;
-      const { weddingId } = req.params;
-      const { rsvpStatus } = req.body;
-      const user = await WeddingService.updateRSVP(
-        weddingId,
-        userId,
-        rsvpStatus
-      );
-      sendSuccess(res, user);
-    } catch (error) {
-      next(error);
-    }
-  }
-
   static async getWeddingBySlug(
     req: Request,
     res: Response,
@@ -172,6 +133,86 @@ export class WeddingController {
         req.body
       );
       sendSuccess(res, wedding, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async addGuest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId } = req.params;
+
+      // Ensure role is included with a default value if not provided
+      const guestData = {
+        ...req.body,
+        role: req.body.role || "Guest", // Set default role if not provided
+      };
+
+      // Validate guest data
+      const validatedData = weddingSchemas.guestData.parse(guestData);
+
+      const wedding = await WeddingService.addGuest(
+        weddingId,
+        validatedData,
+        userId
+      );
+      sendSuccess(res, wedding);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        next(new ValidationError(error.errors[0].message));
+      } else {
+        next(error);
+      }
+    }
+  }
+
+  static async updateRSVP(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId } = req.params;
+      const { rsvpStatus } = req.body;
+      const user = await WeddingService.updateRSVP(
+        weddingId,
+        userId,
+        rsvpStatus
+      );
+      sendSuccess(res, user);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateGuest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId, guestId } = req.params;
+      const guestData = req.body;
+
+      const wedding = await WeddingService.updateGuest(
+        weddingId,
+        guestId,
+        guestData,
+        userId
+      );
+      sendSuccess(res, wedding);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteGuests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).userId;
+      const { weddingId } = req.params;
+      const { guestIds } = req.body;
+
+      const wedding = await WeddingService.deleteGuests(
+        weddingId,
+        guestIds,
+        userId
+      );
+      sendSuccess(res, wedding);
     } catch (error) {
       next(error);
     }

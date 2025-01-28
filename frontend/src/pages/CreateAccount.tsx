@@ -30,7 +30,7 @@ const CreateAccount: React.FC = () => {
             Sign up to Togetherly
           </Typography>
           <CreateAccountForm />
-          <p className="mt-6 text-center text-dark-850">
+          <p className="mt-6 text-center text-dark-800">
             Already have an account?{" "}
             <Link
               to="/login"

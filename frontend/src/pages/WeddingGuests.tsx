@@ -11,12 +11,14 @@ import SidePanel from "../components/ui/SidePanel";
 import AddGuestForm from "../components/wedding/AddGuestForm";
 import { useState } from "react";
 import WeddingHeader from "../components/wedding/WeddingHeader";
+import { GuestUser } from "../types/wedding";
 
 const WeddingGuests: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
   const queryClient = useQueryClient();
   const { activePanels, openPanel, closePanel } = useUIStore();
   const [error, setError] = useState<string>("");
+  const [editingGuest, setEditingGuest] = useState<GuestUser | null>(null);
 
   const {
     isLoading,
@@ -37,17 +39,36 @@ const WeddingGuests: React.FC = () => {
       relationship: "wife" | "husband" | "both";
       rsvpStatus: "pending" | "confirmed" | "declined";
       dietaryPreferences?: string;
+      role:
+        | "Guest"
+        | "Maid of Honor"
+        | "Best Man"
+        | "Bridesmaid"
+        | "Groomsman"
+        | "Flower girl"
+        | "Ring bearer"
+        | "Parent"
+        | "Family"
+        | "Other";
       trivia?: string;
     }) => {
+      if (!wedding?._id) {
+        throw new Error("Wedding ID is required");
+      }
+
       const cleanedData = {
-        ...guestData,
+        firstName: guestData.firstName?.trim() || "",
+        lastName: guestData.lastName?.trim() || "",
         email: guestData.email?.trim() || undefined,
+        relationship: guestData.relationship || "both",
+        rsvpStatus: guestData.rsvpStatus || "pending",
         dietaryPreferences: guestData.dietaryPreferences?.trim() || undefined,
+        role: guestData.role || "Guest",
         trivia: guestData.trivia?.trim() || undefined,
       };
 
       const response = await axiosInstance.post(
-        `/api/weddings/${wedding?._id}/guests`,
+        `/api/weddings/${wedding._id}/guests`,
         cleanedData
       );
       return response.data;
@@ -62,10 +83,145 @@ const WeddingGuests: React.FC = () => {
     },
   });
 
+  const updateGuestMutation = useMutation({
+    mutationFn: async (data: {
+      guestId: string;
+      updates: {
+        firstName: string;
+        lastName: string;
+        email?: string;
+        relationship: "wife" | "husband" | "both";
+        rsvpStatus: "pending" | "confirmed" | "declined";
+        dietaryPreferences?: string;
+        role:
+          | "Guest"
+          | "Maid of Honor"
+          | "Best Man"
+          | "Bridesmaid"
+          | "Groomsman"
+          | "Flower girl"
+          | "Ring bearer"
+          | "Parent"
+          | "Family"
+          | "Other";
+      };
+    }) => {
+      if (!wedding?._id) {
+        throw new Error("Wedding ID is required");
+      }
+      if (!data.guestId) {
+        throw new Error("Guest ID is required");
+      }
+
+      const cleanedData = {
+        profile: {
+          firstName: data.updates.firstName?.trim() || "",
+          lastName: data.updates.lastName?.trim() || "",
+        },
+        email: data.updates.email?.trim() || undefined,
+        guestDetails: [
+          {
+            relationship: data.updates.relationship,
+            rsvpStatus: data.updates.rsvpStatus,
+            dietaryPreferences:
+              data.updates.dietaryPreferences?.trim() || undefined,
+            role: data.updates.role,
+          },
+        ],
+      };
+
+      const response = await axiosInstance.patch(
+        `/api/weddings/${wedding._id}/guests/${data.guestId}`,
+        cleanedData
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+      closePanel("editGuest");
+      setEditingGuest(null);
+      setError("");
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
+  const deleteGuestsMutation = useMutation({
+    mutationFn: async (guestIds: string[]) => {
+      if (!wedding?._id) {
+        throw new Error("Wedding ID is required");
+      }
+      if (!guestIds.length) {
+        throw new Error("At least one guest ID is required");
+      }
+
+      const response = await axiosInstance.delete(
+        `/api/weddings/${wedding._id}/guests`,
+        { data: { guestIds } }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
+  const updateRSVPMutation = useMutation({
+    mutationFn: async (data: {
+      guestIds: string[];
+      status: "pending" | "confirmed" | "declined";
+    }) => {
+      if (!wedding?._id) {
+        throw new Error("Wedding ID is required");
+      }
+      if (!data.guestIds.length) {
+        throw new Error("At least one guest ID is required");
+      }
+
+      const response = await axiosInstance.patch(
+        `/api/weddings/${wedding._id}/guests/rsvp`,
+        data
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
   const handleOpenPanel = () => openPanel("addGuest");
   const handleClosePanel = () => {
     closePanel("addGuest");
+    closePanel("editGuest");
+    setEditingGuest(null);
     setError("");
+  };
+
+  const handleEditGuest = (guest: GuestUser) => {
+    setEditingGuest(guest);
+    openPanel("editGuest");
+  };
+
+  const handleDeleteGuests = (guestIds: string[]) => {
+    if (
+      window.confirm("Are you sure you want to delete the selected guests?")
+    ) {
+      deleteGuestsMutation.mutate(guestIds);
+    }
+  };
+
+  const handleUpdateRSVP = (
+    guestIds: string[],
+    status: "pending" | "confirmed" | "declined"
+  ) => {
+    updateRSVPMutation.mutate({ guestIds, status });
   };
 
   if (isLoading) return <div className="p-5">Loading wedding details...</div>;
@@ -101,12 +257,28 @@ const WeddingGuests: React.FC = () => {
           onClick={handleOpenPanel}
           buttonText="Add guest"
         />
-        <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">
+        <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-y-4 lg:gap-y-6">
             <div className="flex justify-between items-center">
-              <Typography element="h2">Guests</Typography>
+              <Typography element="h2">
+                {wedding?.guests?.length ?? 0} guests
+              </Typography>
             </div>
-            {wedding.guests && <GuestList guests={wedding.guests} />}
+            {wedding?.guests && wedding.guests.length > 0 ? (
+              <GuestList
+                guests={wedding.guests}
+                onDeleteGuests={handleDeleteGuests}
+                onUpdateRSVP={handleUpdateRSVP}
+                onEditGuest={handleEditGuest}
+              />
+            ) : (
+              <Typography
+                element="p"
+                className="text-dark-600"
+              >
+                No guests added yet.
+              </Typography>
+            )}
           </div>
         </div>
       </main>
@@ -122,6 +294,27 @@ const WeddingGuests: React.FC = () => {
           isError={!!error}
           error={error ? new Error(error) : null}
         />
+      </SidePanel>
+
+      <SidePanel
+        isOpen={!!activePanels.editGuest}
+        onClose={handleClosePanel}
+        title="Edit guest"
+      >
+        {editingGuest && (
+          <AddGuestForm
+            guest={editingGuest}
+            onSubmit={(data) =>
+              updateGuestMutation.mutateAsync({
+                guestId: editingGuest._id,
+                updates: data,
+              })
+            }
+            onCancel={handleClosePanel}
+            isError={!!error}
+            error={error ? new Error(error) : null}
+          />
+        )}
       </SidePanel>
 
       <div className="bg-gradient-full"></div>

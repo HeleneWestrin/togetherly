@@ -127,7 +127,7 @@ export const CreateAccountForm: React.FC = () => {
 
       <div className="relative flex my-8 items-center justify-center">
         <hr className="h-0.5 grow" />
-        <span className="w-12 shrink-0 text-center text-compact-bold text-dark-850">
+        <span className="w-12 shrink-0 text-center text-compact-bold text-dark-800">
           or
         </span>
         <hr className="h-0.5 grow" />

@@ -14,6 +14,10 @@ interface UIState {
     addGuest?: {
       isOpen: boolean;
     };
+    editGuest?: {
+      isOpen: boolean;
+      guestId: string | null;
+    };
   };
   openPanel: (panel: keyof UIState["activePanels"], data?: any) => void;
   closePanel: (panel: keyof UIState["activePanels"]) => void;

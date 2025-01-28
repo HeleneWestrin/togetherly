@@ -31,7 +31,7 @@ const AppContent = () => {
         isAuthenticated && isWeddingRoute
           ? isMobile
             ? "pb-20"
-            : "ml-64 2xl:ml-80"
+            : "ml-desktop-nav 2xl:ml-desktop-nav-2xl"
           : ""
       }`}
     >

@@ -136,7 +136,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
               styledAs="bodySmall"
               className="flex justify-between mb-2"
             >
-              <span className="text-dark-850 font-bold">Tasks:</span>
+              <span className="text-dark-800 font-bold">Tasks:</span>
               <span className="text-dark-600">
                 {tasks.length === 0
                   ? "0 tasks"
@@ -172,7 +172,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                     styledAs="bodySmall"
                     className="flex justify-between mb-6"
                   >
-                    <span className="text-dark-850 font-bold">Cost: </span>
+                    <span className="text-dark-800 font-bold">Cost: </span>
                     <span className="text-dark-600">
                       {`${category.spent.toLocaleString()} kr out of ${category.estimatedCost.toLocaleString()} kr`}
                     </span>

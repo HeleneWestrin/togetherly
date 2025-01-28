@@ -55,6 +55,17 @@ export interface GuestDetails {
   rsvpStatus: "pending" | "confirmed" | "declined";
   dietaryPreferences?: string;
   relationship: "wife" | "husband" | "both";
+  role:
+    | "Guest"
+    | "Maid of Honor"
+    | "Best Man"
+    | "Bridesmaid"
+    | "Groomsman"
+    | "Flower girl"
+    | "Ring bearer"
+    | "Parent"
+    | "Family"
+    | "Other";
   trivia?: string;
 }
 

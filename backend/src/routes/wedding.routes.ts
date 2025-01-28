@@ -38,9 +38,25 @@ weddingRouter.post(
   WeddingController.addGuest
 );
 
+// Update guest details
+weddingRouter.patch(
+  "/:weddingId/guests/:guestId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.updateGuest
+);
+
 const updateRsvpSchema = z.object({
   rsvpStatus: weddingSchemas.rsvpStatus,
 });
+
+// Delete guests
+weddingRouter.delete(
+  "/:weddingId/guests",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.deleteGuests
+);
 
 // Update RSVP status
 weddingRouter.patch(

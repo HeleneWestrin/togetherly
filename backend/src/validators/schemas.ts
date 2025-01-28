@@ -25,6 +25,18 @@ export const weddingSchemas = {
       .optional()
       .or(z.literal("")),
     relationship: z.enum(["wife", "husband", "both"]),
+    role: z.enum([
+      "Guest",
+      "Maid of Honor",
+      "Best Man",
+      "Bridesmaid",
+      "Groomsman",
+      "Flower girl",
+      "Ring bearer",
+      "Parent",
+      "Family",
+      "Other",
+    ]),
     rsvpStatus: z.enum(["pending", "confirmed", "declined"]),
     dietaryPreferences: z.string().optional().or(z.literal("")),
     trivia: z.string().optional().or(z.literal("")),

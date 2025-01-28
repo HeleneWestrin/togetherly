@@ -17,6 +17,17 @@ export interface User extends Document {
     rsvpStatus: "pending" | "confirmed" | "declined";
     dietaryPreferences: string;
     relationship: "wife" | "husband" | "both";
+    role:
+      | "Guest"
+      | "Maid of Honor"
+      | "Best Man"
+      | "Bridesmaid"
+      | "Groomsman"
+      | "Flower girl"
+      | "Ring bearer"
+      | "Parent"
+      | "Family"
+      | "Other";
     trivia?: string;
   }>;
   // User's personal information
@@ -92,6 +103,22 @@ const userSchema: Schema<User> = new mongoose.Schema(
         relationship: {
           type: String,
           enum: ["wife", "husband", "both"],
+          required: true,
+        },
+        role: {
+          type: String,
+          enum: [
+            "Guest",
+            "Maid of Honor",
+            "Best Man",
+            "Bridesmaid",
+            "Groomsman",
+            "Flower girl",
+            "Ring bearer",
+            "Parent",
+            "Family",
+            "Other",
+          ],
           required: true,
         },
         trivia: { type: String },
