@@ -214,7 +214,22 @@ const GuestList: React.FC<GuestListProps> = ({
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-4">{guestDetails.role || "Guest"}</td>
+                  <td className="px-3 py-4 whitespace-nowrap">
+                    <p className="text-dark-800 font-medium">
+                      {guestDetails.weddingRole || "Guest"}
+                    </p>
+                    {guestDetails.relationship && (
+                      <p className="text-sm text-dark-600">
+                        {guestDetails.relationship === "both"
+                          ? "Mutual friends"
+                          : guestDetails.relationship === "wife"
+                          ? "Bride's side"
+                          : guestDetails.relationship === "husband"
+                          ? "Groom's side"
+                          : guestDetails.relationship}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-3 py-4">
                     {guestDetails.dietaryPreferences || "None specified"}
                   </td>

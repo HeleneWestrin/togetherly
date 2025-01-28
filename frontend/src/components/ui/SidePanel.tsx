@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { desktopVariants, mobileVariants } from "./SidePanelVariants";
 import { Typography } from "./Typography";
+import { useUIStore } from "../../stores/useUIStore";
 
 interface SidePanelProps {
   isOpen: boolean;
@@ -30,16 +31,27 @@ const SidePanel: React.FC<SidePanelProps> = ({
         onClose();
       }
     };
+
     if (isOpen) {
       document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden"; // lock scroll
-    } else {
-      document.body.style.overflow = ""; // unlock scroll
+      // Count active panels
+      const activePanelCount = Object.values(
+        useUIStore.getState().activePanels
+      ).filter(Boolean).length;
+      if (activePanelCount === 1) {
+        document.body.style.overflow = "hidden"; // only lock if this is the first/only panel
+      }
     }
 
     return () => {
       document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "";
+      // Only remove overflow: hidden if this is the last panel
+      const remainingPanels = Object.values(
+        useUIStore.getState().activePanels
+      ).filter(Boolean).length;
+      if (remainingPanels === 0) {
+        document.body.style.overflow = "";
+      }
     };
   }, [isOpen, onClose]);
 
@@ -74,7 +86,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
 
             {/* Separate Blur Overlay */}
             <motion.div
-              className="absolute inset-0 max-md:hidden"
+              className="absolute inset-0"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -87,12 +99,14 @@ const SidePanel: React.FC<SidePanelProps> = ({
             <motion.div
               ref={panelRef}
               className="
-                absolute 
+                absolute
+                max-h-screen 
                 bg-white
                 shadow-lg
                 md:top-0 md:bottom-0 md:right-0 md:w-96
                 max-md:left-0 max-md:right-0 max-md:bottom-0 max-md:h-auto max-md:rounded-t-3xl
                 overflow-hidden
+                flex flex-col
               "
               variants={isMobile ? mobileVariants : desktopVariants}
               initial="hidden"
@@ -100,7 +114,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
               exit="exit"
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-dark-200">
+              <div className="flex items-center justify-between py-3 px-6 lg:py-6 px-10 border-b border-dark-200 flex-shrink-0">
                 <Typography
                   id="panel-title"
                   element="h2"
@@ -122,7 +136,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
 
               {/* Content */}
               <div
-                className="p-6 overflow-y-auto"
+                className="p-6 overflow-y-auto flex-grow"
                 role="region"
                 aria-labelledby="panel-title"
               >
