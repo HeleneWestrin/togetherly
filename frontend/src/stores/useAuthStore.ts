@@ -7,7 +7,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 interface User {
   id: string;
   email: string;
-  role: "admin" | "couple" | "guest"; // Strict union type for user roles
+  role: "admin" | "couple" | "guest" | "weddingAdmin"; // Strict union type for user roles
   isNewUser?: boolean;
   profile?: {
     firstName?: string;
@@ -61,7 +61,6 @@ export const useAuthStore = create<AuthState>()(
 
       // Actions
       login: (token, user) => {
-        console.log("Login action called with:", { token, user });
         set({
           token,
           user: {
@@ -70,7 +69,6 @@ export const useAuthStore = create<AuthState>()(
           },
           isAuthenticated: true,
         });
-        console.log("New state after login:", useAuthStore.getState());
       },
       logout: () => set({ token: null, user: null, isAuthenticated: false }),
       setLoading: (loading) => set({ isLoading: loading }),

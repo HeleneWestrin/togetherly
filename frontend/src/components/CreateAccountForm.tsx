@@ -57,8 +57,6 @@ export const CreateAccountForm: React.FC = () => {
         `/api/users/auth/${provider}/token`,
         { token }
       );
-      console.log("Google login response:", response.data);
-      console.log("isNewUser value:", response.data.isNewUser);
 
       // First login with the received token and user data
       login(response.data.token, {
@@ -66,7 +64,6 @@ export const CreateAccountForm: React.FC = () => {
         isNewUser: response.data.isNewUser,
       });
 
-      console.log("About to navigate with isNewUser:", response.data.isNewUser);
       // Then navigate based on wedding data
       await navigateBasedOnWeddings(navigate, response.data.isNewUser);
     } catch (error) {
@@ -82,7 +79,6 @@ export const CreateAccountForm: React.FC = () => {
   const mutation = useMutation({
     mutationFn: createAccountForm,
     onSuccess: (data) => {
-      console.log("Create account response:", data);
       // First login with the received token and user data
       login(data.token, {
         ...data.user,

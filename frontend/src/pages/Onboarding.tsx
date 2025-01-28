@@ -154,11 +154,20 @@ const Onboarding: React.FC = () => {
         completed: true,
       });
 
-      // Update user's isNewUser status
-      await axiosInstance.patch("/api/users/complete-onboarding");
+      // Update user's isNewUser status and profile
+      await axiosInstance.patch("/api/users/complete-onboarding", {
+        firstName: coupleInfo.firstName,
+        lastName: coupleInfo.lastName,
+      });
 
       // Update local auth store
-      useAuthStore.getState().updateUser({ isNewUser: false });
+      useAuthStore.getState().updateUser({
+        isNewUser: false,
+        profile: {
+          firstName: coupleInfo.firstName,
+          lastName: coupleInfo.lastName,
+        },
+      });
 
       // Navigate to the wedding budget page using the slug from the response
       navigate(`/wedding/${response.data.slug}/budget`);

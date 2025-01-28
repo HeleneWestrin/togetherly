@@ -39,7 +39,7 @@ const WeddingGuests: React.FC = () => {
       relationship: "wife" | "husband" | "both";
       rsvpStatus: "pending" | "confirmed" | "declined";
       dietaryPreferences?: string;
-      role:
+      weddingRole:
         | "Guest"
         | "Maid of Honor"
         | "Best Man"
@@ -63,7 +63,7 @@ const WeddingGuests: React.FC = () => {
         relationship: guestData.relationship || "wife",
         rsvpStatus: guestData.rsvpStatus || "pending",
         dietaryPreferences: guestData.dietaryPreferences?.trim() || undefined,
-        role: guestData.role || "Guest",
+        weddingRole: guestData.weddingRole || "Guest",
         trivia: guestData.trivia?.trim() || undefined,
       };
 
@@ -93,7 +93,7 @@ const WeddingGuests: React.FC = () => {
         relationship: "wife" | "husband" | "both";
         rsvpStatus: "pending" | "confirmed" | "declined";
         dietaryPreferences?: string;
-        role:
+        weddingRole:
           | "Guest"
           | "Maid of Honor"
           | "Best Man"
@@ -125,7 +125,7 @@ const WeddingGuests: React.FC = () => {
             rsvpStatus: data.updates.rsvpStatus,
             dietaryPreferences:
               data.updates.dietaryPreferences?.trim() || undefined,
-            role: data.updates.role,
+            weddingRole: data.updates.weddingRole,
           },
         ],
       };
@@ -221,7 +221,6 @@ const WeddingGuests: React.FC = () => {
     guestIds: string[],
     rsvpStatus: "pending" | "confirmed" | "declined"
   ) => {
-    console.log("Selected guest IDs:", guestIds);
     updateRSVPMutation.mutate({ guestIds, rsvpStatus });
   };
 

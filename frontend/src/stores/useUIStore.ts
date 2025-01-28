@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { GuestUser } from "../types/wedding";
+import { CoupleUser } from "../types/wedding";
 
 interface UIState {
   activePanels: {
@@ -21,6 +23,10 @@ interface UIState {
     inviteUser?: {
       isOpen: boolean;
       email: string;
+    };
+    editUser?: {
+      isOpen: boolean;
+      user: CoupleUser | GuestUser;
     };
   };
   openPanel: (panel: keyof UIState["activePanels"], data?: any) => void;

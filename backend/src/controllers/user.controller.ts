@@ -92,7 +92,13 @@ export class UserController {
   ) {
     try {
       const userId = (req as any).userId;
-      const user = await UserService.completeOnboarding(userId);
+      const { firstName, lastName } = req.body;
+
+      const user = await UserService.completeOnboarding(userId, {
+        firstName,
+        lastName,
+      });
+
       sendSuccess(res, { message: "Onboarding completed successfully" });
     } catch (error) {
       next(error);

@@ -1,5 +1,6 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
 import { Wedding } from "./wedding.model";
+import { UserRole } from "../types/user";
 
 /**
  * Interface defining the User document structure
@@ -10,14 +11,14 @@ export interface User extends Document {
   password: string;
   isRegistered: boolean;
   isActive: boolean;
-  role: "admin" | "couple" | "guest"; // Strict type for user roles
+  role: UserRole; // Strict type for user roles
   // Array of guest-specific details for each wedding they're invited to
   guestDetails: Array<{
     weddingId: mongoose.Types.ObjectId;
     rsvpStatus: "pending" | "confirmed" | "declined";
     dietaryPreferences: string;
     relationship: "wife" | "husband" | "both";
-    role:
+    weddingRole:
       | "Guest"
       | "Maid of Honor"
       | "Best Man"
@@ -86,7 +87,7 @@ const userSchema: Schema<User> = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "couple", "guest"], // Restricts role to these three options
+      enum: ["admin", "couple", "guest", "weddingAdmin"], // Restricts role to these three options
       default: "couple",
       required: [true, "Role is required"],
     },
@@ -105,7 +106,7 @@ const userSchema: Schema<User> = new mongoose.Schema(
           enum: ["wife", "husband", "both"],
           required: true,
         },
-        role: {
+        weddingRole: {
           type: String,
           enum: [
             "Guest",

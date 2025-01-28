@@ -15,7 +15,7 @@ interface AddGuestFormProps {
     relationship: "wife" | "husband" | "both";
     rsvpStatus: "pending" | "confirmed" | "declined";
     dietaryPreferences?: string;
-    role:
+    weddingRole:
       | "Guest"
       | "Maid of Honor"
       | "Best Man"
@@ -47,7 +47,7 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
     relationship: guest?.guestDetails[0]?.relationship || "wife",
     rsvpStatus: guest?.guestDetails[0]?.rsvpStatus || "pending",
     dietaryPreferences: guest?.guestDetails[0]?.dietaryPreferences || "",
-    role: guest?.guestDetails[0]?.role || "Guest",
+    weddingRole: guest?.guestDetails[0]?.weddingRole || "Guest",
   });
 
   const submitButtonText = guest ? "Save changes" : "Add guest";
@@ -57,7 +57,6 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      console.log(formData);
       await onSubmit(formData);
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -110,16 +109,16 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
 
         <div>
           <FormLabel
-            htmlFor="role"
+            htmlFor="weddingRole"
             className="mb-2"
             required
           >
             Role
           </FormLabel>
           <select
-            id="role"
-            name="role"
-            value={formData.role}
+            id="weddingRole"
+            name="weddingRole"
+            value={formData.weddingRole}
             onChange={handleChange}
             className="w-full rounded-lg border-2 border-dark-500 px-3 py-4"
             required

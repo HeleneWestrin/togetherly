@@ -25,7 +25,7 @@ export const weddingSchemas = {
       .optional()
       .or(z.literal("")),
     relationship: z.enum(["wife", "husband", "both"]),
-    role: z.enum([
+    weddingRole: z.enum([
       "Guest",
       "Maid of Honor",
       "Best Man",

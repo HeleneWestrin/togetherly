@@ -58,7 +58,7 @@ export interface GuestDetails {
   rsvpStatus: "pending" | "confirmed" | "declined";
   dietaryPreferences?: string;
   relationship: "wife" | "husband" | "both";
-  role:
+  weddingRole:
     | "Guest"
     | "Maid of Honor"
     | "Best Man"

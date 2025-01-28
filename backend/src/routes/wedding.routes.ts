@@ -97,3 +97,19 @@ weddingRouter.post(
   requireWeddingAccess,
   WeddingController.inviteUser
 );
+
+// Update user details
+weddingRouter.patch(
+  "/:weddingId/users/:userId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.updateUser
+);
+
+// Delete user from wedding
+weddingRouter.delete(
+  "/:weddingId/users/:userId",
+  authenticateUser,
+  requireWeddingAccess,
+  WeddingController.deleteUser
+);

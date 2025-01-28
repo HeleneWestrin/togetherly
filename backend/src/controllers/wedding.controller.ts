@@ -256,4 +256,38 @@ export class WeddingController {
       next(error);
     }
   }
+
+  static async updateUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { weddingId, userId } = req.params;
+      const requestingUserId = (req as any).userId;
+      const userData = req.body;
+
+      const result = await WeddingService.updateUser(
+        weddingId,
+        userId,
+        userData,
+        requestingUserId
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async deleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { weddingId, userId } = req.params;
+      const requestingUserId = (req as any).userId;
+
+      const result = await WeddingService.deleteUser(
+        weddingId,
+        userId,
+        requestingUserId
+      );
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

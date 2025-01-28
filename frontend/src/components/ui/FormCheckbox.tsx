@@ -22,7 +22,7 @@ const FormCheckbox: FC<FormCheckboxProps> = ({
 }) => {
   return (
     <div
-      className="flex items-center cursor-pointer"
+      className="inline-flex items-center cursor-pointer group"
       onClick={() => onChange(!checked)}
       role="checkbox"
       aria-checked={checked}
@@ -35,7 +35,7 @@ const FormCheckbox: FC<FormCheckboxProps> = ({
       }}
     >
       <motion.div
-        className={`${sizeClasses[size]} border-2 rounded flex items-center justify-center`}
+        className={`${sizeClasses[size]} border-2 rounded flex items-center justify-center hover:shadow-dark-focus transition-shadow duration-200 ease-in-out group-aria-checked:hover:shadow-pink-focus`}
         animate={{
           backgroundColor: checked ? "#B02F8B" : "#ffffff",
           borderColor: checked ? "#B02F8B" : "#283333",

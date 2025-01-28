@@ -118,7 +118,7 @@ export class WeddingService {
       lastName: string;
       email?: string;
       relationship: "wife" | "husband" | "both";
-      role:
+      weddingRole:
         | "Guest"
         | "Maid of Honor"
         | "Best Man"
@@ -170,7 +170,7 @@ export class WeddingService {
               rsvpStatus: guestData.rsvpStatus,
               dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
               relationship: guestData.relationship,
-              role: guestData.role,
+              weddingRole: guestData.weddingRole,
               trivia: guestData.trivia?.trim() || "",
             },
           ],
@@ -197,7 +197,7 @@ export class WeddingService {
             rsvpStatus: guestData.rsvpStatus,
             dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
             relationship: guestData.relationship,
-            role: guestData.role,
+            weddingRole: guestData.weddingRole,
             trivia: guestData.trivia?.trim() || "",
           });
         } else {
@@ -205,7 +205,7 @@ export class WeddingService {
             rsvpStatus: guestData.rsvpStatus,
             dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
             relationship: guestData.relationship,
-            role: guestData.role,
+            weddingRole: guestData.weddingRole,
             trivia: guestData.trivia?.trim() || "",
           });
         }
@@ -553,7 +553,7 @@ export class WeddingService {
         relationship: "wife" | "husband" | "both";
         rsvpStatus: "pending" | "confirmed" | "declined";
         dietaryPreferences?: string;
-        role:
+        weddingRole:
           | "Guest"
           | "Maid of Honor"
           | "Best Man"
@@ -662,18 +662,13 @@ export class WeddingService {
     weddingId: string,
     inviteData: {
       email: string;
-      role: "couple" | "guest";
-      weddingRole:
-        | "Maid of Honor"
-        | "Best Man"
-        | "Bridesmaid"
-        | "Groomsman"
-        | "Parent"
-        | "Other";
+      firstName: string;
+      lastName: string;
+      role: "weddingAdmin" | "couple" | "guest";
+      weddingRole: string;
     },
     userId: string
   ) {
-    // Validate wedding access
     const wedding = await Wedding.findById(weddingId).populate("couple");
     if (!wedding) {
       throw new NotFoundError("Wedding not found");
@@ -688,72 +683,73 @@ export class WeddingService {
     }
 
     // Check if email already exists
-    const existingUser = (await User.findOne({ email: inviteData.email })) as
-      | (User & { _id: Types.ObjectId })
-      | null;
+    const existingUser = await User.findOne({ email: inviteData.email });
 
     if (existingUser) {
-      // If user exists, add them to the wedding
-      if (inviteData.role === "couple") {
-        // Add to couple array if not already there
-        if (
-          !wedding.couple.some(
-            (id) => id.toString() === existingUser._id.toString()
-          )
-        ) {
-          wedding.couple.push(existingUser._id);
+      // Update role only if it's being set to weddingAdmin
+      if (inviteData.role === "weddingAdmin" && existingUser.role !== "admin") {
+        existingUser.role = "weddingAdmin";
+      }
+
+      // Find and update existing guest details or create new ones
+      const existingGuestDetails = existingUser.guestDetails?.find(
+        (d) => d.weddingId.toString() === weddingId
+      );
+
+      if (existingGuestDetails) {
+        // Update existing guest details
+        existingGuestDetails.weddingRole = inviteData.weddingRole as
+          | "Maid of Honor"
+          | "Best Man"
+          | "Bridesmaid"
+          | "Groomsman"
+          | "Parent"
+          | "Other";
+        // Remove old role field if it exists
+        if ("role" in existingGuestDetails) {
+          delete (existingGuestDetails as any).role;
         }
       } else {
-        // Add to guests array if not already there
-        if (!wedding.guests?.includes(existingUser._id)) {
-          wedding.guests = wedding.guests || [];
-          wedding.guests.push(existingUser._id);
-
-          // Update guest details
-          existingUser.guestDetails = existingUser.guestDetails || [];
-          existingUser.guestDetails.push({
-            weddingId: wedding._id as Types.ObjectId,
-            role: inviteData.weddingRole,
-            rsvpStatus: "pending",
-            relationship: "wife", // Default value
-            dietaryPreferences: "",
-            trivia: "",
-          });
-          await existingUser.save();
-        }
+        // Add new guest details
+        existingUser.guestDetails = existingUser.guestDetails || [];
+        existingUser.guestDetails.push({
+          weddingId: wedding._id as Types.ObjectId,
+          weddingRole: inviteData.weddingRole as
+            | "Maid of Honor"
+            | "Best Man"
+            | "Bridesmaid"
+            | "Groomsman"
+            | "Parent"
+            | "Other",
+          rsvpStatus: "pending",
+          relationship: "both",
+          dietaryPreferences: "",
+          trivia: "",
+        });
       }
+
+      await existingUser.save();
     } else {
-      // Create new user shell
-      const newUser = await User.create({
+      // Create new user
+      await User.create({
         email: inviteData.email,
         role: inviteData.role,
-        guestDetails:
-          inviteData.role === "guest"
-            ? [
-                {
-                  weddingId: wedding._id,
-                  role: inviteData.weddingRole,
-                  rsvpStatus: "pending",
-                  relationship: "wife", // Default value
-                  dietaryPreferences: "",
-                  trivia: "",
-                },
-              ]
-            : undefined,
+        profile: {
+          firstName: inviteData.firstName,
+          lastName: inviteData.lastName,
+        },
+        guestDetails: [
+          {
+            weddingId: wedding._id,
+            weddingRole: inviteData.weddingRole,
+            rsvpStatus: "pending",
+            relationship: "both",
+            dietaryPreferences: "",
+            trivia: "",
+          },
+        ],
       });
-
-      // Add to appropriate array
-      if (inviteData.role === "couple") {
-        wedding.couple.push(newUser._id as Types.ObjectId);
-      } else {
-        wedding.guests = wedding.guests || [];
-        wedding.guests.push(newUser._id as Types.ObjectId);
-      }
     }
-
-    await wedding.save();
-
-    // TODO: Send invitation email
 
     return wedding;
   }
@@ -801,5 +797,96 @@ export class WeddingService {
         "guests",
         "profile.firstName profile.lastName email isRegistered guestDetails"
       );
+  }
+
+  static async updateUser(
+    weddingId: string,
+    userId: string,
+    userData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      weddingRole?:
+        | "Guest"
+        | "Maid of Honor"
+        | "Best Man"
+        | "Bridesmaid"
+        | "Groomsman"
+        | "Flower girl"
+        | "Ring bearer"
+        | "Parent"
+        | "Family"
+        | "Other";
+    },
+    requestingUserId: string
+  ) {
+    const wedding = await Wedding.findById(weddingId);
+    if (!wedding) {
+      throw new NotFoundError("Wedding not found");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    // Update profile information
+    if (!user.profile) {
+      user.profile = {
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        address: "",
+        profilePicture: "",
+      };
+    }
+    if (userData.firstName) user.profile.firstName = userData.firstName;
+    if (userData.lastName) user.profile.lastName = userData.lastName;
+    if (userData.email) user.email = userData.email;
+
+    // Update role if user is a guest
+    if (userData.weddingRole && user.guestDetails?.length > 0) {
+      const guestDetail = user.guestDetails.find(
+        (detail) => detail.weddingId.toString() === weddingId
+      );
+      if (guestDetail) {
+        guestDetail.weddingRole = userData.weddingRole;
+      }
+    }
+
+    await user.save();
+    return user;
+  }
+
+  static async deleteUser(
+    weddingId: string,
+    userId: string,
+    requestingUserId: string
+  ) {
+    const wedding = await Wedding.findById(weddingId);
+    if (!wedding) {
+      throw new NotFoundError("Wedding not found");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    // If user is a guest, remove their guest details for this wedding
+    if (user.guestDetails?.length > 0) {
+      user.guestDetails = user.guestDetails.filter(
+        (detail) => detail.weddingId.toString() !== weddingId
+      );
+      await user.save();
+    }
+
+    // If user is part of the couple, remove them from the wedding
+    if (wedding.couple.includes(new Types.ObjectId(userId))) {
+      wedding.couple = wedding.couple.filter((id) => id.toString() !== userId);
+      await wedding.save();
+    }
+
+    return { message: "User removed from wedding successfully" };
   }
 }

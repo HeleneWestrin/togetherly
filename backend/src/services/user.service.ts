@@ -78,7 +78,16 @@ export class UserService {
     }
 
     const token = AuthService.generateToken(user._id.toString());
-    return { userId: user._id, token };
+
+    // Return the response in the expected format
+    return {
+      token,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
   /**
@@ -135,12 +144,20 @@ export class UserService {
    * Updates user's status after completing onboarding
    * @param userId - ID of the user completing onboarding
    */
-  static async completeOnboarding(userId: string) {
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { $set: { isNewUser: false } },
-      { new: true }
-    );
+  static async completeOnboarding(
+    userId: string,
+    profileData?: { firstName?: string; lastName?: string }
+  ) {
+    const updateData: any = { $set: { isNewUser: false } };
+
+    if (profileData) {
+      updateData.$set["profile.firstName"] = profileData.firstName;
+      updateData.$set["profile.lastName"] = profileData.lastName;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
 
     if (!user) {
       throw new NotFoundError("User not found");

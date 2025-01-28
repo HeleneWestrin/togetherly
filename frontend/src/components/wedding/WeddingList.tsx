@@ -46,7 +46,7 @@ export const WeddingList: React.FC = () => {
         {weddings.map((wedding) => (
           <Link
             key={wedding._id}
-            to={`/wedding/${wedding.slug}`}
+            to={`/wedding/${wedding.slug}/budget`}
             className="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
           >
             <Typography

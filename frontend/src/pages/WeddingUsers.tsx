@@ -10,11 +10,17 @@ import { useState } from "react";
 import WeddingHeader from "../components/wedding/WeddingHeader";
 import UserList from "../components/wedding/UserList";
 import InviteUserForm from "../components/wedding/InviteUserForm";
+import { GuestUser } from "../types/wedding";
+import { CoupleUser } from "../types/wedding";
+import EditUserForm from "../components/wedding/EditUserForm";
 
 const WeddingUsers: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
   const queryClient = useQueryClient();
   const { activePanels, openPanel, closePanel } = useUIStore();
+  const [editingUser, setEditingUser] = useState<CoupleUser | GuestUser | null>(
+    null
+  );
   const [error, setError] = useState<string>("");
 
   const {
@@ -30,8 +36,10 @@ const WeddingUsers: React.FC = () => {
 
   const inviteUserMutation = useMutation({
     mutationFn: async (userData: {
+      firstName: string;
+      lastName: string;
       email: string;
-      role: "couple" | "guest";
+      role: "couple" | "guest" | "weddingAdmin";
       weddingRole:
         | "Maid of Honor"
         | "Best Man"
@@ -58,10 +66,69 @@ const WeddingUsers: React.FC = () => {
     },
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!wedding?._id) throw new Error("Wedding ID is required");
+
+      const response = await axiosInstance.delete(
+        `/api/weddings/${wedding._id}/users/${userId}`
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
+  const editUserMutation = useMutation({
+    mutationFn: async ({
+      userId,
+      userData,
+    }: {
+      userId: string;
+      userData: {
+        email?: string;
+        role?: string;
+        firstName?: string;
+        lastName?: string;
+      };
+    }) => {
+      if (!wedding?._id) throw new Error("Wedding ID is required");
+
+      const response = await axiosInstance.patch(
+        `/api/weddings/${wedding._id}/users/${userId}`,
+        userData
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+      closePanel("editUser");
+      setError("");
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    },
+  });
+
   const handleOpenPanel = () => openPanel("inviteUser");
   const handleClosePanel = () => {
     closePanel("inviteUser");
     setError("");
+  };
+
+  const handleEditUser = (user: CoupleUser | GuestUser) => {
+    setEditingUser(user);
+    openPanel("editUser");
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (window.confirm("Are you sure you want to remove this user?")) {
+      await deleteUserMutation.mutateAsync(userId);
+    }
   };
 
   if (isLoading) return <div className="p-5">Loading wedding details...</div>;
@@ -89,7 +156,7 @@ const WeddingUsers: React.FC = () => {
   // Filter guests with admin roles
   const adminGuests =
     wedding.guests?.filter((guest) =>
-      ["Maid of Honor", "Best Man"].includes(guest.guestDetails[0]?.role)
+      ["Maid of Honor", "Best Man"].includes(guest.guestDetails[0]?.weddingRole)
     ) || [];
 
   return (
@@ -116,6 +183,8 @@ const WeddingUsers: React.FC = () => {
               <UserList
                 users={wedding.couple}
                 type="couple"
+                onEditUser={handleEditUser}
+                onDeleteUser={handleDeleteUser}
               />
             </div>
 
@@ -131,6 +200,8 @@ const WeddingUsers: React.FC = () => {
                 <UserList
                   users={adminGuests}
                   type="admin"
+                  onEditUser={handleEditUser}
+                  onDeleteUser={handleDeleteUser}
                 />
               ) : (
                 <Typography
@@ -145,27 +216,44 @@ const WeddingUsers: React.FC = () => {
         </div>
       </main>
 
+      {/* Invite User Panel */}
       <SidePanel
         isOpen={!!activePanels.inviteUser}
         onClose={handleClosePanel}
         title="Invite user"
       >
         <InviteUserForm
-          onSubmit={(data: {
-            email: string;
-            role: "couple" | "guest";
-            weddingRole:
-              | "Maid of Honor"
-              | "Best Man"
-              | "Bridesmaid"
-              | "Groomsman"
-              | "Parent"
-              | "Other";
-          }) => inviteUserMutation.mutateAsync(data)}
+          onSubmit={(data) => inviteUserMutation.mutateAsync(data)}
           onCancel={handleClosePanel}
           isError={!!error}
           error={error ? new Error(error) : null}
+          existingGuests={wedding?.guests}
         />
+      </SidePanel>
+
+      {/* Edit User Panel */}
+      <SidePanel
+        isOpen={!!activePanels.editUser}
+        onClose={() => {
+          closePanel("editUser");
+          setEditingUser(null);
+          setError("");
+        }}
+        title="Edit user"
+      >
+        {editingUser && (
+          <EditUserForm
+            user={editingUser}
+            onSubmit={editUserMutation.mutateAsync}
+            onCancel={() => {
+              closePanel("editUser");
+              setEditingUser(null);
+              setError("");
+            }}
+            isError={!!error}
+            error={error ? new Error(error) : null}
+          />
+        )}
       </SidePanel>
 
       <div className="bg-gradient-full"></div>

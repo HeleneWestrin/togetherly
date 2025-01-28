@@ -20,12 +20,14 @@ export const seedDatabase = async (): Promise<void> => {
       Task.deleteMany({}),
     ]);
 
-    // Create admin user
+    // Create admin user (super user)
     const adminHashedPassword = await bcrypt.hash("AdminPassword123", 10);
     const admin = await User.create({
       email: "helene.westrin@alphadev.se",
       password: adminHashedPassword,
       role: "admin",
+      isRegistered: true,
+      isActive: true,
       profile: {
         firstName: "Helene",
         lastName: "Westrin",
@@ -59,11 +61,13 @@ export const seedDatabase = async (): Promise<void> => {
     ]);
 
     // Create guests first
-    const [guest1, guest2] = (await Promise.all([
+    const [guest1, guest2] = await Promise.all([
       User.create({
         email: "guest1@example.com",
         password: hashedPassword,
         role: "guest",
+        isRegistered: true,
+        isActive: true,
         profile: {
           firstName: "Bob",
           lastName: "Wilson",
@@ -74,7 +78,9 @@ export const seedDatabase = async (): Promise<void> => {
       User.create({
         email: "guest2@example.com",
         password: hashedPassword,
-        role: "guest",
+        role: "weddingAdmin",
+        isRegistered: true,
+        isActive: true,
         profile: {
           firstName: "Alice",
           lastName: "Johnson",
@@ -82,7 +88,7 @@ export const seedDatabase = async (): Promise<void> => {
         },
         guestDetails: [],
       }),
-    ])) as [User, User];
+    ]);
 
     // Then create the wedding with the guest references
     const wedding = await Wedding.create({
@@ -240,8 +246,8 @@ export const seedDatabase = async (): Promise<void> => {
           guestDetails: {
             weddingId: wedding._id,
             rsvpStatus: "pending",
-            relationship: "wife",
-            role: "Guest",
+            relationship: "both",
+            weddingRole: "Guest",
             dietaryPreferences: "No preferences",
             trivia: "Loves dancing",
           },

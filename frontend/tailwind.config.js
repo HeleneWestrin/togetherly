@@ -91,6 +91,7 @@ export default {
       },
       boxShadow: {
         "pink-focus": "0 0 0 4px rgb(223 88 185 / 0.2)",
+        "dark-focus": "0 0 0 4px rgb(32 40 40 / 0.2)",
       },
       backgroundImage: {
         "gradient-landscape": "var(--gradient-svg), var(--gradient-fallback)",
