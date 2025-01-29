@@ -150,5 +150,11 @@ const userSchema: Schema<User> = new mongoose.Schema(
   { timestamps: true } // Automatically manage createdAt and updatedAt fields
 );
 
+// Add these indexes to the userSchema before creating the model
+userSchema.index({ role: 1 });
+userSchema.index({ weddings: 1 });
+userSchema.index({ "guestDetails.weddingId": 1 });
+userSchema.index({ weddings: 1, role: 1 });
+
 // Create and export the User model
 export const User: Model<User> = mongoose.model<User>("User", userSchema);

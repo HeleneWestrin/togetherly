@@ -138,6 +138,11 @@ budgetItemSchema
     return tasks.reduce((total, task) => total + (task.actualCost || 0), 0);
   });
 
+// Add these indexes to the weddingSchema before creating the model
+weddingSchema.index({ couple: 1 });
+weddingSchema.index({ guests: 1 });
+weddingSchema.index({ "budget.allocated.category": 1 });
+
 export const Wedding: Model<Wedding> = mongoose.model<Wedding>(
   "Wedding",
   weddingSchema

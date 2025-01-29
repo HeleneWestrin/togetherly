@@ -42,6 +42,11 @@ const onboardingSchema = new Schema({
   lastUpdated: { type: Date, default: Date.now },
 });
 
+onboardingSchema.index(
+  { lastUpdated: 1 },
+  { expireAfterSeconds: 7 * 24 * 60 * 60 }
+); // Expire after 7 days
+
 export const OnboardingProgress = mongoose.model<OnboardingProgress>(
   "OnboardingProgress",
   onboardingSchema

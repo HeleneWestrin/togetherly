@@ -29,4 +29,8 @@ const taskSchema = new Schema<Task>(
   { timestamps: true }
 );
 
+taskSchema.index({ weddingId: 1 });
+taskSchema.index({ budgetItem: 1 });
+taskSchema.index({ completed: 1 });
+
 export const Task: Model<Task> = mongoose.model<Task>("Task", taskSchema);
