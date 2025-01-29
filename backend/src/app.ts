@@ -9,6 +9,8 @@ import { onboardingRouter } from "./routes/onboarding.routes";
 
 export const app = express();
 
+console.log("CORS Allowed Origin:", process.env.FRONTEND_URL);
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
