@@ -3,7 +3,7 @@ import { forceLogout } from "../utils/logoutHandler";
 import { useAuthStore } from "../stores/useAuthStore";
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 5000,
 });
 

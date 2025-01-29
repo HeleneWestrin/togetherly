@@ -17,9 +17,7 @@ const startServer = async (): Promise<void> => {
   }
 
   app.listen(env.PORT, () => {
-    console.log(
-      `Server running on http://localhost:${env.PORT} in ${env.NODE_ENV} mode`
-    );
+    console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode.`);
   });
 };
 
