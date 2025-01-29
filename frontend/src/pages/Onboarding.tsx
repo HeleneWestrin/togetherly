@@ -47,41 +47,20 @@ const Onboarding: React.FC = () => {
 
   // State initialization with backend data
   const [step, setStep] = useState(1);
-  const [coupleInfo, setCoupleInfo] = useState<CoupleInfo>(() => {
-    const savedInfo = localStorage.getItem(STORAGE_KEYS.COUPLE_INFO);
-    return savedInfo
-      ? JSON.parse(savedInfo)
-      : {
-          firstName: "",
-          lastName: "",
-          partnerFirstName: "",
-          partnerLastName: "",
-          partnerEmail: "",
-          role: "",
-          partnerRole: "",
-        };
+  const [coupleInfo, setCoupleInfo] = useState<CoupleInfo>({
+    firstName: "",
+    lastName: "",
+    partnerFirstName: "",
+    partnerLastName: "",
+    partnerEmail: "",
+    role: "",
+    partnerRole: "",
   });
-  const [weddingInfo, setWeddingInfo] = useState<WeddingInfo>(() => {
-    const savedInfo = localStorage.getItem(STORAGE_KEYS.WEDDING_INFO);
-    return savedInfo
-      ? JSON.parse(savedInfo)
-      : {
-          date: "",
-          estimatedGuests: 0,
-          estimatedBudget: 0,
-        };
+  const [weddingInfo, setWeddingInfo] = useState<WeddingInfo>({
+    date: "",
+    estimatedGuests: 0,
+    estimatedBudget: 0,
   });
-
-  // Add this new useEffect to update form when user data changes
-  useEffect(() => {
-    if (user?.profile) {
-      setCoupleInfo((current) => ({
-        ...current,
-        firstName: user?.profile?.firstName || current.firstName,
-        lastName: user?.profile?.lastName || current.lastName,
-      }));
-    }
-  }, [user?.profile]);
 
   // Initialize state from backend data
   useEffect(() => {
@@ -89,12 +68,19 @@ const Onboarding: React.FC = () => {
       setStep(onboardingData.step);
       if (onboardingData.coupleInfo) {
         setCoupleInfo(onboardingData.coupleInfo);
+      } else if (!onboardingData.coupleInfo && user?.profile) {
+        // Only set from user profile if no onboarding data exists
+        setCoupleInfo((current) => ({
+          ...current,
+          firstName: user.profile?.firstName || "",
+          lastName: user.profile?.lastName || "",
+        }));
       }
       if (onboardingData.weddingInfo) {
         setWeddingInfo(onboardingData.weddingInfo);
       }
     }
-  }, [onboardingData]);
+  }, [onboardingData, user?.profile]);
 
   // Save to localStorage whenever form data changes
   useEffect(() => {
@@ -110,8 +96,33 @@ const Onboarding: React.FC = () => {
 
   // Clear localStorage after successful submission
   const clearLocalStorage = () => {
+    // Clear specific onboarding keys
     localStorage.removeItem(STORAGE_KEYS.COUPLE_INFO);
     localStorage.removeItem(STORAGE_KEYS.WEDDING_INFO);
+
+    // Clear any other potential onboarding-related data
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("onboarding_")) {
+        localStorage.removeItem(key);
+      }
+    }
+
+    // Force a state reset
+    setCoupleInfo({
+      firstName: "",
+      lastName: "",
+      partnerFirstName: "",
+      partnerLastName: "",
+      partnerEmail: "",
+      role: "",
+      partnerRole: "",
+    });
+
+    setWeddingInfo({
+      date: "",
+      estimatedGuests: 0,
+      estimatedBudget: 0,
+    });
   };
 
   // Mutation to update progress
@@ -142,25 +153,25 @@ const Onboarding: React.FC = () => {
   const handleWeddingInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Clear localStorage first before any other operations
+      clearLocalStorage();
+
       const response = await createWeddingMutation.mutateAsync({
         coupleInfo,
         weddingInfo,
       });
 
-      // Mark onboarding as completed
       await updateProgressMutation.mutateAsync({
         step: 2,
         weddingInfo,
         completed: true,
       });
 
-      // Update user's isNewUser status and profile
       await axiosInstance.patch("/api/users/complete-onboarding", {
         firstName: coupleInfo.firstName,
         lastName: coupleInfo.lastName,
       });
 
-      // Update local auth store
       useAuthStore.getState().updateUser({
         isNewUser: false,
         profile: {
@@ -169,7 +180,6 @@ const Onboarding: React.FC = () => {
         },
       });
 
-      // Navigate to the wedding budget page using the slug from the response
       navigate(`/wedding/${response.data.slug}/budget`);
     } catch (error) {
       console.error("Failed to update onboarding status:", error);
@@ -187,9 +197,6 @@ const Onboarding: React.FC = () => {
         data
       );
       return response.data;
-    },
-    onSuccess: (data) => {
-      clearLocalStorage(); // Clear stored data after successful submission
     },
   });
 
