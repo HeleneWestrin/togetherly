@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { FC } from "react";
 
 type FormCheckboxProps = {
+  id?: string;
   label?: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
@@ -14,7 +15,14 @@ const sizeClasses = {
   large: "w-7 h-7",
 };
 
+const svgSizeClasses = {
+  small: "w-4 h-4",
+  medium: "w-5 h-5",
+  large: "w-6 h-6",
+};
+
 const FormCheckbox: FC<FormCheckboxProps> = ({
+  id,
   label = "",
   checked,
   onChange,
@@ -22,6 +30,7 @@ const FormCheckbox: FC<FormCheckboxProps> = ({
 }) => {
   return (
     <div
+      id={id}
       className="inline-flex items-center cursor-pointer group"
       onClick={() => onChange(!checked)}
       role="checkbox"
@@ -50,7 +59,7 @@ const FormCheckbox: FC<FormCheckboxProps> = ({
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`w-4 h-4 text-white`}
+          className={`${svgSizeClasses[size]} text-white`}
         >
           <motion.polyline
             points="4 12 9 17 20 6"

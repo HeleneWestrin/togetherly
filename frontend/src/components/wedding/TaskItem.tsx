@@ -10,7 +10,7 @@ import { Button } from "../ui/Button";
 import SidePanel from "../ui/SidePanel";
 import TaskForm from "./TaskForm";
 import { useUIStore } from "../../stores/useUIStore";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import FormCheckbox from "../ui/FormCheckbox";
 
 interface TaskItemProps {
   task: Task;
@@ -60,14 +60,11 @@ const TaskItem: React.FC<TaskItemProps> = ({
     <>
       <div className="flex items-center justify-between bg-gray-50 rounded-lg">
         <div className="flex items-center gap-4">
-          <input
-            type="checkbox"
-            title={task.title}
+          <FormCheckbox
             id={task.title}
             checked={task.completed}
-            className="w-6 h-6 accent-pink-600"
             onChange={() => onEditTask(task._id)}
-            tabIndex={tabIndex}
+            size="large"
           />
           <div className="flex flex-col">
             <FormLabel

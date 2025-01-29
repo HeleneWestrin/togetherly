@@ -12,7 +12,8 @@ import { useUIStore } from "../stores/useUIStore";
 import SidePanel from "../components/ui/SidePanel";
 import FormInput from "../components/ui/FormInput";
 import { Button } from "../components/ui/Button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { offlineStorage } from "../services/offlineStorage";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -38,12 +39,84 @@ const WeddingBudget: React.FC = () => {
     }
   }, [wedding?.budget?.total]);
 
+  const useDebounce = (callback: Function, delay: number) => {
+    const timeoutRef = useRef<NodeJS.Timeout>();
+
+    useEffect(() => {
+      return () => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    }, []);
+
+    return useCallback(
+      (...args: any[]) => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+
+        timeoutRef.current = setTimeout(() => {
+          callback(...args);
+        }, delay);
+      },
+      [callback, delay]
+    );
+  };
+
+  const debouncedTaskUpdate = useDebounce(
+    (taskId: string, completed: boolean) => {
+      updateTaskMutation.mutate(
+        { taskId, completed },
+        {
+          onError: () => {
+            offlineStorage.saveTask(taskId, completed);
+          },
+        }
+      );
+    },
+    300
+  );
+
   const updateTaskMutation = useMutation({
     mutationFn: (data: { taskId: string; completed: boolean }) =>
       axiosInstance.patch(`/api/tasks/${data.taskId}`, {
         completed: data.completed,
       }),
-    onSuccess: () => {
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ["wedding", weddingSlug] });
+
+      const previousWedding = queryClient.getQueryData([
+        "wedding",
+        weddingSlug,
+      ]);
+
+      queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
+        const updatedWedding = { ...old };
+        if (updatedWedding.budget?.allocated) {
+          updatedWedding.budget.allocated = updatedWedding.budget.allocated.map(
+            (category: any) => ({
+              ...category,
+              tasks: category.tasks.map((task: any) =>
+                task._id === newData.taskId
+                  ? { ...task, completed: newData.completed }
+                  : task
+              ),
+            })
+          );
+        }
+        return updatedWedding;
+      });
+
+      return { previousWedding };
+    },
+    onError: (err, newData, context) => {
+      queryClient.setQueryData(
+        ["wedding", weddingSlug],
+        context?.previousWedding
+      );
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
     },
   });
@@ -73,10 +146,24 @@ const WeddingBudget: React.FC = () => {
       .find((t) => t._id === taskId);
 
     if (task) {
-      updateTaskMutation.mutate({
-        taskId,
-        completed: !task.completed,
+      const newCompleted = !task.completed;
+
+      queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
+        const updatedWedding = { ...old };
+        if (updatedWedding.budget?.allocated) {
+          updatedWedding.budget.allocated = updatedWedding.budget.allocated.map(
+            (category: any) => ({
+              ...category,
+              tasks: category.tasks.map((t: any) =>
+                t._id === taskId ? { ...t, completed: newCompleted } : t
+              ),
+            })
+          );
+        }
+        return updatedWedding;
       });
+
+      debouncedTaskUpdate(taskId, newCompleted);
     }
   };
 
@@ -92,6 +179,15 @@ const WeddingBudget: React.FC = () => {
     }
     updateBudgetMutation.mutate(newBudget);
   };
+
+  useEffect(() => {
+    const handleOnline = () => {
+      offlineStorage.syncTasks();
+    };
+
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
 
   if (queryError) {
     const axiosError = queryError as { response?: { status: number } };
