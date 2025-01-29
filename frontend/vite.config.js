@@ -5,14 +5,20 @@ import fs from "fs";
 
 export default defineConfig({
   plugins: [react(), svgr()],
-  server: {
-    https: {
-      key: fs.readFileSync("./certs/helene-local.io.key"),
-      cert: fs.readFileSync("./certs/helene-local.io.crt"),
-    },
-    host: "helene-local.io",
-    port: 1234,
-  },
+  server:
+    process.env.NODE_ENV === "production"
+      ? {
+          host: true, // Listen on all addresses in production
+          port: process.env.PORT || 1234,
+        }
+      : {
+          https: {
+            key: fs.readFileSync("./certs/helene-local.io.key"),
+            cert: fs.readFileSync("./certs/helene-local.io.crt"),
+          },
+          host: "helene-local.io",
+          port: 1234,
+        },
   build: {
     assetsInlineLimit: 0, // Forces assets to be separate files
     rollupOptions: {
