@@ -79,19 +79,14 @@ export const CreateAccountForm: React.FC = () => {
   const mutation = useMutation({
     mutationFn: createAccountForm,
     onSuccess: (data) => {
-      // First login with the received token and user data
       login(data.token, {
         ...data.user,
         isNewUser: data.isNewUser,
       });
-      // Then navigate based on wedding data
       navigateBasedOnWeddings(navigate, data.isNewUser);
     },
-    onError: (error: any) => {
-      alert(
-        error.response?.data?.message ||
-          "An error occurred while creating the user."
-      );
+    onError: (error: AxiosError) => {
+      console.error("Account creation failed:", error);
     },
   });
 
@@ -157,9 +152,8 @@ export const CreateAccountForm: React.FC = () => {
             className="text-red-600 font-bold text-sm"
             role="alert"
           >
-            {mutation.error instanceof Error
-              ? mutation.error.message
-              : "Something went wrong."}
+            {(mutation.error as AxiosError<{ message: string }>).response?.data
+              ?.message || "An error occurred while creating your account."}
           </p>
         )}
 

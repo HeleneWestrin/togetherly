@@ -34,11 +34,14 @@ export const Button = forwardRef<
     ref
   ) => {
     const variantClasses = {
-      primary: "bg-dark-800 text-white hover:bg-pink-700 hover:text-white",
-      secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-800 hover:border-dark-800 hover:text-white disabled:cursor-not-allowed`,
-      ghost: "bg-transparent text-dark-950 hover:bg-dark-950 hover:text-white",
-      inline: "text-sm md:text-base hover:text-pink-600",
-      icon: "bg-dark-100 hover:bg-dark-200 text-dark-800 hover:text-dark-950",
+      primary:
+        "bg-dark-800 text-white hover:bg-pink-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
+      secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-800 hover:border-dark-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50`,
+      ghost:
+        "bg-transparent text-dark-950 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
+      inline:
+        "text-sm md:text-base hover:text-pink-600 disabled:cursor-not-allowed disabled:opacity-50",
+      icon: "bg-dark-100 hover:bg-dark-200 text-dark-800 hover:text-dark-950 disabled:cursor-not-allowed disabled:opacity-50",
     } as const;
 
     const sizeClasses = {
