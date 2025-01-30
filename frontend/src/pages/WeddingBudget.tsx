@@ -7,7 +7,7 @@ import BudgetOverview from "../components/wedding/BudgetOverview";
 import BudgetCategory from "../components/wedding/BudgetCategory";
 import { fetchWeddingDetails } from "../services/weddingService";
 import WeddingHeader from "../components/wedding/WeddingHeader";
-import { Edit2 } from "lucide-react";
+import { CheckIcon, Edit2 } from "lucide-react";
 import { useUIStore } from "../stores/useUIStore";
 import SidePanel from "../components/ui/SidePanel";
 import FormInput from "../components/ui/FormInput";
@@ -16,6 +16,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { offlineStorage } from "../services/offlineStorage";
 import BudgetCategorySkeleton from "../components/wedding/BudgetCategorySkeleton";
 import BudgetOverviewSkeleton from "../components/wedding/BudgetOverviewSkeleton";
+import { BouncingBall } from "react-svg-spinners";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -311,7 +312,19 @@ const WeddingBudget: React.FC = () => {
               type="submit"
               className="flex-1"
             >
-              Update budget
+              {updateBudgetMutation.isPending ? (
+                <BouncingBall
+                  color="#fff"
+                  className="w-6 h-6"
+                />
+              ) : updateBudgetMutation.isSuccess ? (
+                <CheckIcon
+                  color="#fff"
+                  className="w-6 h-6"
+                />
+              ) : (
+                "Update budget"
+              )}
             </Button>
             <Button
               type="button"

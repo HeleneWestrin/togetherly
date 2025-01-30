@@ -134,7 +134,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
         <FormInput
           id="dueDate"
-          className="w-full"
           name="dueDate"
           type="date"
           min={new Date().toISOString().split("T")[0]}

@@ -86,7 +86,11 @@ const FormInput = ({
             onChange={onChange}
             className={`form-input w-full border-2 rounded-lg ${
               error ? "border-red-600" : "border-dark-400"
-            } bg-white px-2 py-2 focus:border-pink-700 focus:shadow-none focus:outline-4 focus:outline-pink-600/20 focus:outline-offset-0 focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4 appearance-textfield ${className}`}
+            } bg-white px-2 py-2 focus:border-pink-700 focus:shadow-none focus:outline-4 focus:outline-pink-600/20 focus:outline-offset-0 focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4 ${
+              type === "date"
+                ? "appearance-none w-full min-h-12 md:min-h-14"
+                : ""
+            } ${className}`}
             {...rest}
           />
           {type === "date" && value && (

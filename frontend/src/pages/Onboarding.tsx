@@ -407,7 +407,6 @@ const Onboarding: React.FC = () => {
         >
           <FormInput
             id="date"
-            className="w-full"
             name="date"
             label="Wedding date"
             type="date"
@@ -508,13 +507,11 @@ const Onboarding: React.FC = () => {
               className="w-full"
               disabled={
                 updateProgressMutation.isPending ||
-                createWeddingMutation.isPending ||
-                updateProgressMutation.isSuccess
+                createWeddingMutation.isPending
               }
               aria-busy={
                 updateProgressMutation.isPending ||
-                createWeddingMutation.isPending ||
-                updateProgressMutation.isSuccess
+                createWeddingMutation.isPending
               }
             >
               {updateProgressMutation.isPending ||
@@ -524,13 +521,12 @@ const Onboarding: React.FC = () => {
                   width={24}
                   height={24}
                 />
-              ) : updateProgressMutation.isSuccess ? (
-                <>
-                  <CheckIcon
-                    color="#fff"
-                    className="w-6 h-6"
-                  />
-                </>
+              ) : updateProgressMutation.isSuccess &&
+                createWeddingMutation.isSuccess ? (
+                <CheckIcon
+                  color="#fff"
+                  className="w-6 h-6"
+                />
               ) : (
                 <>
                   Complete setup{" "}
