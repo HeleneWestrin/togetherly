@@ -100,7 +100,7 @@ const SidePanel: React.FC<SidePanelProps> = ({
               ref={panelRef}
               className="
                 absolute
-                max-h-screen 
+                max-h-svh 
                 bg-white
                 shadow-lg
                 md:top-0 md:bottom-0 md:right-0 md:w-96
