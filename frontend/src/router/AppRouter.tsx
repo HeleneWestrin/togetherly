@@ -27,7 +27,7 @@ const AppContent = () => {
 
   return (
     <div
-      className={`min-h-screen ${
+      className={`min-h-svh ${
         isAuthenticated && isWeddingRoute
           ? isMobile
             ? "pb-20"

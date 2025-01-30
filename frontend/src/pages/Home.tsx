@@ -22,22 +22,22 @@ const Home: React.FC = () => {
           </div>
         </div>
 
-        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5 py-8 md:py-0 px-4 md:px-10">
+        <div className="w-full flex flex-col md:flex-row items-center justify-between gap-5 py-8 md:py-6 px-4 md:px-10">
           <Logo
             aria-label="Togetherly logo"
             className="h-8"
           />
-          <div className="flex w-full md:w-auto gap-4">
+          <div className="flex w-full md:w-auto md:items-center gap-4">
             <Button
-              className="flex-1"
-              variant="primary"
+              className="flex-1 md:flex-none"
+              variant="secondary"
               onClick={() => navigate("/login")}
             >
               Log in
             </Button>
             <Button
-              className="flex-1"
-              variant="secondary"
+              className="flex-1 md:flex-none"
+              variant="primary"
               onClick={() => navigate("/signup")}
             >
               Sign up

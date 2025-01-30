@@ -163,7 +163,7 @@ const WeddingUsers: React.FC = () => {
     <>
       <main
         id="main"
-        className="min-h-screen"
+        className="min-h-svh"
       >
         <WeddingHeader
           title="Users"

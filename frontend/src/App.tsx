@@ -2,7 +2,7 @@ import AppRouter from "./router/AppRouter";
 
 const App: React.FC = () => {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-svh">
       <AppRouter />
     </div>
   );

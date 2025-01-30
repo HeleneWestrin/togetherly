@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
     <>
       <main
         id="main"
-        className="min-h-screen"
+        className="min-h-svh"
       >
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-8">

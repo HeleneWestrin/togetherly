@@ -24,7 +24,7 @@ const WeddingSchedule: React.FC = () => {
     <>
       <main
         id="main"
-        className="min-h-screen"
+        className="min-h-svh"
       >
         <WeddingHeader title="Schedule" />
         <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-4xl mx-auto">

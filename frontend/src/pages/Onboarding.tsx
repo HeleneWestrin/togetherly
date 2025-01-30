@@ -207,7 +207,7 @@ const Onboarding: React.FC = () => {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen flex flex-col items-center lg:items-stretch lg:flex-row relative">
+      <div className="min-h-svh flex flex-col items-center lg:items-stretch lg:flex-row relative">
         <div className="w-full lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
           <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
             <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
@@ -364,7 +364,7 @@ const Onboarding: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row relative">
+    <div className="min-h-svh flex flex-col lg:flex-row relative">
       <div className="lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
         <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
           <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
