@@ -8,7 +8,7 @@ const Home: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-col justify-between p-6 md:p-8 pb-0 min-h-svh">
+      <div className="flex flex-col justify-between p-6 pb-0 md:p-8 md:pb-0 min-h-svh">
         <div className="flex-1 flex flex-col rounded-3xl bg-gradient">
           <div className="flex-1 flex flex-col items-center justify-center p-8">
             <div className="text-center">
