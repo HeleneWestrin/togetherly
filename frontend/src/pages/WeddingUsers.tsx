@@ -41,6 +41,7 @@ const WeddingUsers: React.FC = () => {
       email: string;
       role: "couple" | "guest" | "weddingAdmin";
       weddingRole:
+        | "Guest"
         | "Maid of Honor"
         | "Best Man"
         | "Bridesmaid"
@@ -114,13 +115,18 @@ const WeddingUsers: React.FC = () => {
     },
   });
 
-  const handleOpenPanel = () => openPanel("inviteUser");
+  const handleOpenPanel = () => {
+    inviteUserMutation.reset();
+    openPanel("inviteUser");
+  };
+
   const handleClosePanel = () => {
     closePanel("inviteUser");
     setError("");
   };
 
   const handleEditUser = (user: CoupleUser | GuestUser) => {
+    editUserMutation.reset();
     setEditingUser(user);
     openPanel("editUser");
   };

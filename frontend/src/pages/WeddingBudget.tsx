@@ -171,6 +171,7 @@ const WeddingBudget: React.FC = () => {
   };
 
   const handleEditBudget = () => {
+    updateBudgetMutation.reset();
     openPanel("editBudget");
   };
 
@@ -290,7 +291,7 @@ const WeddingBudget: React.FC = () => {
             id="totalBudget"
             name="totalBudget"
             label="Total budget"
-            type="text"
+            type="tel"
             inputMode="numeric"
             isCurrency={true}
             currencySuffix=" kr"

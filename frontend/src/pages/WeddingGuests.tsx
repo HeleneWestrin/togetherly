@@ -196,7 +196,11 @@ const WeddingGuests: React.FC = () => {
     },
   });
 
-  const handleOpenPanel = () => openPanel("addGuest");
+  const handleOpenPanel = () => {
+    addGuestMutation.reset();
+    openPanel("addGuest");
+  };
+
   const handleClosePanel = () => {
     closePanel("addGuest");
     closePanel("editGuest");

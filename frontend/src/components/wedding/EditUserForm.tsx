@@ -3,6 +3,8 @@ import { Button } from "../ui/Button";
 import FormInput from "../ui/FormInput";
 import FormSelect from "../ui/FormSelect";
 import { CoupleUser, GuestUser } from "../../types/wedding";
+import { BouncingBall } from "react-svg-spinners";
+import { useMutation } from "@tanstack/react-query";
 
 interface EditUserFormProps {
   user: CoupleUser | GuestUser;
@@ -27,6 +29,10 @@ const EditUserForm: React.FC<EditUserFormProps> = ({
   isError,
   error,
 }) => {
+  const { mutate, isPending } = useMutation({
+    mutationFn: onSubmit,
+  });
+
   const [formData, setFormData] = useState({
     firstName: user.profile?.firstName || "",
     lastName: user.profile?.lastName || "",
@@ -39,7 +45,7 @@ const EditUserForm: React.FC<EditUserFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit({
+    mutate({
       userId: user._id,
       userData: {
         firstName: formData.firstName,
@@ -102,9 +108,9 @@ const EditUserForm: React.FC<EditUserFormProps> = ({
           id="role"
           name="role"
           label="Role"
-          value={formData.role}
+          value={formData.weddingRole}
           onChange={(e) =>
-            setFormData((prev) => ({ ...prev, role: e.target.value }))
+            setFormData((prev) => ({ ...prev, weddingRole: e.target.value }))
           }
         >
           {roleOptions.map((option) => (
@@ -123,7 +129,16 @@ const EditUserForm: React.FC<EditUserFormProps> = ({
       )}
 
       <div className="flex flex-col justify-end gap-3 pt-4">
-        <Button type="submit">Save changes</Button>
+        <Button type="submit">
+          {isPending ? (
+            <BouncingBall
+              color="#fff"
+              className="w-6 h-6"
+            />
+          ) : (
+            "Save changes"
+          )}
+        </Button>
         <Button
           type="button"
           variant="secondary"

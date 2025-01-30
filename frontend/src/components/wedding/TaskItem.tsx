@@ -31,8 +31,10 @@ const TaskItem: React.FC<TaskItemProps> = ({
   const isEditPanelOpen =
     activePanels.editTask?.isOpen && activePanels.editTask.taskId === task._id;
 
-  const handleOpenPanel = () =>
+  const handleOpenPanel = () => {
+    updateTaskMutation.reset();
     openPanel("editTask", { isOpen: true, taskId: task._id });
+  };
   const handleClosePanel = () => closePanel("editTask");
 
   const queryClient = useQueryClient();

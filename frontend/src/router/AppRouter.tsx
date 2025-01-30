@@ -13,6 +13,7 @@ import Onboarding from "../pages/Onboarding";
 import WeddingSchedule from "../pages/WeddingSchedule";
 import WeddingUsers from "../pages/WeddingUsers";
 import ScrollToTop from "../components/ScrollToTop";
+import WeddingMore from "../pages/WeddingMore";
 /**
  * Main router component that handles all application routing
  * Uses React Router v6 for client-side routing
@@ -91,6 +92,14 @@ const AppContent = () => {
                   element={
                     <PrivateRoute>
                       <WeddingUsers />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="more"
+                  element={
+                    <PrivateRoute>
+                      <WeddingMore />
                     </PrivateRoute>
                   }
                 />
