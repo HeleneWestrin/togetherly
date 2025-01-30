@@ -15,6 +15,7 @@ interface FormInputProps
     | "email"
     | "search"
     | "date";
+  numericType?: "text" | "password" | "tel";
   id: string;
   className?: string;
   name: string;
@@ -30,8 +31,9 @@ interface FormInputProps
 
 const FormInput = ({
   type = "text",
+  numericType = "text",
   id,
-  className,
+  className = "",
   name,
   label,
   value,
@@ -50,6 +52,7 @@ const FormInput = ({
       {isCurrency ? (
         <NumericFormat
           id={id}
+          type={numericType}
           name={name}
           value={value}
           placeholder={placeholder}

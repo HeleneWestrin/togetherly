@@ -1,8 +1,5 @@
-import { useState, useEffect } from "react";
 import { Typography } from "../ui/Typography";
 import ProgressBar from "../ui/ProgressBar";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { axiosInstance } from "../../services/axiosService";
 import { getBudgetProgress } from "../../utils/weddingCalculations";
 import { Wedding } from "../../types/wedding";
 

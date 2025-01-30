@@ -15,6 +15,7 @@ import { Button } from "../components/ui/Button";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { offlineStorage } from "../services/offlineStorage";
 import BudgetCategorySkeleton from "../components/wedding/BudgetCategorySkeleton";
+import BudgetOverviewSkeleton from "../components/wedding/BudgetOverviewSkeleton";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -229,7 +230,7 @@ const WeddingBudget: React.FC = () => {
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
             {isWeddingLoading ? (
               <div className="space-y-8">
-                <BudgetCategorySkeleton />
+                <BudgetOverviewSkeleton />
                 <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
                   <Typography
                     element="h2"
