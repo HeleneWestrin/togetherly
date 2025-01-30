@@ -32,4 +32,7 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    "%MODE%": JSON.stringify(process.env.NODE_ENV),
+  },
 });
