@@ -2,6 +2,7 @@ import { InputHTMLAttributes, ChangeEvent } from "react";
 import { NumericFormat } from "react-number-format";
 import FormLabel from "./FormLabel";
 import { Typography } from "./Typography";
+import { CircleX } from "lucide-react";
 
 interface FormInputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -70,18 +71,41 @@ const FormInput = ({
           } bg-white px-2 py-2 focus:border-pink-700 focus:shadow-none focus:outline-4 focus:outline-pink-600/20 focus:outline-offset-0 focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4 ${className}`}
         />
       ) : (
-        <input
-          id={id}
-          type={type}
-          name={name}
-          value={value}
-          placeholder={placeholder}
-          onChange={onChange}
-          className={`form-input w-full border-2 rounded-lg ${
-            error ? "border-red-600" : "border-dark-400"
-          } bg-white px-2 py-2 focus:border-pink-700 focus:shadow-none focus:outline-4 focus:outline-pink-600/20 focus:outline-offset-0 focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4 ${className}`}
-          {...rest}
-        />
+        <div
+          className={type === "date" ? "flex items-center gap-3" : undefined}
+        >
+          <input
+            id={id}
+            type={type}
+            name={name}
+            value={value}
+            placeholder={placeholder}
+            onChange={onChange}
+            className={`form-input w-full border-2 rounded-lg ${
+              error ? "border-red-600" : "border-dark-400"
+            } bg-white px-2 py-2 focus:border-pink-700 focus:shadow-none focus:outline-4 focus:outline-pink-600/20 focus:outline-offset-0 focus:ring-0 focus:ring-offset-0 md:px-4 md:py-4 appearance-textfield ${className}`}
+            {...rest}
+          />
+          {type === "date" && value && (
+            <button
+              type="button"
+              className="text-gray-500 hover:text-gray-700"
+              onClick={() => {
+                onChange?.({
+                  target: {
+                    name,
+                    value: "",
+                  } as unknown as EventTarget & HTMLInputElement,
+                } as ChangeEvent<HTMLInputElement>);
+              }}
+            >
+              <CircleX
+                aria-label="Clear date"
+                className="w-5 h-5"
+              />
+            </button>
+          )}
+        </div>
       )}
 
       {error && (

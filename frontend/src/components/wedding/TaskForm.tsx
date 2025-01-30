@@ -131,6 +131,8 @@ const TaskForm: React.FC<TaskFormProps> = ({
           className="w-full"
           name="dueDate"
           type="date"
+          min={new Date().toISOString().split("T")[0]}
+          max="2100-12-31"
           label="Due date"
           value={formData.dueDate}
           onChange={(e) => {

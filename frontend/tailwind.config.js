@@ -107,7 +107,19 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      const newUtilities = {
+        ".appearance-textfield": {
+          "-webkit-appearance": "textfield",
+          "-moz-appearance": "textfield",
+          appearance: "textfield",
+        },
+      };
+
+      addUtilities(newUtilities, ["responsive"]);
+    },
+  ],
   safelist: [
     "peer/one",
     "peer/two",
