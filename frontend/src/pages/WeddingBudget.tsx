@@ -14,6 +14,7 @@ import FormInput from "../components/ui/FormInput";
 import { Button } from "../components/ui/Button";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { offlineStorage } from "../services/offlineStorage";
+import BudgetCategorySkeleton from "../components/wedding/BudgetCategorySkeleton";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -226,17 +227,9 @@ const WeddingBudget: React.FC = () => {
         />
         <div className="px-5 lg:px-8 py-6 lg:py-8 2xl:py-12 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
-            {!wedding && (
-              <div className="p-3 bg-gray-50 rounded">
-                <Typography element="p">No wedding data available.</Typography>
-              </div>
-            )}
-            {wedding && wedding.budget && (
+            {isWeddingLoading ? (
               <div className="space-y-8">
-                <BudgetOverview
-                  wedding={wedding}
-                  onUpdateBudget={updateBudgetMutation.mutate}
-                />
+                <BudgetCategorySkeleton />
                 <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
                   <Typography
                     element="h2"
@@ -244,17 +237,40 @@ const WeddingBudget: React.FC = () => {
                   >
                     Wedding checklist
                   </Typography>
-                  {wedding.budget.allocated.map((category) => (
-                    <BudgetCategory
-                      key={category._id}
-                      category={category}
-                      onEditTask={handleEditTask}
-                      wedding={wedding}
-                      isLoading={isWeddingLoading}
-                    />
-                  ))}
+                  <BudgetCategorySkeleton />
+                  <BudgetCategorySkeleton />
                 </div>
               </div>
+            ) : !wedding ? (
+              <div className="p-3 bg-gray-50 rounded">
+                <Typography element="p">No wedding data available.</Typography>
+              </div>
+            ) : (
+              wedding.budget && (
+                <div className="space-y-8">
+                  <BudgetOverview
+                    wedding={wedding}
+                    onUpdateBudget={updateBudgetMutation.mutate}
+                  />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
+                    <Typography
+                      element="h2"
+                      className="lg:col-span-2"
+                    >
+                      Wedding checklist
+                    </Typography>
+                    {wedding.budget.allocated.map((category) => (
+                      <BudgetCategory
+                        key={category._id}
+                        category={category}
+                        onEditTask={handleEditTask}
+                        wedding={wedding}
+                        isLoading={isWeddingLoading}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
             )}
           </div>
         </div>
