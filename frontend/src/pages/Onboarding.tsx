@@ -206,8 +206,8 @@ const Onboarding: React.FC = () => {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen flex flex-col lg:flex-row relative">
-        <div className="lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
+      <div className="min-h-screen flex flex-col items-center lg:items-stretch lg:flex-row relative">
+        <div className="w-full lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
           <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
             <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
               <div className="w-8 h-8 rounded-full bg-pink-600 text-white font-bold flex items-center justify-center z-10">
@@ -229,14 +229,14 @@ const Onboarding: React.FC = () => {
               <Typography
                 element="p"
                 styledAs="bodyLarge"
-                className="text-center"
+                className="text-center text-pretty"
               >
                 ...and congratulations to your upcoming wedding!
               </Typography>
             </div>
           </div>
         </div>
-        <div className="flex-1 px-6 py-10 lg:px-6 xl:px-8 2xl:px-12 lg:py-16 xl:py-20 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
+        <div className="flex-1 w-full md:max-w-2xl lg:max-w-none px-6 py-10 lg:px-6 xl:px-8 2xl:px-12 lg:py-16 xl:py-20 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col lg:justify-center">
           <Typography
             element="h2"
             styledAs="h2Large"
@@ -245,7 +245,7 @@ const Onboarding: React.FC = () => {
           </Typography>
           <form
             onSubmit={handleCoupleInfoSubmit}
-            className="space-y-16"
+            className="space-y-10 lg:space-y-16"
           >
             <div>
               <Typography
@@ -254,7 +254,7 @@ const Onboarding: React.FC = () => {
               >
                 Who are you?
               </Typography>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 xl:gap-4 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-5 mb-4">
                 <FormInput
                   id="firstName"
                   name="firstName"
@@ -302,7 +302,7 @@ const Onboarding: React.FC = () => {
               >
                 Who's your partner?
               </Typography>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 xl:gap-4 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 xl:gap-5 mb-4">
                 <FormInput
                   id="partnerFirstName"
                   name="partnerFirstName"
@@ -386,7 +386,7 @@ const Onboarding: React.FC = () => {
             <Typography
               element="p"
               styledAs="bodyLarge"
-              className="text-center"
+              className="text-center text-pretty"
             >
               Let us know a few details about your big day
             </Typography>
@@ -406,6 +406,7 @@ const Onboarding: React.FC = () => {
         >
           <FormInput
             id="date"
+            className="w-full"
             name="date"
             label="Wedding date"
             type="date"
@@ -414,8 +415,8 @@ const Onboarding: React.FC = () => {
             value={weddingInfo.date}
             onChange={(e) => {
               const inputDate = e.target.value;
-              // Basic validation for YYYY-MM-DD format
-              if (/^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
+              // Allow empty value or validate YYYY-MM-DD format
+              if (inputDate === "" || /^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
                 setWeddingInfo({ ...weddingInfo, date: inputDate });
               }
             }}
@@ -465,7 +466,7 @@ const Onboarding: React.FC = () => {
               })
             }
           />
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row flex-col-reverse gap-4">
             <Button
               type="button"
               variant="secondary"

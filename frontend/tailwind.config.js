@@ -98,7 +98,7 @@ export default {
         "gradient-portrait":
           "var(--gradient-svg-mobile), var(--gradient-fallback)",
       },
-      leading: {
+      lineHeight: {
         tightest: "1.15",
       },
       transitionTimingFunction: {

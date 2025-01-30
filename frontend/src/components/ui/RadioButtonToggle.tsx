@@ -31,7 +31,7 @@ const RadioButtonToggle = <T extends string>({
 
   return (
     <fieldset
-      className={`relative flex items-center justify-between p-1 rounded-full ${className}`}
+      className={`relative flex items-center justify-between rounded-full ${className}`}
     >
       {legend && (
         <legend

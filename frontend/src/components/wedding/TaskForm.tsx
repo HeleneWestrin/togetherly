@@ -128,13 +128,18 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
         <FormInput
           id="dueDate"
+          className="w-full"
           name="dueDate"
           type="date"
           label="Due date"
           value={formData.dueDate}
-          onChange={(e) =>
-            setFormData({ ...formData, dueDate: e.target.value })
-          }
+          onChange={(e) => {
+            const inputDate = e.target.value;
+            // Allow empty value or validate YYYY-MM-DD format
+            if (inputDate === "" || /^\d{4}-\d{2}-\d{2}$/.test(inputDate)) {
+              setFormData({ ...formData, dueDate: inputDate });
+            }
+          }}
           error={validationErrors.dueDate}
         />
 

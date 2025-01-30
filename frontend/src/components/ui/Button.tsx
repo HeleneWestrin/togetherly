@@ -35,7 +35,7 @@ export const Button = forwardRef<
   ) => {
     const variantClasses = {
       primary:
-        "bg-dark-800 text-white hover:bg-pink-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
+        "bg-dark-800 border-2 border-dark-800 text-white hover:bg-pink-700 hover:border-pink-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
       secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-800 hover:border-dark-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50`,
       ghost:
         "bg-transparent text-dark-950 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
