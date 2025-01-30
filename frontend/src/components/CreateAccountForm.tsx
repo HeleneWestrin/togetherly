@@ -8,6 +8,8 @@ import { AxiosError } from "axios";
 import { SocialLoginResponse } from "../types/auth";
 import { navigateBasedOnWeddings } from "../utils/navigationHelper";
 import { useNavigate } from "react-router-dom";
+import { BouncingBall } from "react-svg-spinners";
+import { CheckIcon } from "lucide-react";
 
 const createAccountForm = async (userData: {
   email: string;
@@ -160,10 +162,25 @@ export const CreateAccountForm: React.FC = () => {
         <Button
           type="submit"
           className="w-full"
-          disabled={mutation.isPending}
-          aria-busy={mutation.isPending}
+          disabled={mutation.isPending || mutation.isSuccess}
+          aria-busy={mutation.isPending || mutation.isSuccess}
         >
-          {mutation.isPending ? "Signing up..." : "Sign up"}
+          {mutation.isPending ? (
+            <BouncingBall
+              color="#fff"
+              width={24}
+              height={24}
+            />
+          ) : mutation.isSuccess ? (
+            <>
+              <CheckIcon
+                color="#fff"
+                className="w-6 h-6"
+              />
+            </>
+          ) : (
+            "Sign up"
+          )}
         </Button>
       </div>
     </form>

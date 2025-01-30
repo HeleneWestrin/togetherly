@@ -3,6 +3,7 @@ import FormInput from "../ui/FormInput";
 import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
 import { CreateTaskData, TaskResponse, Task } from "../../types/wedding";
+import { BouncingBall } from "react-svg-spinners";
 
 interface TaskFormProps {
   task?: Task;
@@ -46,7 +47,13 @@ const TaskForm: React.FC<TaskFormProps> = ({
 
   const isEditing = !!task;
   const submitButtonText = isEditing ? "Update task" : "Create task";
-  const loadingText = isEditing ? "Updating task..." : "Creating task...";
+  const loadingText = (
+    <BouncingBall
+      color="#fff"
+      width={24}
+      height={24}
+    />
+  );
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -92,7 +99,6 @@ const TaskForm: React.FC<TaskFormProps> = ({
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           required
           error={validationErrors.title}
-          autoFocus
         />
 
         <FormInput

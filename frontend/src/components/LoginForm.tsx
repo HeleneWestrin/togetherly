@@ -6,9 +6,11 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { useAuthStore } from "../stores/useAuthStore";
 import { axiosInstance } from "../services/axiosService";
 import { SocialLoginResponse } from "../types/auth";
+import { BouncingBall } from "react-svg-spinners";
+import { CheckIcon } from "lucide-react";
 
 export const LoginForm: React.FC = () => {
-  const { mutate, isPending, isError, error } = useLogin();
+  const { mutate, isPending, isError, error, isSuccess } = useLogin();
   const { login } = useAuthStore();
 
   const googleLogin = useGoogleLogin({
@@ -129,10 +131,25 @@ export const LoginForm: React.FC = () => {
         <Button
           type="submit"
           className="w-full"
-          disabled={isPending}
-          aria-busy={isPending}
+          disabled={isPending || isSuccess}
+          aria-busy={isPending || isSuccess}
         >
-          {isPending ? "Logging in..." : "Login"}
+          {isPending ? (
+            <BouncingBall
+              color="#fff"
+              width={24}
+              height={24}
+            />
+          ) : isSuccess ? (
+            <>
+              <CheckIcon
+                color="#fff"
+                className="w-6 h-6"
+              />
+            </>
+          ) : (
+            "Login"
+          )}
         </Button>
       </div>
     </form>

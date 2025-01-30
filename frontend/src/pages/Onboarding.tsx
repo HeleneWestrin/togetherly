@@ -9,6 +9,7 @@ import { useAuthStore } from "../stores/useAuthStore";
 import WeddingRings from "../assets/illustrations/wedding-rings-divider.svg?react";
 import RadioButtonToggle from "../components/ui/RadioButtonToggle";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
+import { BouncingBall } from "react-svg-spinners";
 
 interface CoupleInfo {
   firstName: string;
@@ -466,7 +467,7 @@ const Onboarding: React.FC = () => {
               })
             }
           />
-          <div className="flex flex-col md:flex-row flex-col-reverse gap-4">
+          <div className="flex flex-col-reverse md:flex-row gap-4">
             <Button
               type="button"
               variant="secondary"
@@ -505,9 +506,37 @@ const Onboarding: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
+              disabled={
+                updateProgressMutation.isPending ||
+                createWeddingMutation.isPending ||
+                updateProgressMutation.isSuccess
+              }
+              aria-busy={
+                updateProgressMutation.isPending ||
+                createWeddingMutation.isPending ||
+                updateProgressMutation.isSuccess
+              }
             >
-              Complete setup{" "}
-              <ArrowRightIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+              {updateProgressMutation.isPending ||
+              createWeddingMutation.isPending ? (
+                <BouncingBall
+                  color="#fff"
+                  width={24}
+                  height={24}
+                />
+              ) : updateProgressMutation.isSuccess ? (
+                <>
+                  <CheckIcon
+                    color="#fff"
+                    className="w-6 h-6"
+                  />
+                </>
+              ) : (
+                <>
+                  Complete setup{" "}
+                  <ArrowRightIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+                </>
+              )}
             </Button>
           </div>
         </form>

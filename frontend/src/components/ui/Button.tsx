@@ -35,18 +35,18 @@ export const Button = forwardRef<
   ) => {
     const variantClasses = {
       primary:
-        "bg-dark-800 border-2 border-dark-800 text-white hover:bg-pink-700 hover:border-pink-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
-      secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-800 hover:border-dark-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50`,
+        "bg-dark-800 border-2 border-dark-800 text-white hover:bg-pink-700 hover:border-pink-700 hover:text-white disabled:cursor-not-allowed",
+      secondary: `border-2 border-solid border-dark-800 text-dark-800 hover:bg-dark-800 hover:border-dark-800 hover:text-white disabled:cursor-not-allowed`,
       ghost:
-        "bg-transparent text-dark-950 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed disabled:opacity-50",
+        "bg-transparent text-dark-950 hover:bg-dark-950 hover:text-white disabled:cursor-not-allowed",
       inline:
-        "text-sm md:text-base hover:text-pink-600 disabled:cursor-not-allowed disabled:opacity-50",
-      icon: "bg-dark-100 hover:bg-dark-200 text-dark-800 hover:text-dark-950 disabled:cursor-not-allowed disabled:opacity-50",
+        "text-sm md:text-base hover:text-pink-600 disabled:cursor-not-allowed",
+      icon: "bg-dark-100 hover:bg-dark-200 text-dark-800 hover:text-dark-950 disabled:cursor-not-allowed",
     } as const;
 
     const sizeClasses = {
       default:
-        "font-slab text-base md:text-md px-5 py-3 md:px-6 2xl:px-7 2xl:py-4",
+        "font-slab text-base md:text-md px-5 py-3 md:px-6 2xl:px-7 2xl:py-4 min-h-12 md:min-h-14",
       small: "text-sm px-3 py-1.5 md:px-4 md:py-2",
       tiny: "px-1 py-1",
       icon: "p-2 rounded-full",

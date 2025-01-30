@@ -296,7 +296,6 @@ const WeddingBudget: React.FC = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewBudget(Number(e.target.value))
             }
-            autoFocus
           />
           {error && (
             <Typography
