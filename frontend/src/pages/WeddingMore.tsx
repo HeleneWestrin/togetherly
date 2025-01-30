@@ -51,6 +51,10 @@ const WeddingMore: React.FC = () => {
                       please share your feedback on the product thus far. Any
                       suggestions are welcome!
                     </Typography>
+                    <Typography element="p">
+                      Click on the button that says "Feedback" on the right side
+                      of the screen to share your feedback.
+                    </Typography>
 
                     {isMobile && (
                       <Button
