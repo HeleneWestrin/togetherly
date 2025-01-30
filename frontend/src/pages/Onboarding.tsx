@@ -456,7 +456,7 @@ const Onboarding: React.FC = () => {
             currencySuffix=" kr"
             name="estimatedBudget"
             label="Estimated budget"
-            type="text"
+            type="tel"
             inputMode="numeric"
             value={weddingInfo.estimatedBudget}
             onChange={(e) =>
