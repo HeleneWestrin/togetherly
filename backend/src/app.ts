@@ -9,31 +9,30 @@ import { onboardingRouter } from "./routes/onboarding.routes";
 
 export const app = express();
 
+// Configure CORS to only allow requests from our frontend
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
+
+// Parse JSON request bodies
 app.use(express.json());
+
+// Add security headers with Helmet
 app.use(helmet());
 
-// Root route
+// Health check endpoint
 app.get("/api/", (req, res) => {
   res.json({ message: "Welcome to the Togetherly API" });
 });
 
-// User routes
+// Register route modules
 app.use("/api/users", userRouter);
-
-// Wedding routes
 app.use("/api/weddings", weddingRouter);
-
-// Task routes
 app.use("/api/tasks", taskRouter);
-
-// Onboarding routes
 app.use("/api/onboarding", onboardingRouter);
 
-// Error handler should be last
+// Global error handler - must be last middleware
 app.use(errorHandler);

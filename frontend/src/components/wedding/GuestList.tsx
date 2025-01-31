@@ -26,10 +26,14 @@ const GuestList: React.FC<GuestListProps> = ({
   onUpdateRSVP,
   onEditGuest,
 }) => {
+  // Track selected guests for batch operations
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
+
+  // Sorting state
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
+  // Toggle sort direction or change sort field
   const handleSort = (field: SortField) => {
     if (field === sortField) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -39,11 +43,13 @@ const GuestList: React.FC<GuestListProps> = ({
     }
   };
 
+  // Memoized sorted guest list to prevent unnecessary re-renders
   const sortedGuests = useMemo(() => {
     return [...guests].sort((a, b) => {
       let aValue: string = "";
       let bValue: string = "";
 
+      // Extract the appropriate field values based on sort field
       switch (sortField) {
         case "name":
           aValue = `${a.profile?.firstName || ""} ${
@@ -54,8 +60,8 @@ const GuestList: React.FC<GuestListProps> = ({
           }`.trim();
           break;
         case "role":
-          aValue = a.guestDetails?.[0]?.role || "";
-          bValue = b.guestDetails?.[0]?.role || "";
+          aValue = a.guestDetails?.[0]?.weddingRole || "";
+          bValue = b.guestDetails?.[0]?.weddingRole || "";
           break;
         case "rsvpStatus":
           aValue = a.guestDetails?.[0]?.rsvpStatus || "";
@@ -67,19 +73,21 @@ const GuestList: React.FC<GuestListProps> = ({
           break;
       }
 
+      // Compare values based on sort direction
       return sortDirection === "asc"
         ? aValue.localeCompare(bValue)
         : bValue.localeCompare(aValue);
     });
   }, [guests, sortField, sortDirection]);
 
+  // Batch selection handlers
   const handleSelectAll = (checked: boolean) => {
     setSelectedGuests(checked ? guests.map((g) => g._id) : []);
   };
 
   const handleDeleteGuests = (guestIds: string[]) => {
     onDeleteGuests(guestIds);
-    setSelectedGuests([]);
+    setSelectedGuests([]); // Clear selection after deletion
   };
 
   const handleSelectGuest = (guestId: string, checked: boolean) => {
@@ -88,6 +96,7 @@ const GuestList: React.FC<GuestListProps> = ({
     );
   };
 
+  // Helper functions for RSVP status display
   const getRSVPStatusBadgeColor = (status?: string): BadgeProps["color"] => {
     switch (status) {
       case "confirmed":

@@ -5,17 +5,20 @@ type CategoryTask = Pick<
   "_id" | "completed" | "title" | "budget" | "actualCost" | "dueDate"
 >;
 
+// Calculate percentage of total budget that has been spent
 export const getBudgetProgress = (wedding: Wedding) => {
   if (!wedding?.budget) return 0;
   return (wedding.budget.spent / wedding.budget.total) * 100;
 };
 
+// Calculate percentage of completed tasks in a category
 export const getCategoryProgress = (tasks: CategoryTask[]) => {
   return tasks.length
     ? (tasks.filter((t) => t.completed).length / tasks.length) * 100
     : 0;
 };
 
+// Calculate number of days until the wedding
 export const getDaysUntilWedding = (weddingDate: string): number => {
   const today = new Date();
   const wedding = new Date(weddingDate);
@@ -23,6 +26,7 @@ export const getDaysUntilWedding = (weddingDate: string): number => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
+// Get a user-friendly status message based on wedding date
 export const getWeddingDateStatus = (weddingDate: string): string => {
   const daysUntil = getDaysUntilWedding(weddingDate);
   if (daysUntil < 0) return "Congratulations on your wedding!";

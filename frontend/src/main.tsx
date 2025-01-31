@@ -6,21 +6,27 @@ import App from "./App";
 import "./index.css";
 import "react-loading-skeleton/dist/skeleton.css";
 
+// Configure React Query client with optimal settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 minute
-      retry: 1,
-      refetchOnWindowFocus: true, // Always get fresh data when users return
+      staleTime: 1000 * 60, // Cache data for 1 minute before refetching
+      retry: 1, // Only retry failed requests once
+      refetchOnWindowFocus: true, // Refresh data when user returns to tab
     },
   },
 });
 
+// Ensure root element exists before mounting
 const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
 }
 
+// Mount app with required providers:
+// - GoogleOAuthProvider for authentication
+// - QueryClientProvider for data fetching
+// - SpeedInsights for performance monitoring
 ReactDOM.createRoot(rootElement).render(
   <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <QueryClientProvider client={queryClient}>

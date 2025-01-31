@@ -12,31 +12,39 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   wedding,
   onUpdateBudget,
 }) => {
+  // Calculate the overall budget progress percentage
   const progress = getBudgetProgress(wedding);
+
+  // Calculate remaining budget (can be negative if overspent)
   const remaining = wedding.budget
     ? wedding.budget.total - wedding.budget.spent
     : 0;
 
-  // Calculate total estimated costs from all categories
+  // Sum up all estimated costs across all categories
   const totalEstimatedCost =
     wedding?.budget?.allocated?.reduce(
       (sum, category) => sum + category.estimatedCost,
       0
     ) ?? 0;
 
-  // Check warning conditions
+  // Determine warning states for budget alerts
   const isOverSpent = remaining < 0;
   const isOverEstimatedBudget =
     totalEstimatedCost > (wedding?.budget?.total ?? 0);
 
+  // Early return if no budget data is available
   if (!wedding?.budget) return null;
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Header section */}
       <div className="flex justify-between items-center">
         <Typography element="h2">Budget overview</Typography>
       </div>
+
+      {/* Main budget card */}
       <div className="bg-white p-6 rounded-3xl">
+        {/* Total budget display */}
         <Typography
           element="h3"
           className="mb-4 flex justify-between"
@@ -47,12 +55,14 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           <span>{wedding.budget.total.toLocaleString()} kr</span>
         </Typography>
 
+        {/* Visual progress indicator */}
         <ProgressBar
           progress={progress}
           height="medium"
           className="mb-4"
         />
 
+        {/* Budget statistics */}
         <div className="flex justify-between">
           <div>
             <Typography
@@ -69,6 +79,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               {wedding.budget.spent.toLocaleString()} kr
             </Typography>
           </div>
+
+          {/* Remaining budget or overspent amount */}
           <div className="text-right">
             <Typography
               element="p"
@@ -89,9 +101,10 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           </div>
         </div>
 
-        {/* Warning Messages */}
+        {/* Warning Messages Section */}
         {(isOverSpent || isOverEstimatedBudget) && (
           <div className="mt-4 pt-4 border-t border-dark-200 space-y-2">
+            {/* Display when actual spending exceeds budget */}
             {isOverSpent && (
               <Typography
                 element="p"
@@ -106,6 +119,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               </Typography>
             )}
 
+            {/* Display when estimated costs exceed budget but not yet overspent */}
             {!isOverSpent && isOverEstimatedBudget && (
               <Typography
                 element="p"

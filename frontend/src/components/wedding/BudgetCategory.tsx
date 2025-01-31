@@ -26,12 +26,14 @@ interface BudgetCategoryProps {
   isLoading?: boolean;
 }
 
+// Helper function to determine progress indicator color
 const getProgressColor = (progress: number): BadgeProps["color"] => {
   if (progress === 0) return "blue";
   if (progress === 100) return "green";
   return "yellow";
 };
 
+// Custom hook for task creation mutation
 const useCreateTaskMutation = (onSuccess: () => void) => {
   return useMutation<TaskResponse, Error, CreateTaskData>({
     mutationFn: async (data: CreateTaskData) => {
@@ -53,14 +55,19 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   wedding,
   isLoading,
 }) => {
+  // Show skeleton loader while data is loading
   if (isLoading) {
     return <BudgetCategorySkeleton />;
   }
 
+  // Local state for category expansion
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // Global UI state management
   const { activePanels, openPanel, closePanel } = useUIStore();
   const queryClient = useQueryClient();
 
+  // Panel management handlers
   const handleClosePanel = () => closePanel("addTask");
   const createTaskMutation = useCreateTaskMutation(() => {
     queryClient.invalidateQueries({ queryKey: ["wedding"] });
@@ -77,6 +84,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   const handleOpenPanel = () =>
     openPanel("addTask", { isOpen: true, category: category.category });
 
+  // Helper function to create category names without special characters
   const sanitizeCategoryName = (name: string) => {
     return name
       .toLowerCase()
@@ -89,6 +97,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       aria-live="polite"
       className="bg-white p-6 rounded-3xl"
     >
+      {/* Category Header/Toggle Button */}
       <button
         id={`category-header-${sanitizeCategoryName(category?.category)}`}
         onClick={() => setIsExpanded(!isExpanded)}
@@ -119,6 +128,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
         />
       </button>
 
+      {/* Expandable Content Section */}
       <div
         id={`category-content-${sanitizeCategoryName(category?.category)}`}
         className={`grid transition-all duration-300 ease-in-out ${
@@ -131,6 +141,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       >
         <div className={`${isExpanded ? "" : "overflow-hidden"}`}>
           <div className="py-1 mt-4">
+            {/* Task Progress Summary */}
             <Typography
               element="p"
               styledAs="bodySmall"
@@ -151,6 +162,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
               className="mb-6"
             />
 
+            {/* Task List */}
             <div className="space-y-4">
               {tasks.map((task) => (
                 <TaskItem
@@ -163,6 +175,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
               ))}
             </div>
 
+            {/* Cost Summary Section - Only shown if tasks have budget/costs */}
             {tasks.length > 0 &&
               tasks.some((task) => task.budget > 0 || task.actualCost > 0) && (
                 <>
@@ -180,6 +193,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                 </>
               )}
 
+            {/* Add Task Button */}
             <Button
               variant="inline"
               size="tiny"
@@ -193,6 +207,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
         </div>
       </div>
 
+      {/* Add Task Side Panel */}
       <SidePanel
         isOpen={isAddTaskPanelOpen || false}
         onClose={handleClosePanel}
