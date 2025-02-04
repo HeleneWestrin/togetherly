@@ -83,34 +83,30 @@ const WeddingBudget: React.FC = () => {
 
   const updateTaskMutation = useMutation({
     mutationFn: (data: { taskId: string; completed: boolean }) =>
-      axiosInstance.patch(`/api/tasks/${data.taskId}`, {
-        completed: data.completed,
-      }),
+      axiosInstance
+        .patch(`/api/tasks/${data.taskId}`, { completed: data.completed })
+        .then((response) => response.data),
     onMutate: async (newData) => {
       await queryClient.cancelQueries({ queryKey: ["wedding", weddingSlug] });
-
       const previousWedding = queryClient.getQueryData([
         "wedding",
         weddingSlug,
       ]);
-
       queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
         const updatedWedding = { ...old };
-        if (updatedWedding.budgetCategories) {
-          updatedWedding.budgetCategories = updatedWedding.budgetCategories.map(
-            (category: any) => ({
+        if (updatedWedding.budget && updatedWedding.budget.budgetCategories) {
+          updatedWedding.budget.budgetCategories =
+            updatedWedding.budget.budgetCategories.map((category: any) => ({
               ...category,
               tasks: category.tasks.map((task: any) =>
                 task._id === newData.taskId
                   ? { ...task, completed: newData.completed }
                   : task
               ),
-            })
-          );
+            }));
         }
         return updatedWedding;
       });
-
       return { previousWedding };
     },
     onError: (err, newData, context) => {
@@ -119,8 +115,26 @@ const WeddingBudget: React.FC = () => {
         context?.previousWedding
       );
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["wedding", weddingSlug] });
+    onSuccess: (updatedTask) => {
+      queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
+        if (!old || !old.budget || !old.budget.budgetCategories) return old;
+        return {
+          ...old,
+          budget: {
+            ...old.budget,
+            budgetCategories: old.budget.budgetCategories.map(
+              (category: any) => ({
+                ...category,
+                tasks: category.tasks.map((task: any) =>
+                  task._id === updatedTask._id
+                    ? { ...task, ...updatedTask }
+                    : task
+                ),
+              })
+            ),
+          },
+        };
+      });
     },
   });
 
@@ -150,22 +164,6 @@ const WeddingBudget: React.FC = () => {
 
     if (task) {
       const newCompleted = !task.completed;
-
-      // queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
-      //   const updatedWedding = { ...old };
-      //   if (updatedWedding.budgetCategories) {
-      //     updatedWedding.budgetCategories = updatedWedding.budgetCategories.map(
-      //       (category: any) => ({
-      //         ...category,
-      //         tasks: category.tasks.map((t: any) =>
-      //           t._id === taskId ? { ...t, completed: newCompleted } : t
-      //         ),
-      //       })
-      //     );
-      //   }
-      //   return updatedWedding;
-      // });
-
       debouncedTaskUpdate(taskId, newCompleted);
     }
   };
