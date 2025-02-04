@@ -151,20 +151,20 @@ const WeddingBudget: React.FC = () => {
     if (task) {
       const newCompleted = !task.completed;
 
-      queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
-        const updatedWedding = { ...old };
-        if (updatedWedding.budgetCategories) {
-          updatedWedding.budgetCategories = updatedWedding.budgetCategories.map(
-            (category: any) => ({
-              ...category,
-              tasks: category.tasks.map((t: any) =>
-                t._id === taskId ? { ...t, completed: newCompleted } : t
-              ),
-            })
-          );
-        }
-        return updatedWedding;
-      });
+      // queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
+      //   const updatedWedding = { ...old };
+      //   if (updatedWedding.budgetCategories) {
+      //     updatedWedding.budgetCategories = updatedWedding.budgetCategories.map(
+      //       (category: any) => ({
+      //         ...category,
+      //         tasks: category.tasks.map((t: any) =>
+      //           t._id === taskId ? { ...t, completed: newCompleted } : t
+      //         ),
+      //       })
+      //     );
+      //   }
+      //   return updatedWedding;
+      // });
 
       debouncedTaskUpdate(taskId, newCompleted);
     }
