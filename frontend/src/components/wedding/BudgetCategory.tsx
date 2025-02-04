@@ -25,7 +25,7 @@ interface BudgetCategoryProps {
   budget: {
     total: number;
     spent: number;
-    allocated: BudgetCategoryType[];
+    budgetCategories: BudgetCategoryType[];
   };
   isLoading: boolean;
   wedding?: {
@@ -90,6 +90,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
 
   // Safely access tasks with a default empty array
   const tasks: Task[] = budgetCategory.tasks || [];
+  const estimatedCost = tasks.reduce((sum, task) => sum + task.budget, 0);
   const progress = getCategoryProgress(tasks);
   const isAddTaskPanelOpen =
     activePanels.addTask?.isOpen &&
@@ -203,7 +204,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                   >
                     <span className="text-dark-800 font-bold">Cost: </span>
                     <span className="text-dark-600">
-                      {`${budgetCategory.spent.toLocaleString()} kr out of ${budgetCategory.estimatedCost.toLocaleString()} kr`}
+                      {`${budgetCategory.spent.toLocaleString()} kr out of ${estimatedCost.toLocaleString()} kr`}
                     </span>
                   </Typography>
                 </>
