@@ -78,7 +78,7 @@ const WeddingBudget: React.FC = () => {
         }
       );
     },
-    300
+    100
   );
 
   const updateTaskMutation = useMutation({
