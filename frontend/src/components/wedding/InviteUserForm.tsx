@@ -36,7 +36,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
     email: "",
     firstName: "",
     lastName: "",
-    accessLevel: "guest" as WeddingAccessLevelType,
+    accessLevel: "weddingAdmin" as WeddingAccessLevelType,
     partyRole: "Guest" as WeddingPartyRoleType,
     existingGuestId: "",
   });
@@ -92,17 +92,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
         {!formData.existingGuestId && (
           <>
             <FormInput
-              id="email"
-              name="email"
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              required
-            />
-            <FormInput
               id="firstName"
               name="firstName"
               label="First Name"
@@ -123,27 +112,17 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
               required
             />
 
-            <FormSelect
-              id="accessLevel"
-              label="Access Level"
-              value={formData.accessLevel}
+            <FormInput
+              id="email"
+              name="email"
+              label="Email"
+              type="email"
+              value={formData.email}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  accessLevel: e.target.value as WeddingAccessLevelType,
-                })
+                setFormData({ ...formData, email: e.target.value })
               }
-            >
-              {Object.values(WeddingAccessLevel).map((level) => (
-                <option
-                  key={level}
-                  value={level}
-                >
-                  {level}
-                </option>
-              ))}
-            </FormSelect>
-
+              required
+            />
             <FormSelect
               id="partyRole"
               label="Role in wedding"

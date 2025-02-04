@@ -869,14 +869,16 @@ export class WeddingService {
         },
         isRegistered: false,
         isActive: false,
-        guestDetails: [
+        weddings: [
           {
             weddingId: new Types.ObjectId(weddingId),
             accessLevel: inviteData.accessLevel,
-            partyRole: inviteData.partyRole,
-            rsvpStatus: "pending",
-            connection: {
-              partnerIds: [], // Empty array until connections are set
+            guestDetails: {
+              rsvpStatus: "pending",
+              partyRole: inviteData.partyRole || "Guest",
+              connection: {
+                partnerIds: [], // Empty array until connections are set
+              },
             },
           },
         ],
