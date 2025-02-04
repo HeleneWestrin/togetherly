@@ -1,24 +1,32 @@
-import { CoupleUser, GuestUser, UserStatus } from "../../types/wedding";
+import { CoupleUser, GuestUser } from "../../types/wedding";
 import Badge from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Edit2, Trash2 } from "lucide-react";
 
 interface UserListProps {
   users: (CoupleUser | GuestUser)[];
-  type: "couple" | "admin";
+  type: "couple" | "admin" | "weddingAdmin";
   onEditUser?: (user: CoupleUser | GuestUser) => void;
   onDeleteUser?: (userId: string) => void;
 }
 
-const determineUserStatus = (user: CoupleUser | GuestUser): UserStatus => {
-  if (user.isRegistered) return "Active";
-  if ("guestDetails" in user) return "Invited";
-  return "Pending";
+const determineUserStatus = (user: CoupleUser | GuestUser): string => {
+  return user.isRegistered ? "Active" : "Inactive";
 };
+
+// Type guard for GuestUser
+function isGuestUser(user: CoupleUser | GuestUser): user is GuestUser {
+  return (
+    // Check that the weddings array exists and its first element has guestDetails
+    "weddings" in user &&
+    Array.isArray(user.weddings) &&
+    user.weddings.length > 0 &&
+    !!user.weddings[0].guestDetails
+  );
+}
 
 const UserList: React.FC<UserListProps> = ({
   users,
-  type,
   onEditUser,
   onDeleteUser,
 }) => {
@@ -43,8 +51,10 @@ const UserList: React.FC<UserListProps> = ({
         </thead>
         <tbody className="text-sm lg:text-base text-dark-600">
           {users.map((user) => {
-            const isGuest = "guestDetails" in user;
-            const role = isGuest ? user.guestDetails[0]?.role : "Couple";
+            const isGuest = isGuestUser(user);
+            const role = isGuest
+              ? user.weddings[0].guestDetails?.partyRole
+              : "Guest";
             const status = determineUserStatus(user);
 
             return (

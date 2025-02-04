@@ -1,4 +1,11 @@
 import { z } from "zod";
+import {
+  weddingAccessLevelSchema,
+  rsvpStatusSchema,
+  budgetCategorySchema,
+  WeddingPartyRoles,
+  RSVPStatus,
+} from "../types/constants";
 
 export const userSchemas = {
   email: z.string().email("Invalid email format"),
@@ -14,8 +21,7 @@ export const userSchemas = {
 };
 
 export const weddingSchemas = {
-  rsvpStatus: z.enum(["pending", "confirmed", "declined"]),
-  relationship: z.enum(["wife", "husband", "both"]),
+  rsvpStatus: rsvpStatusSchema,
   guestData: z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
@@ -24,28 +30,19 @@ export const weddingSchemas = {
       .email("Invalid email format")
       .optional()
       .or(z.literal("")),
-    relationship: z.enum(["wife", "husband", "both"]),
-    weddingRole: z.enum([
-      "Guest",
-      "Maid of Honor",
-      "Best Man",
-      "Bridesmaid",
-      "Groomsman",
-      "Flower girl",
-      "Ring bearer",
-      "Parent",
-      "Family",
-      "Other",
-    ]),
-    rsvpStatus: z.enum(["pending", "confirmed", "declined"]),
+    connection: z.object({
+      partnerIds: z.array(z.string()).min(1).max(2),
+    }),
+    partyRole: z.nativeEnum(WeddingPartyRoles),
+    rsvpStatus: z.nativeEnum(RSVPStatus),
     dietaryPreferences: z.string().optional().or(z.literal("")),
     trivia: z.string().optional().or(z.literal("")),
   }),
   budget: z.object({
     total: z.number().min(0),
-    allocated: z.array(
+    budgetCategories: z.array(
       z.object({
-        category: z.string(),
+        category: budgetCategorySchema,
         spent: z.number().min(0),
       })
     ),

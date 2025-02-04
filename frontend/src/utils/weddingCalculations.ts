@@ -1,4 +1,4 @@
-import { Wedding, Task } from "../types/wedding";
+import { Task } from "../types/wedding";
 
 type CategoryTask = Pick<
   Task,
@@ -6,9 +6,9 @@ type CategoryTask = Pick<
 >;
 
 // Calculate percentage of total budget that has been spent
-export const getBudgetProgress = (wedding: Wedding) => {
-  if (!wedding?.budget) return 0;
-  return (wedding.budget.spent / wedding.budget.total) * 100;
+export const getBudgetProgress = (budget: { total: number; spent: number }) => {
+  if (!budget) return 0;
+  return (budget.spent / budget.total) * 100;
 };
 
 // Calculate percentage of completed tasks in a category

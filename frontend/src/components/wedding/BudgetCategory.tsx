@@ -3,8 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CreateTaskData,
   TaskResponse,
-  Wedding,
   BudgetCategory as BudgetCategoryType,
+  Task,
 } from "../../types/wedding";
 import { createTask } from "../../services/taskService";
 import { Typography } from "../ui/Typography";
@@ -20,10 +20,17 @@ import { getCategoryProgress } from "../../utils/weddingCalculations";
 import BudgetCategorySkeleton from "./BudgetCategorySkeleton";
 
 interface BudgetCategoryProps {
-  category: BudgetCategoryType;
+  budgetCategory: BudgetCategoryType;
   onEditTask: (taskId: string) => void;
-  wedding: Wedding;
-  isLoading?: boolean;
+  budget: {
+    total: number;
+    spent: number;
+    allocated: BudgetCategoryType[];
+  };
+  isLoading: boolean;
+  wedding?: {
+    _id: string;
+  };
 }
 
 // Helper function to determine progress indicator color
@@ -50,11 +57,18 @@ const useCreateTaskMutation = (onSuccess: () => void) => {
 };
 
 const BudgetCategory: React.FC<BudgetCategoryProps> = ({
-  category,
+  budgetCategory,
   onEditTask,
-  wedding,
+  budget,
   isLoading,
+  wedding,
 }) => {
+  // Prevent rendering if no wedding ID
+  if (!wedding?._id) {
+    console.error("No wedding ID available");
+    return null;
+  }
+
   // Show skeleton loader while data is loading
   if (isLoading) {
     return <BudgetCategorySkeleton />;
@@ -75,14 +89,14 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
   });
 
   // Safely access tasks with a default empty array
-  const tasks = category?.tasks || [];
+  const tasks: Task[] = budgetCategory.tasks || [];
   const progress = getCategoryProgress(tasks);
   const isAddTaskPanelOpen =
     activePanels.addTask?.isOpen &&
-    activePanels.addTask.category === category.category;
+    activePanels.addTask.category === budgetCategory.category;
 
   const handleOpenPanel = () =>
-    openPanel("addTask", { isOpen: true, category: category.category });
+    openPanel("addTask", { isOpen: true, category: budgetCategory.category });
 
   // Helper function to create category names without special characters
   const sanitizeCategoryName = (name: string) => {
@@ -99,12 +113,12 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
     >
       {/* Category Header/Toggle Button */}
       <button
-        id={`category-header-${sanitizeCategoryName(category?.category)}`}
+        id={`category-header-${sanitizeCategoryName(budgetCategory.category)}`}
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center justify-between text-left"
         aria-expanded={isExpanded}
         aria-controls={`category-content-${sanitizeCategoryName(
-          category?.category
+          budgetCategory.category
         )}`}
       >
         <div className="flex flex-col items-start gap-1.5">
@@ -112,7 +126,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
             element="h3"
             className="!leading-none"
           >
-            {category?.category}
+            {budgetCategory.category}
           </Typography>
           <Badge color={getProgressColor(progress)}>
             {tasks.length === 0
@@ -130,12 +144,12 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
 
       {/* Expandable Content Section */}
       <div
-        id={`category-content-${sanitizeCategoryName(category?.category)}`}
+        id={`category-content-${sanitizeCategoryName(budgetCategory.category)}`}
         className={`grid transition-all duration-300 ease-in-out ${
           isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
         aria-labelledby={`category-header-${sanitizeCategoryName(
-          category?.category
+          budgetCategory.category
         )}`}
         aria-hidden={!isExpanded}
       >
@@ -164,15 +178,17 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
 
             {/* Task List */}
             <div className="space-y-4">
-              {tasks.map((task) => (
-                <TaskItem
-                  key={task._id}
-                  task={task}
-                  budgetItemId={category._id}
-                  weddingId={wedding._id}
-                  onEditTask={onEditTask}
-                />
-              ))}
+              {tasks.map((task) => {
+                return (
+                  <TaskItem
+                    key={task._id}
+                    task={task}
+                    budgetCategoryId={budgetCategory._id}
+                    weddingId={wedding._id}
+                    onEditTask={onEditTask}
+                  />
+                );
+              })}
             </div>
 
             {/* Cost Summary Section - Only shown if tasks have budget/costs */}
@@ -187,7 +203,7 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
                   >
                     <span className="text-dark-800 font-bold">Cost: </span>
                     <span className="text-dark-600">
-                      {`${category.spent.toLocaleString()} kr out of ${category.estimatedCost.toLocaleString()} kr`}
+                      {`${budgetCategory.spent.toLocaleString()} kr out of ${budgetCategory.estimatedCost.toLocaleString()} kr`}
                     </span>
                   </Typography>
                 </>
@@ -211,10 +227,10 @@ const BudgetCategory: React.FC<BudgetCategoryProps> = ({
       <SidePanel
         isOpen={isAddTaskPanelOpen || false}
         onClose={handleClosePanel}
-        title={`Add task to ${category.category}`}
+        title={`Add task to ${budgetCategory.category}`}
       >
         <TaskForm
-          budgetItemId={category._id}
+          budgetCategoryId={budgetCategory._id}
           weddingId={wedding._id}
           onSubmit={createTaskMutation.mutateAsync}
           onCancel={handleClosePanel}

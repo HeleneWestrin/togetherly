@@ -13,6 +13,11 @@ import InviteUserForm from "../components/wedding/InviteUserForm";
 import { GuestUser } from "../types/wedding";
 import { CoupleUser } from "../types/wedding";
 import EditUserForm from "../components/wedding/EditUserForm";
+import {
+  WeddingAccessLevel,
+  WeddingAccessLevelType,
+  WeddingPartyRoleType,
+} from "../types/constants";
 
 const WeddingUsers: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -39,15 +44,8 @@ const WeddingUsers: React.FC = () => {
       firstName: string;
       lastName: string;
       email: string;
-      role: "couple" | "guest" | "weddingAdmin";
-      weddingRole:
-        | "Guest"
-        | "Maid of Honor"
-        | "Best Man"
-        | "Bridesmaid"
-        | "Groomsman"
-        | "Parent"
-        | "Other";
+      accessLevel: WeddingAccessLevelType;
+      partyRole: WeddingPartyRoleType;
     }) => {
       if (!wedding?._id) throw new Error("Wedding ID is required");
 
@@ -92,7 +90,8 @@ const WeddingUsers: React.FC = () => {
       userId: string;
       userData: {
         email?: string;
-        role?: string;
+        accessLevel?: WeddingAccessLevelType;
+        partyRole?: WeddingPartyRoleType;
         firstName?: string;
         lastName?: string;
       };
@@ -159,10 +158,14 @@ const WeddingUsers: React.FC = () => {
 
   if (!wedding) return <div className="p-5">No wedding data available.</div>;
 
-  // Filter guests with admin roles
-  const adminGuests =
+  // Filter guests with weddingAdmin access for the current wedding
+  const weddingAdmins =
     wedding.guests?.filter((guest) =>
-      ["Maid of Honor", "Best Man"].includes(guest.guestDetails[0]?.weddingRole)
+      guest.weddings?.some(
+        (w) =>
+          w.weddingId.toString() === wedding._id.toString() &&
+          w.accessLevel === WeddingAccessLevel.WEDDING_ADMIN
+      )
     ) || [];
 
   return (
@@ -202,10 +205,10 @@ const WeddingUsers: React.FC = () => {
               >
                 Wedding admins
               </Typography>
-              {adminGuests.length > 0 ? (
+              {weddingAdmins.length > 0 ? (
                 <UserList
-                  users={adminGuests}
-                  type="admin"
+                  users={weddingAdmins}
+                  type="weddingAdmin"
                   onEditUser={handleEditUser}
                   onDeleteUser={handleDeleteUser}
                 />

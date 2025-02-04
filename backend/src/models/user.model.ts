@@ -1,49 +1,52 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
-import { Wedding } from "./wedding.model";
-import { UserRole } from "../types/user";
+import {
+  WeddingAccessLevel,
+  CoupleRole,
+  WeddingPartyRoles,
+  RSVPStatus,
+} from "../types/constants";
 
 /**
  * Interface defining the User document structure
  * Extends mongoose.Document to include MongoDB document methods
  */
 export interface User extends Document {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  isAdmin: boolean;
   isRegistered: boolean;
   isActive: boolean;
-  role: UserRole; // Strict type for user roles
-  // Array of guest-specific details for each wedding they're invited to
-  guestDetails: Array<{
-    weddingId: mongoose.Types.ObjectId;
-    rsvpStatus: "pending" | "confirmed" | "declined";
-    dietaryPreferences: string;
-    relationship: "wife" | "husband" | "both";
-    weddingRole:
-      | "Guest"
-      | "Maid of Honor"
-      | "Best Man"
-      | "Bridesmaid"
-      | "Groomsman"
-      | "Flower girl"
-      | "Ring bearer"
-      | "Parent"
-      | "Family"
-      | "Other";
-    trivia?: string;
-  }>;
-  // User's personal information
   profile: {
     firstName: string;
     lastName: string;
-    phoneNumber: string;
-    address: string;
-    profilePicture: string;
+    phoneNumber?: string;
+    address?: string;
+    profilePicture?: string;
   };
-  weddings: Wedding[]; // References to weddings (either as guest or couple)
+  weddings: Array<{
+    weddingId: mongoose.Types.ObjectId;
+    accessLevel: (typeof WeddingAccessLevel)[keyof typeof WeddingAccessLevel];
+
+    // Only for accessLevel = "couple"
+    coupleDetails?: {
+      role: (typeof CoupleRole)[keyof typeof CoupleRole];
+    };
+
+    // Only for accessLevel = "guest" | "weddingAdmin"
+    guestDetails?: {
+      rsvpStatus: (typeof RSVPStatus)[keyof typeof RSVPStatus];
+      partyRole: (typeof WeddingPartyRoles)[keyof typeof WeddingPartyRoles];
+      connection: {
+        partnerIds: mongoose.Types.ObjectId[];
+      };
+      dietaryPreferences?: string;
+      trivia?: string;
+    };
+  }>;
+  socialProvider?: string;
+  socialId?: string;
   createdAt: Date;
   updatedAt: Date;
-  socialProvider?: "google";
-  socialId?: string;
 }
 
 // Main user schema definition with validation rules
@@ -83,46 +86,54 @@ const userSchema: Schema<User> = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
-      default: true,
+      default: false,
     },
-    role: {
-      type: String,
-      enum: ["admin", "couple", "guest", "weddingAdmin"], // Restricts role to these three options
-      default: "couple",
-      required: [true, "Role is required"],
+    isAdmin: {
+      type: Boolean,
+      default: false,
     },
     // Nested array for tracking wedding-specific guest information
-    guestDetails: [
+    weddings: [
       {
         weddingId: { type: Schema.Types.ObjectId, ref: "Wedding" },
-        rsvpStatus: {
+        accessLevel: {
           type: String,
-          enum: ["pending", "confirmed", "declined"],
-          default: "pending",
-        },
-        dietaryPreferences: { type: String },
-        relationship: {
-          type: String,
-          enum: ["wife", "husband", "both"],
+          enum: Object.values(WeddingAccessLevel),
           required: true,
         },
-        weddingRole: {
-          type: String,
-          enum: [
-            "Guest",
-            "Maid of Honor",
-            "Best Man",
-            "Bridesmaid",
-            "Groomsman",
-            "Flower girl",
-            "Ring bearer",
-            "Parent",
-            "Family",
-            "Other",
-          ],
-          required: true,
+        coupleDetails: {
+          role: {
+            type: String,
+            enum: Object.values(CoupleRole),
+          },
         },
-        trivia: { type: String },
+        guestDetails: {
+          rsvpStatus: {
+            type: String,
+            enum: Object.values(RSVPStatus),
+            default: RSVPStatus.PENDING,
+          },
+          partyRole: {
+            type: String,
+            enum: Object.values(WeddingPartyRoles),
+            default: WeddingPartyRoles.GUEST,
+          },
+          connection: {
+            partnerIds: {
+              type: [Schema.Types.ObjectId],
+              ref: "User",
+              validate: {
+                validator: function (partnerIds: mongoose.Types.ObjectId[]) {
+                  return partnerIds.length >= 1 && partnerIds.length <= 2;
+                },
+                message:
+                  "Must be connected to at least one partner and no more than two",
+              },
+            },
+          },
+          dietaryPreferences: { type: String },
+          trivia: { type: String },
+        },
       },
     ],
     profile: {
@@ -138,12 +149,6 @@ const userSchema: Schema<User> = new mongoose.Schema(
       address: { type: String, required: false },
       profilePicture: { type: String, required: false },
     },
-    weddings: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Wedding", // Allows population of wedding details
-      },
-    ],
     socialProvider: { type: String, enum: ["google"] },
     socialId: { type: String },
   },
@@ -151,10 +156,9 @@ const userSchema: Schema<User> = new mongoose.Schema(
 );
 
 // Add these indexes to the userSchema before creating the model
-userSchema.index({ role: 1 });
 userSchema.index({ weddings: 1 });
-userSchema.index({ "guestDetails.weddingId": 1 });
-userSchema.index({ weddings: 1, role: 1 });
+userSchema.index({ "weddings.weddingId": 1 });
+userSchema.index({ "weddings.accessLevel": 1 });
 
 // Create and export the User model
 export const User: Model<User> = mongoose.model<User>("User", userSchema);

@@ -1,17 +1,5 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
-
-export const DEFAULT_BUDGET_CATEGORIES = [
-  "Attire & accessories",
-  "Ceremony",
-  "Decor & styling",
-  "Entertainment",
-  "Invitations & stationery",
-  "Makeup & wellness",
-  "Miscellaneous",
-  "Photography & videography",
-  "Transportation",
-  "Venue & catering",
-];
+import mongoose, { Schema, Document, Model, Types } from "mongoose";
+import { DEFAULT_BUDGET_CATEGORIES } from "../types/constants";
 
 interface BudgetTaskItem {
   _id: mongoose.Types.ObjectId;
@@ -21,13 +9,24 @@ interface BudgetTaskItem {
   completed: boolean;
 }
 
-export interface BudgetItem {
+export interface BudgetCategory {
   _id?: mongoose.Types.ObjectId;
   category: string;
   estimatedCost: number;
   spent: number;
-  tasks: BudgetTaskItem[];
+  tasks: mongoose.Types.ObjectId[];
   progress: number;
+}
+
+export interface PopulatedBudgetCategory extends Omit<BudgetCategory, "tasks"> {
+  tasks: {
+    _id: Types.ObjectId;
+    title: string;
+    budget: number;
+    actualCost: number;
+    completed: boolean;
+    dueDate: Date;
+  }[];
 }
 
 interface Location {
@@ -46,7 +45,7 @@ export interface Wedding extends Document {
   budget: {
     total: number;
     spent: number;
-    allocated: BudgetItem[];
+    budgetCategories: BudgetCategory[];
   };
   couple: mongoose.Types.ObjectId[]; // references Users collection
   guests: mongoose.Types.ObjectId[]; // references Users collection (guests are a user role)
@@ -55,8 +54,12 @@ export interface Wedding extends Document {
   updatedAt: Date;
 }
 
-const budgetItemSchema = new Schema<BudgetItem>({
-  category: { type: String, required: true },
+const budgetCategorySchema = new Schema<BudgetCategory>({
+  category: {
+    type: String,
+    required: true,
+    enum: DEFAULT_BUDGET_CATEGORIES,
+  },
   estimatedCost: { type: Number, required: true, default: 0 },
   spent: { type: Number, required: true, default: 0 },
   tasks: [{ type: Schema.Types.ObjectId, ref: "Task", required: false }],
@@ -90,8 +93,8 @@ const weddingSchema = new Schema<Wedding>(
     budget: {
       total: { type: Number, required: true },
       spent: { type: Number, required: true },
-      allocated: {
-        type: [budgetItemSchema],
+      budgetCategories: {
+        type: [budgetCategorySchema],
         default: () =>
           DEFAULT_BUDGET_CATEGORIES.map((category) => ({
             category,
@@ -130,9 +133,9 @@ weddingSchema.pre("save", async function (next) {
 });
 
 // Virtual to calculate spent dynamically based on task "actualCost"
-budgetItemSchema
+budgetCategorySchema
   .virtual("calculatedSpent")
-  .get(async function (this: BudgetItem) {
+  .get(async function (this: BudgetCategory) {
     const Task = mongoose.model("Task");
     const tasks = await Task.find({ _id: { $in: this.tasks } });
     return tasks.reduce((total, task) => total + (task.actualCost || 0), 0);
@@ -141,7 +144,7 @@ budgetItemSchema
 // Add these indexes to the weddingSchema before creating the model
 weddingSchema.index({ couple: 1 });
 weddingSchema.index({ guests: 1 });
-weddingSchema.index({ "budget.allocated.category": 1 });
+weddingSchema.index({ "budget.budgetCategories.category": 1 });
 
 export const Wedding: Model<Wedding> = mongoose.model<Wedding>(
   "Wedding",

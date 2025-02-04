@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { UserService } from "../services/user.service";
-import { sendSuccess, sendError } from "../utils/responseHandlers";
+import { sendSuccess } from "../utils/responseHandlers";
 import { ValidationError } from "../utils/errors";
 
 /**
@@ -11,80 +11,61 @@ import { ValidationError } from "../utils/errors";
  * @param res - Express response object
  * @param next - Express next function for error handling
  */
-export const createUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email) {
-      throw new ValidationError("Email is required");
-    }
-    if (!password) {
-      throw new ValidationError("Password is required");
-    }
-    if (password.length < 10) {
-      throw new ValidationError("Password must be at least 10 characters long");
-    }
-
-    // Delegate user creation to service layer
-    const result = await UserService.createUser(email, password);
-    // Send successful response with 201 Created status
-    sendSuccess(res, result, 201);
-  } catch (error) {
-    // Pass any errors to the error handling middleware
-    next(error);
-  }
-};
-
-/**
- * Authenticates a user and generates a JWT token
- *
- * @param req - Express request object containing login credentials
- * @param res - Express response object
- * @param next - Express next function for error handling
- */
-export const loginUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const { email, password } = req.body;
-    // Attempt to login user and generate token
-    const result = await UserService.loginUser(email, password);
-    // Send successful response with user data and token
-    sendSuccess(res, result);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * Retrieves a list of all active users
- * Requires admin privileges (checked in route middleware)
- *
- * @param req - Express request object
- * @param res - Express response object
- * @param next - Express next function for error handling
- */
-export const getUsers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    // Fetch all active users from the database
-    const users = await UserService.getActiveUsers();
-    sendSuccess(res, users);
-  } catch (error) {
-    next(error);
-  }
-};
-
 export class UserController {
+  static async createUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email, password } = req.body;
+
+      if (!email) {
+        throw new ValidationError("Email is required");
+      }
+      if (!password) {
+        throw new ValidationError("Password is required");
+      }
+      if (password.length < 10) {
+        throw new ValidationError(
+          "Password must be at least 10 characters long"
+        );
+      }
+
+      const result = await UserService.createUser(email, password);
+      sendSuccess(res, result, 201);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async loginUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const { email, password } = req.body;
+      const result = await UserService.loginUser(email, password);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getUsers(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const users = await UserService.getActiveUsers();
+      sendSuccess(res, users);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async completeOnboarding(
     req: Request,
     res: Response,
@@ -92,11 +73,15 @@ export class UserController {
   ) {
     try {
       const userId = (req as any).userId;
-      const { firstName, lastName } = req.body;
+      const { firstName, lastName, phoneNumber, address } = req.body;
 
-      const user = await UserService.completeOnboarding(userId, {
-        firstName,
-        lastName,
+      await UserService.completeOnboarding(userId, {
+        profile: {
+          firstName,
+          lastName,
+          phoneNumber,
+          address,
+        },
       });
 
       sendSuccess(res, { message: "Onboarding completed successfully" });
@@ -106,5 +91,6 @@ export class UserController {
   }
 }
 
-// Export the method directly
-export const completeOnboarding = UserController.completeOnboarding;
+// Export all methods from the class
+export const { createUser, loginUser, getUsers, completeOnboarding } =
+  UserController;

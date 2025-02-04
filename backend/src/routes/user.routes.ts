@@ -104,7 +104,7 @@ userRouter.post("/auth/google/token", (async (
         user: {
           id: user._id,
           email: user.email,
-          role: user.role,
+          isAdmin: user.isAdmin,
           profile: {
             firstName: user.profile?.firstName,
             lastName: user.profile?.lastName,

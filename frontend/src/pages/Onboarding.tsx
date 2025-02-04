@@ -17,8 +17,8 @@ interface CoupleInfo {
   partnerFirstName: string;
   partnerLastName: string;
   partnerEmail: string;
-  role: "Wife" | "Husband" | "";
-  partnerRole: "Wife" | "Husband" | "";
+  role: "wife" | "husband" | "";
+  partnerRole: "wife" | "husband" | "";
 }
 
 interface WeddingInfo {
@@ -54,8 +54,8 @@ const Onboarding: React.FC = () => {
     partnerFirstName: "",
     partnerLastName: "",
     partnerEmail: "",
-    role: "",
-    partnerRole: "",
+    role: "wife",
+    partnerRole: "wife",
   });
   const [weddingInfo, setWeddingInfo] = useState<WeddingInfo>({
     date: "",
@@ -115,8 +115,8 @@ const Onboarding: React.FC = () => {
       partnerFirstName: "",
       partnerLastName: "",
       partnerEmail: "",
-      role: "",
-      partnerRole: "",
+      role: "wife",
+      partnerRole: "husband",
     });
 
     setWeddingInfo({
@@ -154,25 +154,38 @@ const Onboarding: React.FC = () => {
   const handleWeddingInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Clear localStorage first before any other operations
+      // Validate required roles before submission
+      if (!coupleInfo.role || !coupleInfo.partnerRole) {
+        throw new Error("Please select roles for both partners");
+      }
+
       clearLocalStorage();
 
-      const response = await createWeddingMutation.mutateAsync({
-        coupleInfo,
+      // Create wedding and wait for response
+      const weddingResponse = await createWeddingMutation.mutateAsync({
+        coupleInfo: {
+          ...coupleInfo,
+          role: coupleInfo.role as "wife" | "husband",
+          partnerRole: coupleInfo.partnerRole as "wife" | "husband",
+        },
         weddingInfo,
       });
 
-      await updateProgressMutation.mutateAsync({
-        step: 2,
-        weddingInfo,
-        completed: true,
-      });
+      // Wait for all updates to complete before navigation
+      await Promise.all([
+        updateProgressMutation.mutateAsync({
+          step: 2,
+          weddingInfo,
+          completed: true,
+        }),
 
-      await axiosInstance.patch("/api/users/complete-onboarding", {
-        firstName: coupleInfo.firstName,
-        lastName: coupleInfo.lastName,
-      });
+        axiosInstance.patch("/api/users/complete-onboarding", {
+          firstName: coupleInfo.firstName,
+          lastName: coupleInfo.lastName,
+        }),
+      ]);
 
+      // Update local user state
       useAuthStore.getState().updateUser({
         isNewUser: false,
         profile: {
@@ -181,9 +194,13 @@ const Onboarding: React.FC = () => {
         },
       });
 
-      navigate(`/wedding/${response.data.slug}/budget`);
+      // Add small delay to ensure backend updates are complete
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Navigate to wedding page
+      navigate(`/wedding/${weddingResponse.data.slug}/budget`);
     } catch (error) {
-      console.error("Failed to update onboarding status:", error);
+      console.error("Failed to complete onboarding:", error);
       throw error;
     }
   };
@@ -288,7 +305,7 @@ const Onboarding: React.FC = () => {
                   onChange={(value) =>
                     setCoupleInfo({
                       ...coupleInfo,
-                      role: value as "Wife" | "Husband",
+                      role: value as "wife" | "husband",
                     })
                   }
                   className="self-end"
@@ -342,7 +359,7 @@ const Onboarding: React.FC = () => {
                   onChange={(value) =>
                     setCoupleInfo({
                       ...coupleInfo,
-                      partnerRole: value as "Wife" | "Husband",
+                      partnerRole: value as "wife" | "husband",
                     })
                   }
                   className="self-end"
@@ -425,13 +442,14 @@ const Onboarding: React.FC = () => {
             id="estimatedGuests"
             name="estimatedGuests"
             label="Estimated number of guests"
-            type="text"
+            type="tel"
             inputMode="numeric"
             pattern="[0-9]*"
             value={weddingInfo.estimatedGuests}
             onKeyDown={(e) => {
               if (
                 !/[0-9]/.test(e.key) &&
+                e.key !== "Tab" &&
                 e.key !== "Backspace" &&
                 e.key !== "Delete" &&
                 e.key !== "ArrowLeft" &&
@@ -467,41 +485,6 @@ const Onboarding: React.FC = () => {
             }
           />
           <div className="flex flex-col-reverse md:flex-row gap-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={async () => {
-                try {
-                  const response = await createWeddingMutation.mutateAsync({
-                    coupleInfo,
-                    weddingInfo,
-                  });
-
-                  // Mark onboarding as completed
-                  await updateProgressMutation.mutateAsync({
-                    step: 2,
-                    weddingInfo,
-                    completed: true,
-                  });
-
-                  // Update user's isNewUser status
-                  await axiosInstance.patch("/api/users/complete-onboarding");
-
-                  // Clear localStorage
-                  clearLocalStorage();
-
-                  // Update local auth store
-                  useAuthStore.getState().updateUser({ isNewUser: false });
-
-                  navigate(`/wedding/${response.data.slug}/budget`);
-                } catch (error) {
-                  console.error("Error during onboarding completion:", error);
-                }
-              }}
-              className="w-full"
-            >
-              Skip for now
-            </Button>
             <Button
               type="submit"
               className="w-full"

@@ -1,3 +1,10 @@
+import {
+  RSVPStatusType,
+  WeddingPartyRoleType,
+  WeddingAccessLevelType,
+  CoupleRoleType,
+} from "./constants";
+
 export interface Task {
   _id: string;
   title: string;
@@ -5,7 +12,7 @@ export interface Task {
   actualCost: number;
   completed: boolean;
   dueDate?: string;
-  budgetItem: string;
+  budgetCategoryId: string;
   weddingId: string;
 }
 
@@ -39,44 +46,46 @@ export interface CoupleProfile {
   lastName: string;
 }
 
-export type UserStatus = "Active" | "Pending" | "Invited";
-
 export interface CoupleUser {
   _id: string;
   email?: string;
   profile: CoupleProfile;
+  accessLevel: WeddingAccessLevelType;
   isRegistered?: boolean;
 }
 
 export interface GuestProfile {
   firstName: string;
   lastName: string;
+  phoneNumber?: string;
+  address?: string;
+  profilePicture?: string;
 }
 
-export interface GuestDetails {
+export interface UserWedding {
   weddingId: string;
-  rsvpStatus: "pending" | "confirmed" | "declined";
-  dietaryPreferences?: string;
-  relationship: "wife" | "husband" | "both";
-  weddingRole:
-    | "Guest"
-    | "Maid of Honor"
-    | "Best Man"
-    | "Bridesmaid"
-    | "Groomsman"
-    | "Flower girl"
-    | "Ring bearer"
-    | "Parent"
-    | "Family"
-    | "Other";
-  trivia?: string;
+  accessLevel: WeddingAccessLevelType;
+  coupleDetails: {
+    role: CoupleRoleType;
+  };
+  guestDetails: {
+    rsvpStatus: RSVPStatusType;
+    partyRole: WeddingPartyRoleType;
+    connection: {
+      partnerIds: string[];
+    };
+    trivia?: string;
+    dietaryPreferences?: string;
+  };
 }
 
 export interface GuestUser {
   _id: string;
+  accessLevel: WeddingAccessLevelType;
   email?: string;
   profile: GuestProfile;
-  guestDetails: GuestDetails[];
+  weddings: UserWedding[];
+  isAdmin?: boolean;
   isRegistered?: boolean;
 }
 
@@ -84,15 +93,16 @@ export interface Wedding {
   _id: string;
   slug: string;
   title: string;
-  date: string;
-  location: WeddingLocation;
-  couple: Array<CoupleUser>;
-  budget?: {
+  date?: string;
+  location?: WeddingLocation;
+  budget: {
     total: number;
     spent: number;
-    allocated: Array<BudgetCategory>;
+    budgetCategories: BudgetCategory[];
   };
-  guests?: GuestUser[];
+  weddingAccess?: string;
+  guests: GuestUser[];
+  couple: CoupleUser[];
 }
 
 export interface WeddingListItem

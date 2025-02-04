@@ -1,39 +1,36 @@
 import { Typography } from "../ui/Typography";
 import ProgressBar from "../ui/ProgressBar";
 import { getBudgetProgress } from "../../utils/weddingCalculations";
-import { Wedding } from "../../types/wedding";
+import { BudgetCategory } from "../../types/wedding";
 
 interface BudgetOverviewProps {
-  wedding: Wedding;
-  onUpdateBudget: (total: number) => void;
+  budget: {
+    total: number;
+    spent: number;
+    budgetCategories: BudgetCategory[];
+  };
 }
 
-const BudgetOverview: React.FC<BudgetOverviewProps> = ({
-  wedding,
-  onUpdateBudget,
-}) => {
+const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budget }) => {
   // Calculate the overall budget progress percentage
-  const progress = getBudgetProgress(wedding);
+  const progress = getBudgetProgress(budget);
 
   // Calculate remaining budget (can be negative if overspent)
-  const remaining = wedding.budget
-    ? wedding.budget.total - wedding.budget.spent
-    : 0;
+  const remaining = budget.total - budget.spent;
 
   // Sum up all estimated costs across all categories
   const totalEstimatedCost =
-    wedding?.budget?.allocated?.reduce(
+    budget.budgetCategories?.reduce(
       (sum, category) => sum + category.estimatedCost,
       0
     ) ?? 0;
 
   // Determine warning states for budget alerts
   const isOverSpent = remaining < 0;
-  const isOverEstimatedBudget =
-    totalEstimatedCost > (wedding?.budget?.total ?? 0);
+  const isOverEstimatedBudget = totalEstimatedCost > budget.total;
 
   // Early return if no budget data is available
-  if (!wedding?.budget) return null;
+  if (!budget) return null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -52,7 +49,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           <span className="font-medium tracking-normal font-sans text-dark-700 text-base md:text-lg">
             Total budget:
           </span>{" "}
-          <span>{wedding.budget.total.toLocaleString()} kr</span>
+          <span>{budget.total.toLocaleString()} kr</span>
         </Typography>
 
         {/* Visual progress indicator */}
@@ -76,7 +73,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               element="p"
               className="font-semibold"
             >
-              {wedding.budget.spent.toLocaleString()} kr
+              {budget.spent.toLocaleString()} kr
             </Typography>
           </div>
 
@@ -128,9 +125,9 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               >
                 <span className="text-red-700 font-bold">Heads up!</span> Your
                 estimated costs are{" "}
-                {(totalEstimatedCost - wedding.budget.total).toLocaleString()}{" "}
-                kr over your total budget. Update your total budget or adjust
-                your estimated costs by editing your tasks.
+                {(totalEstimatedCost - budget.total).toLocaleString()} kr over
+                your total budget. Update your total budget or adjust your
+                estimated costs by editing your tasks.
               </Typography>
             )}
           </div>

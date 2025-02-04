@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { userRoleValues } from "../types/constants";
 
 export interface OnboardingProgress extends Document {
   userId: string;
@@ -30,8 +31,8 @@ const onboardingSchema = new Schema({
     partnerFirstName: { type: String },
     partnerLastName: { type: String },
     partnerEmail: { type: String },
-    role: { type: String },
-    partnerRole: { type: String },
+    role: { type: String, enum: userRoleValues },
+    partnerRole: { type: String, enum: userRoleValues },
   },
   weddingInfo: {
     date: { type: String },

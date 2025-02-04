@@ -5,27 +5,35 @@ import { Typography } from "../ui/Typography";
 import RadioButtonToggle from "../ui/RadioButtonToggle";
 import { GuestUser } from "../../types/wedding";
 import FormLabel from "../ui/FormLabel";
+import {
+  RSVPStatus,
+  WeddingPartyRoles,
+  WeddingPartyRoleType,
+  RSVPStatusType,
+} from "../../types/constants";
+
+interface Couple {
+  _id: string;
+  profile: {
+    firstName: string;
+    lastName?: string;
+  };
+}
 
 interface AddGuestFormProps {
   guest?: GuestUser;
+  couple: Couple[];
   onSubmit: (data: {
     firstName: string;
     lastName: string;
     email?: string;
-    relationship: "wife" | "husband" | "both";
-    rsvpStatus: "pending" | "confirmed" | "declined";
+    connection: {
+      partnerIds: string[];
+    };
+    rsvpStatus: RSVPStatusType;
     dietaryPreferences?: string;
-    weddingRole:
-      | "Guest"
-      | "Maid of Honor"
-      | "Best Man"
-      | "Bridesmaid"
-      | "Groomsman"
-      | "Flower girl"
-      | "Ring bearer"
-      | "Parent"
-      | "Family"
-      | "Other";
+    partyRole: WeddingPartyRoleType;
+    trivia?: string;
   }) => Promise<void>;
   onCancel: () => void;
   isError?: boolean;
@@ -34,20 +42,38 @@ interface AddGuestFormProps {
 
 const AddGuestForm: React.FC<AddGuestFormProps> = ({
   guest,
+  couple,
   onSubmit,
   onCancel,
   isError,
   error,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string>("");
+
+  if (!couple?.length) {
+    return <div>Error: No couple information available</div>;
+  }
+
+  // Use the first partner's _id as default
+  const defaultPartnerId = couple[0]._id;
+  const existingPartnerIds =
+    guest?.weddings?.[0]?.guestDetails?.connection?.partnerIds;
+
   const [formData, setFormData] = useState({
-    firstName: guest?.profile.firstName || "",
-    lastName: guest?.profile.lastName || "",
+    firstName: guest?.profile?.firstName || "",
+    lastName: guest?.profile?.lastName || "",
     email: guest?.email || "",
-    relationship: guest?.guestDetails[0]?.relationship || "wife",
-    rsvpStatus: guest?.guestDetails[0]?.rsvpStatus || "pending",
-    dietaryPreferences: guest?.guestDetails[0]?.dietaryPreferences || "",
-    weddingRole: guest?.guestDetails[0]?.weddingRole || "Guest",
+    connection: {
+      partnerIds: existingPartnerIds || [defaultPartnerId],
+    },
+    rsvpStatus:
+      guest?.weddings?.[0]?.guestDetails?.rsvpStatus || RSVPStatus.PENDING,
+    dietaryPreferences:
+      guest?.weddings?.[0]?.guestDetails?.dietaryPreferences || "",
+    partyRole:
+      guest?.weddings?.[0]?.guestDetails?.partyRole || WeddingPartyRoles.GUEST,
+    trivia: guest?.weddings?.[0]?.guestDetails?.trivia || "",
   });
 
   const submitButtonText = guest ? "Save changes" : "Add guest";
@@ -55,6 +81,10 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.connection.partnerIds.length) {
+      setFormError("Please select a side for the guest");
+      return;
+    }
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
@@ -109,30 +139,28 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
 
         <div>
           <FormLabel
-            htmlFor="weddingRole"
+            htmlFor="partyRole"
             className="mb-2"
             required
           >
             Role
           </FormLabel>
           <select
-            id="weddingRole"
-            name="weddingRole"
-            value={formData.weddingRole}
+            id="partyRole"
+            name="partyRole"
+            value={formData.partyRole}
             onChange={handleChange}
             className="w-full rounded-lg border-2 border-dark-500 px-3 py-4"
             required
           >
-            <option value="Guest">Guest</option>
-            <option value="Maid of Honor">Maid of Honor</option>
-            <option value="Best Man">Best Man</option>
-            <option value="Bridesmaid">Bridesmaid</option>
-            <option value="Groomsman">Groomsman</option>
-            <option value="Flower girl">Flower girl</option>
-            <option value="Ring bearer">Ring bearer</option>
-            <option value="Parent">Parent</option>
-            <option value="Family">Family</option>
-            <option value="Other">Other</option>
+            {Object.values(WeddingPartyRoles).map((role) => (
+              <option
+                key={role}
+                value={role}
+              >
+                {role}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -142,19 +170,35 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
             styledAs="label"
             className="mb-2"
           >
-            Side
+            Side <span className="text-red-600">*</span>
           </Typography>
           <RadioButtonToggle
-            name="relationship"
+            name="connection.partnerIds"
             options={[
-              { label: "Bride", value: "wife" },
-              { label: "Groom", value: "husband" },
-              { label: "Both", value: "both" },
+              {
+                label: `${couple[0].profile.firstName}'s`,
+                value: couple[0]._id,
+              },
+              {
+                label: `${couple[1].profile.firstName}'s`,
+                value: couple[1]._id,
+              },
+              {
+                label: "Mutual",
+                value: `${couple[0]._id},${couple[1]._id}`,
+              },
             ]}
-            value={formData.relationship}
-            onChange={(value: "wife" | "husband" | "both") =>
-              setFormData((prev) => ({ ...prev, relationship: value }))
-            }
+            value={formData.connection.partnerIds.join(",")}
+            onChange={(value: string) => {
+              const ids = value.split(",").filter(Boolean);
+              if (ids.length === 0) return; // Prevent empty selection
+              setFormData((prev) => ({
+                ...prev,
+                connection: {
+                  partnerIds: ids,
+                },
+              }));
+            }}
           />
         </div>
 

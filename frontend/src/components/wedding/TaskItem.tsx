@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NumericFormat } from "react-number-format";
 import { Typography } from "../ui/Typography";
 import FormLabel from "../ui/FormLabel";
@@ -16,15 +15,14 @@ interface TaskItemProps {
   task: Task;
   onEditTask: (taskId: string) => void;
   tabIndex?: number;
-  budgetItemId: string;
+  budgetCategoryId: string;
   weddingId: string;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({
   task,
   onEditTask,
-  tabIndex,
-  budgetItemId,
+  budgetCategoryId,
   weddingId,
 }) => {
   const { activePanels, openPanel, closePanel } = useUIStore();
@@ -132,8 +130,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
       >
         <TaskForm
           task={task}
-          budgetItemId={budgetItemId}
-          weddingId={weddingId}
+          budgetCategoryId={budgetCategoryId}
+          weddingId={task.weddingId}
           onSubmit={(data) =>
             updateTaskMutation.mutateAsync({ taskId: task._id, data })
           }

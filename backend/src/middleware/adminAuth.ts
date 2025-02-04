@@ -24,7 +24,7 @@ export const requireAdmin = async (
     const user = await User.findById(userId);
 
     // Check if user exists and has admin role
-    if (!user || user.role !== "admin") {
+    if (!user || !user.isAdmin) {
       throw new ForbiddenError("Admin access required");
     }
 

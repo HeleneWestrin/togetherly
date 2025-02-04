@@ -3,7 +3,9 @@ import { WeddingService } from "../services/wedding.service";
 import { sendSuccess } from "../utils/responseHandlers";
 import { weddingSchemas } from "../validators/schemas";
 import { z } from "zod";
-import { ValidationError } from "../utils/errors";
+import { ValidationError, ForbiddenError } from "../utils/errors";
+import { WeddingPartyRoles, RSVPStatus } from "../types/constants";
+import { User } from "../models/user.model";
 
 export class WeddingController {
   static async getWeddings(req: Request, res: Response, next: NextFunction) {
@@ -29,8 +31,23 @@ export class WeddingController {
 
   static async createWedding(req: Request, res: Response, next: NextFunction) {
     try {
-      const wedding = await WeddingService.createWedding(req.body);
-      sendSuccess(res, wedding, 201);
+      const userId = (req as any).userId;
+      const { weddingInfo } = req.body;
+
+      // Create the wedding
+      const wedding = await WeddingService.createWedding(weddingInfo);
+
+      // Add wedding role for the creating user
+      await User.findByIdAndUpdate(userId, {
+        $push: {
+          weddings: {
+            weddingId: wedding._id,
+            accessLevel: "couple",
+          },
+        },
+      });
+
+      sendSuccess(res, wedding);
     } catch (error) {
       next(error);
     }
@@ -67,7 +84,8 @@ export class WeddingController {
   static async createTask(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = (req as any).userId;
-      const task = await WeddingService.createTask(req.body, userId);
+      const { weddingId } = req.params;
+      const task = await WeddingService.createTask(weddingId, req.body, userId);
       sendSuccess(res, task, 201);
     } catch (error) {
       next(error);
@@ -143,13 +161,14 @@ export class WeddingController {
       const userId = (req as any).userId;
       const { weddingId } = req.params;
 
-      // Ensure role is included with a default value if not provided
+      // Ensure default values
       const guestData = {
         ...req.body,
-        role: req.body.role || "Guest", // Set default role if not provided
+        partyRole: req.body.partyRole || WeddingPartyRoles.GUEST,
+        rsvpStatus: req.body.rsvpStatus || RSVPStatus.PENDING,
       };
 
-      // Validate guest data
+      // Validate the data
       const validatedData = weddingSchemas.guestData.parse(guestData);
 
       const wedding = await WeddingService.addGuest(
@@ -224,6 +243,17 @@ export class WeddingController {
       const { weddingId } = req.params;
       const inviteData = req.body;
 
+      // Get requesting user's role
+      const requestingUserRole = await WeddingService.getUserWeddingAccess(
+        userId,
+        weddingId
+      );
+
+      if (!requestingUserRole)
+        throw new ForbiddenError("No access to this wedding");
+
+      validateRoleChange("guest", inviteData.accessLevel, requestingUserRole);
+
       const result = await WeddingService.inviteUser(
         weddingId,
         inviteData,
@@ -263,6 +293,25 @@ export class WeddingController {
       const requestingUserId = (req as any).userId;
       const userData = req.body;
 
+      // Get current roles
+      const requestingUser = await WeddingService.getUserWeddingAccess(
+        requestingUserId,
+        weddingId
+      );
+      const targetUser = await WeddingService.getUserWeddingAccess(
+        userId,
+        weddingId
+      );
+
+      // Validate role change if accessLevel is being updated
+      if (userData.accessLevel && targetUser) {
+        validateRoleChange(
+          targetUser,
+          userData.accessLevel,
+          requestingUser || ""
+        );
+      }
+
       const result = await WeddingService.updateUser(
         weddingId,
         userId,
@@ -291,3 +340,15 @@ export class WeddingController {
     }
   }
 }
+
+const validateRoleChange = (
+  currentRole: string,
+  newRole: string,
+  requestingUserRole: string
+) => {
+  if (newRole === "couple" && requestingUserRole !== "couple") {
+    throw new ForbiddenError(
+      "Only existing couple members can add new couple members"
+    );
+  }
+};

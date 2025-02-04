@@ -7,7 +7,7 @@ import { BouncingBall } from "react-svg-spinners";
 
 interface TaskFormProps {
   task?: Task;
-  budgetItemId: string;
+  budgetCategoryId: string;
   weddingId: string;
   onSubmit: (data: CreateTaskData) => Promise<TaskResponse>;
   onCancel: () => void;
@@ -17,7 +17,7 @@ interface TaskFormProps {
 
 const TaskForm: React.FC<TaskFormProps> = ({
   task,
-  budgetItemId,
+  budgetCategoryId,
   weddingId,
   onSubmit,
   onCancel,
@@ -36,7 +36,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
     budget: task?.budget ?? 0,
     actualCost: task?.actualCost ?? 0,
     dueDate: formatDateForInput(task?.dueDate),
-    budgetItem: budgetItemId,
+    budgetCategoryId: budgetCategoryId,
     weddingId: weddingId,
   });
 

@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../services/axiosService";
-import { Button } from "../components/ui/Button";
 import { Typography } from "../components/ui/Typography";
 import { forceLogout } from "../utils/logoutHandler";
 import GuestList from "../components/wedding/GuestList";
@@ -11,7 +10,9 @@ import SidePanel from "../components/ui/SidePanel";
 import AddGuestForm from "../components/wedding/AddGuestForm";
 import { useState } from "react";
 import WeddingHeader from "../components/wedding/WeddingHeader";
-import { GuestUser } from "../types/wedding";
+import { GuestUser, Wedding } from "../types/wedding";
+import { RSVPStatusType, WeddingPartyRoles } from "../types/constants";
+import { WeddingPartyRoleType } from "../types/constants";
 
 const WeddingGuests: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -24,9 +25,12 @@ const WeddingGuests: React.FC = () => {
     isLoading,
     error: fetchError,
     data: wedding,
-  } = useQuery({
+  } = useQuery<Wedding, Error>({
     queryKey: ["wedding", weddingSlug],
-    queryFn: () => fetchWeddingDetails(weddingSlug!),
+    queryFn: async () => {
+      const response = await fetchWeddingDetails(weddingSlug!);
+      return response as Wedding;
+    },
     enabled: !!weddingSlug,
     staleTime: 5 * 60 * 1000,
   });
@@ -36,20 +40,12 @@ const WeddingGuests: React.FC = () => {
       firstName: string;
       lastName: string;
       email?: string;
-      relationship: "wife" | "husband" | "both";
-      rsvpStatus: "pending" | "confirmed" | "declined";
+      connection: {
+        partnerIds: string[];
+      };
+      rsvpStatus: RSVPStatusType;
       dietaryPreferences?: string;
-      weddingRole:
-        | "Guest"
-        | "Maid of Honor"
-        | "Best Man"
-        | "Bridesmaid"
-        | "Groomsman"
-        | "Flower girl"
-        | "Ring bearer"
-        | "Parent"
-        | "Family"
-        | "Other";
+      partyRole: WeddingPartyRoleType;
       trivia?: string;
     }) => {
       if (!wedding?._id) {
@@ -60,10 +56,12 @@ const WeddingGuests: React.FC = () => {
         firstName: guestData.firstName?.trim() || "",
         lastName: guestData.lastName?.trim() || "",
         email: guestData.email?.trim() || undefined,
-        relationship: guestData.relationship || "wife",
+        connection: {
+          partnerIds: guestData.connection.partnerIds,
+        },
         rsvpStatus: guestData.rsvpStatus || "pending",
         dietaryPreferences: guestData.dietaryPreferences?.trim() || undefined,
-        weddingRole: guestData.weddingRole || "Guest",
+        partyRole: guestData.partyRole || WeddingPartyRoles.GUEST,
         trivia: guestData.trivia?.trim() || undefined,
       };
 
@@ -90,20 +88,12 @@ const WeddingGuests: React.FC = () => {
         firstName: string;
         lastName: string;
         email?: string;
-        relationship: "wife" | "husband" | "both";
-        rsvpStatus: "pending" | "confirmed" | "declined";
+        connection: {
+          partnerIds: string[];
+        };
+        rsvpStatus: RSVPStatusType;
         dietaryPreferences?: string;
-        weddingRole:
-          | "Guest"
-          | "Maid of Honor"
-          | "Best Man"
-          | "Bridesmaid"
-          | "Groomsman"
-          | "Flower girl"
-          | "Ring bearer"
-          | "Parent"
-          | "Family"
-          | "Other";
+        partyRole: WeddingPartyRoleType;
       };
     }) => {
       if (!wedding?._id) {
@@ -119,15 +109,15 @@ const WeddingGuests: React.FC = () => {
           lastName: data.updates.lastName?.trim() || "",
         },
         email: data.updates.email?.trim() || undefined,
-        guestDetails: [
-          {
-            relationship: data.updates.relationship,
-            rsvpStatus: data.updates.rsvpStatus,
-            dietaryPreferences:
-              data.updates.dietaryPreferences?.trim() || undefined,
-            weddingRole: data.updates.weddingRole,
+        guestDetails: {
+          connection: {
+            partnerIds: data.updates.connection.partnerIds,
           },
-        ],
+          rsvpStatus: data.updates.rsvpStatus,
+          dietaryPreferences:
+            data.updates.dietaryPreferences?.trim() || undefined,
+          partyRole: data.updates.partyRole,
+        },
       };
 
       const response = await axiosInstance.patch(
@@ -173,7 +163,7 @@ const WeddingGuests: React.FC = () => {
   const updateRSVPMutation = useMutation({
     mutationFn: async (data: {
       guestIds: string[];
-      rsvpStatus: "pending" | "confirmed" | "declined";
+      rsvpStatus: RSVPStatusType;
     }) => {
       if (!wedding?._id) {
         throw new Error("Wedding ID is required");
@@ -221,10 +211,7 @@ const WeddingGuests: React.FC = () => {
     }
   };
 
-  const handleUpdateRSVP = (
-    guestIds: string[],
-    rsvpStatus: "pending" | "confirmed" | "declined"
-  ) => {
+  const handleUpdateRSVP = (guestIds: string[], rsvpStatus: RSVPStatusType) => {
     updateRSVPMutation.mutate({ guestIds, rsvpStatus });
   };
 
@@ -271,6 +258,7 @@ const WeddingGuests: React.FC = () => {
             {wedding?.guests && wedding.guests.length > 0 ? (
               <GuestList
                 guests={wedding.guests}
+                wedding={wedding}
                 onDeleteGuests={handleDeleteGuests}
                 onUpdateRSVP={handleUpdateRSVP}
                 onEditGuest={handleEditGuest}
@@ -287,27 +275,31 @@ const WeddingGuests: React.FC = () => {
         </div>
       </main>
 
-      <SidePanel
-        isOpen={!!activePanels.addGuest}
-        onClose={handleClosePanel}
-        title="Add new guest"
-      >
-        <AddGuestForm
-          onSubmit={(data) => addGuestMutation.mutateAsync(data)}
-          onCancel={handleClosePanel}
-          isError={!!error}
-          error={error ? new Error(error) : null}
-        />
-      </SidePanel>
+      {activePanels.addGuest && wedding?.couple && (
+        <SidePanel
+          isOpen={!!activePanels.addGuest}
+          onClose={handleClosePanel}
+          title="Add guest"
+        >
+          <AddGuestForm
+            onSubmit={(data) => addGuestMutation.mutateAsync(data)}
+            onCancel={handleClosePanel}
+            couple={wedding.couple}
+            isError={!!error}
+            error={error ? new Error(error) : null}
+          />
+        </SidePanel>
+      )}
 
       <SidePanel
         isOpen={!!activePanels.editGuest}
         onClose={handleClosePanel}
         title="Edit guest"
       >
-        {editingGuest && (
+        {editingGuest && wedding?.couple && (
           <AddGuestForm
             guest={editingGuest}
+            couple={wedding.couple}
             onSubmit={(data) =>
               updateGuestMutation.mutateAsync({
                 guestId: editingGuest._id,

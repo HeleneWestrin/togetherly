@@ -4,21 +4,20 @@ import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
 import FormSelect from "../ui/FormSelect";
 import { GuestUser } from "../../types/wedding";
+import {
+  WeddingAccessLevel,
+  WeddingPartyRoles,
+  WeddingAccessLevelType,
+  WeddingPartyRoleType,
+} from "../../types/constants";
 
 interface InviteUserFormProps {
   onSubmit: (data: {
     email: string;
     firstName: string;
     lastName: string;
-    role: "weddingAdmin" | "couple" | "guest";
-    weddingRole:
-      | "Maid of Honor"
-      | "Best Man"
-      | "Bridesmaid"
-      | "Groomsman"
-      | "Parent"
-      | "Other"
-      | "Guest";
+    accessLevel: WeddingAccessLevelType;
+    partyRole: WeddingPartyRoleType;
   }) => Promise<void>;
   onCancel: () => void;
   isError?: boolean;
@@ -37,15 +36,8 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
     email: "",
     firstName: "",
     lastName: "",
-    role: "weddingAdmin" as "weddingAdmin" | "couple" | "guest",
-    weddingRole: "Guest" as
-      | "Maid of Honor"
-      | "Best Man"
-      | "Bridesmaid"
-      | "Groomsman"
-      | "Parent"
-      | "Other"
-      | "Guest",
+    accessLevel: "guest" as WeddingAccessLevelType,
+    partyRole: "Guest" as WeddingPartyRoleType,
     existingGuestId: "",
   });
 
@@ -58,14 +50,10 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
       email: existingGuest?.email || formData.email,
       firstName: existingGuest?.profile.firstName || formData.firstName,
       lastName: existingGuest?.profile.lastName || formData.lastName,
-      role: formData.role,
-      weddingRole: existingGuest
-        ? (existingGuest.guestDetails[0]?.weddingRole === "Flower girl" ||
-          existingGuest.guestDetails[0]?.weddingRole === "Ring bearer" ||
-          existingGuest.guestDetails[0]?.weddingRole === "Family"
-            ? "Other"
-            : existingGuest.guestDetails[0]?.weddingRole) || "Other"
-        : formData.weddingRole,
+      accessLevel: formData.accessLevel,
+      partyRole: existingGuest
+        ? existingGuest.weddings[0]?.guestDetails?.partyRole || "Guest"
+        : formData.partyRole,
     });
   };
 
@@ -85,6 +73,7 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
                 ...formData,
                 existingGuestId: e.target.value,
                 email: e.target.value ? "" : formData.email,
+                accessLevel: e.target.value ? "weddingAdmin" : "guest",
               })
             }
           >
@@ -135,22 +124,45 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
             />
 
             <FormSelect
-              id="weddingRole"
-              label="Role in wedding"
-              value={formData.weddingRole}
+              id="accessLevel"
+              label="Access Level"
+              value={formData.accessLevel}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  weddingRole: e.target.value as typeof formData.weddingRole,
+                  accessLevel: e.target.value as WeddingAccessLevelType,
                 })
               }
             >
-              <option value="Maid of Honor">Maid of Honor</option>
-              <option value="Best Man">Best Man</option>
-              <option value="Bridesmaid">Bridesmaid</option>
-              <option value="Groomsman">Groomsman</option>
-              <option value="Parent">Parent</option>
-              <option value="Other">Other</option>
+              {Object.values(WeddingAccessLevel).map((level) => (
+                <option
+                  key={level}
+                  value={level}
+                >
+                  {level}
+                </option>
+              ))}
+            </FormSelect>
+
+            <FormSelect
+              id="partyRole"
+              label="Role in wedding"
+              value={formData.partyRole}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  partyRole: e.target.value as WeddingPartyRoleType,
+                })
+              }
+            >
+              {Object.values(WeddingPartyRoles).map((role) => (
+                <option
+                  key={role}
+                  value={role}
+                >
+                  {role}
+                </option>
+              ))}
             </FormSelect>
           </>
         )}

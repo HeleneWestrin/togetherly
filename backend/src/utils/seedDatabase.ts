@@ -1,17 +1,14 @@
 import mongoose from "mongoose";
 import { User } from "../models/user.model";
-import {
-  Wedding,
-  BudgetItem,
-  DEFAULT_BUDGET_CATEGORIES,
-} from "../models/wedding.model";
+import { Wedding } from "../models/wedding.model";
+import { DEFAULT_BUDGET_CATEGORIES } from "../types/constants";
 import { Task } from "../models/task.model";
 import bcrypt from "bcryptjs";
 
 export const seedDatabase = async (): Promise<void> => {
   try {
-    // Drop the email index first
-    await User.collection.dropIndex("email_1");
+    // Drop all indexes first
+    await User.collection.dropIndexes();
 
     // Clear existing data
     await Promise.all([
@@ -20,12 +17,18 @@ export const seedDatabase = async (): Promise<void> => {
       Task.deleteMany({}),
     ]);
 
+    // Recreate only the necessary indexes
+    await User.collection.createIndex(
+      { email: 1 },
+      { sparse: true, unique: true }
+    );
+
     // Create admin user (super user)
     const adminHashedPassword = await bcrypt.hash("AdminPassword123", 10);
     const admin = await User.create({
       email: "helene.westrin@alphadev.se",
       password: adminHashedPassword,
-      role: "admin",
+      isAdmin: true,
       isRegistered: true,
       isActive: true,
       profile: {
@@ -33,6 +36,7 @@ export const seedDatabase = async (): Promise<void> => {
         lastName: "Westrin",
         phoneNumber: "123-456-7894",
       },
+      weddings: [],
     });
 
     // Create couple (2 users)
@@ -41,22 +45,24 @@ export const seedDatabase = async (): Promise<void> => {
       {
         email: "partner1@example.com",
         password: hashedPassword,
-        role: "couple",
+        isAdmin: false,
         profile: {
           firstName: "John",
           lastName: "Doe",
           phoneNumber: "123-456-7890",
         },
+        weddings: [],
       },
       {
         email: "partner2@example.com",
         password: hashedPassword,
-        role: "couple",
+        isAdmin: false,
         profile: {
           firstName: "Jane",
           lastName: "Smith",
           phoneNumber: "123-456-7891",
         },
+        weddings: [],
       },
     ]);
 
@@ -65,7 +71,7 @@ export const seedDatabase = async (): Promise<void> => {
       User.create({
         email: "guest1@example.com",
         password: hashedPassword,
-        role: "guest",
+        isAdmin: false,
         isRegistered: true,
         isActive: true,
         profile: {
@@ -73,12 +79,12 @@ export const seedDatabase = async (): Promise<void> => {
           lastName: "Wilson",
           phoneNumber: "123-456-7892",
         },
-        guestDetails: [],
+        weddings: [],
       }),
       User.create({
         email: "guest2@example.com",
         password: hashedPassword,
-        role: "weddingAdmin",
+        isAdmin: false,
         isRegistered: true,
         isActive: true,
         profile: {
@@ -86,7 +92,7 @@ export const seedDatabase = async (): Promise<void> => {
           lastName: "Johnson",
           phoneNumber: "123-456-7893",
         },
-        guestDetails: [],
+        weddings: [],
       }),
     ]);
 
@@ -104,7 +110,7 @@ export const seedDatabase = async (): Promise<void> => {
       budget: {
         total: 0,
         spent: 0,
-        allocated: DEFAULT_BUDGET_CATEGORIES.map((category) => ({
+        budgetCategories: DEFAULT_BUDGET_CATEGORIES.map((category) => ({
           category,
           spent: 0,
           tasks: [],
@@ -116,7 +122,7 @@ export const seedDatabase = async (): Promise<void> => {
 
     // Fetch the created wedding to get the proper budget item IDs
     const createdWedding = await Wedding.findById(wedding._id);
-    if (!createdWedding || !createdWedding.budget.allocated) {
+    if (!createdWedding || !createdWedding.budget.budgetCategories) {
       throw new Error("Failed to create wedding with budget items");
     }
 
@@ -180,11 +186,11 @@ export const seedDatabase = async (): Promise<void> => {
     };
 
     for (const category of DEFAULT_BUDGET_CATEGORIES) {
-      const budgetItem = createdWedding.budget.allocated.find(
+      const budgetCategory = createdWedding.budget.budgetCategories.find(
         (item) => item.category === category
       );
 
-      if (budgetItem) {
+      if (budgetCategory) {
         const categoryTasks =
           (
             taskTemplates as Record<
@@ -205,7 +211,7 @@ export const seedDatabase = async (): Promise<void> => {
             budget: taskTemplate.budget,
             actualCost: taskTemplate.spent,
             completed: taskTemplate.completed,
-            budgetItem: budgetItem._id,
+            budgetCategoryId: budgetCategory._id,
             dueDate: new Date("2025-06-17"),
           });
           tasks.push(task);
@@ -213,11 +219,11 @@ export const seedDatabase = async (): Promise<void> => {
           await Wedding.findOneAndUpdate(
             {
               _id: wedding._id,
-              "budget.allocated._id": budgetItem._id,
+              "budget.budgetCategories._id": budgetCategory._id,
             },
             {
               $push: {
-                "budget.allocated.$.tasks": task._id,
+                "budget.budgetCategories.$.tasks": task._id,
               },
             }
           );
@@ -237,38 +243,61 @@ export const seedDatabase = async (): Promise<void> => {
       },
     });
 
-    // Update guest details after wedding creation
+    // Update couple roles
     await User.updateMany(
-      { _id: { $in: [guest1._id, guest2._id] } },
+      { _id: { $in: [partner1._id, partner2._id] } },
       {
         $push: {
-          weddings: wedding._id,
-          guestDetails: {
+          weddings: {
             weddingId: wedding._id,
-            rsvpStatus: "pending",
-            relationship: "both",
-            weddingRole: "Guest",
-            dietaryPreferences: "No preferences",
-            trivia: "Loves dancing",
+            accessLevel: "couple",
           },
         },
       }
     );
 
-    // After creating the wedding, update both couple and guests' references
+    // Update guest roles
     await User.updateMany(
-      { _id: { $in: wedding.guests } },
+      { _id: guest1._id },
       {
         $push: {
-          weddings: wedding._id,
+          weddings: {
+            weddingId: wedding._id,
+            accessLevel: "guest",
+            guestDetails: {
+              rsvpStatus: "pending",
+              connection: {
+                partnerIds: [partner1._id, partner2._id],
+              },
+              partyRole: "Guest",
+              dietaryPreferences: "No preferences",
+              trivia: "Loves dancing",
+            },
+          },
         },
       }
     );
 
-    // Update couple's wedding references separately (they don't need guestDetails)
+    // Update wedding admin role
     await User.updateMany(
-      { _id: { $in: wedding.couple } },
-      { $push: { weddings: wedding._id } }
+      { _id: guest2._id },
+      {
+        $push: {
+          weddings: {
+            weddingId: wedding._id,
+            accessLevel: "weddingAdmin",
+            guestDetails: {
+              rsvpStatus: "pending",
+              connection: {
+                partnerIds: [partner1._id],
+              },
+              partyRole: "Guest",
+              dietaryPreferences: "No preferences",
+              trivia: "Helps with planning",
+            },
+          },
+        },
+      }
     );
 
     console.log("Database seeded successfully!");

@@ -5,7 +5,7 @@ interface CreateTaskData {
   budget: number;
   actualCost: number;
   dueDate?: string;
-  budgetItem: string; // ID of the budget category
+  budgetCategoryId: string;
   weddingId: string;
 }
 
@@ -16,7 +16,7 @@ interface TaskResponse {
   actualCost: number;
   dueDate?: string;
   completed: boolean;
-  budgetItem: string;
+  budgetCategoryId: string;
   weddingId: string;
   createdAt: string;
   updatedAt: string;
@@ -25,10 +25,11 @@ interface TaskResponse {
 export const createTask = async (
   data: CreateTaskData
 ): Promise<TaskResponse> => {
+  const { weddingId, ...createData } = data;
   const response = await axiosInstance.post<{
     status: string;
     data: TaskResponse;
-  }>(`/api/tasks/${data.weddingId}`, data);
+  }>(`/api/tasks/${weddingId}`, createData);
   return response.data.data;
 };
 
@@ -40,9 +41,10 @@ export const updateTaskDetails = async (
   taskId: string,
   data: Partial<CreateTaskData>
 ): Promise<TaskResponse> => {
+  const { weddingId, ...updateData } = data;
   const response = await axiosInstance.put<{
     status: string;
     data: TaskResponse;
-  }>(`/api/tasks/${taskId}`, data);
+  }>(`/api/tasks/${taskId}`, updateData);
   return response.data.data;
 };

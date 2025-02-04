@@ -2,6 +2,7 @@ import { User } from "../models/user.model";
 import { Types } from "mongoose";
 import { AuthService } from "./auth.service";
 import { ValidationError, NotFoundError } from "../utils/errors";
+import { WeddingAccessLevel } from "../types/constants";
 
 /**
  * Service class handling user-related business logic
@@ -26,9 +27,10 @@ export class UserService {
     const newUser = new User({
       email,
       password: hashedPassword,
-      role: "couple",
       isActive: true,
       isRegistered: true,
+      isAdmin: false,
+      weddings: [], // Initialize empty weddings array
     });
 
     // Save user to database and generate authentication token
@@ -42,7 +44,7 @@ export class UserService {
       user: {
         id: savedUser._id,
         email: savedUser.email,
-        role: savedUser.role,
+        isAdmin: savedUser.isAdmin,
       },
       isNewUser: true, // Always true for new user creation
     };
@@ -65,7 +67,7 @@ export class UserService {
 
     const isPasswordValid = await AuthService.comparePasswords(
       password,
-      user.password
+      user.password as string
     );
     if (!isPasswordValid) {
       throw new ValidationError("Incorrect email or password");
@@ -85,7 +87,9 @@ export class UserService {
       user: {
         id: user._id.toString(),
         email: user.email,
-        role: user.role,
+        isAdmin: user.isAdmin,
+        profile: user.profile,
+        weddings: user.weddings,
       },
     };
   }
@@ -101,11 +105,12 @@ export class UserService {
       {
         email: 1,
         profile: 1,
-        role: 1,
+        weddings: 1,
         isActive: 1,
+        isAdmin: 1,
       }
     ).populate({
-      path: "weddings",
+      path: "weddings.weddingId",
       select: "title date location couple",
     });
 
@@ -123,19 +128,24 @@ export class UserService {
     return {
       id: user._id,
       email: user.email,
-      firstName: user.profile?.firstName,
-      lastName: user.profile?.lastName,
-      role: user.role,
+      profile: user.profile,
       isActive: user.isActive,
       isRegistered: user.isRegistered,
+      isAdmin: user.isAdmin,
       weddings: user.weddings?.map((wedding: any) => ({
-        id: wedding._id,
-        title: wedding.title,
-        date: wedding.date,
-        location: wedding.location,
-        isCouple: wedding.couple.some(
-          (coupleId: any) => coupleId.toString() === user._id.toString()
-        ),
+        id: wedding.weddingId._id,
+        title: wedding.weddingId.title,
+        date: wedding.weddingId.date,
+        location: wedding.weddingId.location,
+        accessLevel: wedding.accessLevel,
+        coupleDetails:
+          wedding.accessLevel === WeddingAccessLevel.COUPLE
+            ? wedding.coupleDetails
+            : undefined,
+        guestDetails:
+          wedding.accessLevel !== WeddingAccessLevel.COUPLE
+            ? wedding.guestDetails
+            : undefined,
       })),
     };
   }
@@ -146,18 +156,25 @@ export class UserService {
    */
   static async completeOnboarding(
     userId: string,
-    profileData?: { firstName?: string; lastName?: string }
-  ) {
-    const updateData: any = { $set: { isNewUser: false } };
-
-    if (profileData) {
-      updateData.$set["profile.firstName"] = profileData.firstName;
-      updateData.$set["profile.lastName"] = profileData.lastName;
+    data: {
+      profile: {
+        firstName: string;
+        lastName: string;
+        phoneNumber?: string;
+        address?: string;
+      };
     }
-
-    const user = await User.findByIdAndUpdate(userId, updateData, {
-      new: true,
-    });
+  ) {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          profile: data.profile,
+          isNewUser: false,
+        },
+      },
+      { new: true }
+    );
 
     if (!user) {
       throw new NotFoundError("User not found");

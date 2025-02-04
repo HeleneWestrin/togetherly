@@ -37,10 +37,10 @@ const WeddingBudget: React.FC = () => {
   });
 
   useEffect(() => {
-    if (wedding?.budget?.total) {
+    if (wedding?.budget.total) {
       setNewBudget(wedding.budget.total);
     }
-  }, [wedding?.budget?.total]);
+  }, [wedding?.budget.total]);
 
   const useDebounce = (callback: Function, delay: number) => {
     const timeoutRef = useRef<NodeJS.Timeout>();
@@ -96,8 +96,8 @@ const WeddingBudget: React.FC = () => {
 
       queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
         const updatedWedding = { ...old };
-        if (updatedWedding.budget?.allocated) {
-          updatedWedding.budget.allocated = updatedWedding.budget.allocated.map(
+        if (updatedWedding.budgetCategories) {
+          updatedWedding.budgetCategories = updatedWedding.budgetCategories.map(
             (category: any) => ({
               ...category,
               tasks: category.tasks.map((task: any) =>
@@ -144,7 +144,7 @@ const WeddingBudget: React.FC = () => {
   });
 
   const handleEditTask = (taskId: string) => {
-    const task = wedding?.budget?.allocated
+    const task = wedding?.budget.budgetCategories
       .flatMap((cat) => cat.tasks)
       .find((t) => t._id === taskId);
 
@@ -153,8 +153,8 @@ const WeddingBudget: React.FC = () => {
 
       queryClient.setQueryData(["wedding", weddingSlug], (old: any) => {
         const updatedWedding = { ...old };
-        if (updatedWedding.budget?.allocated) {
-          updatedWedding.budget.allocated = updatedWedding.budget.allocated.map(
+        if (updatedWedding.budgetCategories) {
+          updatedWedding.budgetCategories = updatedWedding.budgetCategories.map(
             (category: any) => ({
               ...category,
               tasks: category.tasks.map((t: any) =>
@@ -249,31 +249,27 @@ const WeddingBudget: React.FC = () => {
                 <Typography element="p">No wedding data available.</Typography>
               </div>
             ) : (
-              wedding.budget && (
-                <div className="space-y-8">
-                  <BudgetOverview
-                    wedding={wedding}
-                    onUpdateBudget={updateBudgetMutation.mutate}
-                  />
-                  <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
-                    <Typography
-                      element="h2"
-                      className="lg:col-span-2"
-                    >
-                      Wedding checklist
-                    </Typography>
-                    {wedding.budget.allocated.map((category) => (
-                      <BudgetCategory
-                        key={category._id}
-                        category={category}
-                        onEditTask={handleEditTask}
-                        wedding={wedding}
-                        isLoading={isWeddingLoading}
-                      />
-                    ))}
-                  </div>
+              <div className="space-y-8">
+                <BudgetOverview budget={wedding.budget} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
+                  <Typography
+                    element="h2"
+                    className="lg:col-span-2"
+                  >
+                    Wedding checklist
+                  </Typography>
+                  {wedding.budget.budgetCategories.map((budgetCategory) => (
+                    <BudgetCategory
+                      key={budgetCategory._id}
+                      budgetCategory={budgetCategory}
+                      onEditTask={handleEditTask}
+                      budget={wedding.budget}
+                      isLoading={isWeddingLoading}
+                      wedding={wedding}
+                    />
+                  ))}
                 </div>
-              )
+              </div>
             )}
           </div>
         </div>
@@ -295,7 +291,7 @@ const WeddingBudget: React.FC = () => {
             inputMode="numeric"
             isCurrency={true}
             currencySuffix=" kr"
-            value={wedding?.budget?.total ?? 0}
+            value={newBudget}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewBudget(Number(e.target.value))
             }

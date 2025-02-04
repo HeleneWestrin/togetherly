@@ -1,5 +1,9 @@
 import mongoose, { Types } from "mongoose";
-import { DEFAULT_BUDGET_CATEGORIES, Wedding } from "../models/wedding.model";
+import {
+  Wedding,
+  PopulatedBudgetCategory,
+  BudgetCategory,
+} from "../models/wedding.model";
 import { User } from "../models/user.model";
 import { Task } from "../models/task.model";
 import {
@@ -9,6 +13,12 @@ import {
 } from "../utils/errors";
 import { weddingSchemas } from "../validators/schemas";
 import { z } from "zod";
+import {
+  RSVPStatusType,
+  DEFAULT_BUDGET_CATEGORIES,
+  WeddingAccessLevelType,
+  WeddingPartyRoleType,
+} from "../types/constants";
 
 export class WeddingService {
   static async getWeddingsForUser(userId: string) {
@@ -19,32 +29,19 @@ export class WeddingService {
     const populateOptions =
       "profile.firstName profile.lastName email isRegistered";
 
-    switch (user.role) {
-      case "admin":
-        // Admins can see all weddings
-        weddings = await Wedding.find()
-          .populate("couple", populateOptions)
-          .populate("guests", populateOptions)
-          .select("title slug date location couple"); // Add slug to selected fields
-        break;
-
-      case "couple":
-        // Couples can only see their weddings
-        weddings = await Wedding.find({ couple: userId })
-          .populate("couple", populateOptions)
-          .populate("guests", populateOptions)
-          .select("title slug date location couple"); // Add slug to selected fields
-        break;
-
-      case "guest":
-        // Guests can only see weddings they're invited to
-        weddings = await Wedding.find({ guests: userId })
-          .populate("couple", populateOptions)
-          .select("title slug date location couple guests"); // Only include necessary fields
-        break;
-
-      default:
-        throw new ForbiddenError("Invalid user role");
+    if (user.isAdmin) {
+      // Admins can see all weddings
+      weddings = await Wedding.find()
+        .populate("couple", populateOptions)
+        .populate("guests", populateOptions)
+        .select("title slug date location couple");
+    } else {
+      // Find all weddings where user has any role
+      const weddingIds = user.weddings.map((wr) => wr.weddingId);
+      weddings = await Wedding.find({ _id: { $in: weddingIds } })
+        .populate("couple", populateOptions)
+        .populate("guests", populateOptions)
+        .select("title slug date location couple guests");
     }
 
     return weddings;
@@ -66,8 +63,12 @@ export class WeddingService {
 
     if (!wedding) throw new NotFoundError("Wedding not found");
 
+    const userWeddingRole = user.weddings.find(
+      (wr) => wr.weddingId.toString() === weddingId
+    );
+
     // If user is a guest, remove sensitive information
-    if (user.role === "guest") {
+    if (userWeddingRole?.accessLevel === "guest") {
       return wedding.toObject({
         transform: (_, ret) => {
           delete ret.budget;
@@ -91,23 +92,24 @@ export class WeddingService {
     budget: {
       total: number;
     };
-    coupleIds: string[];
+    couple: string[];
   }) {
     const wedding = new Wedding({
       ...weddingData,
-      couple: weddingData.coupleIds,
+      couple: weddingData.couple as string[],
       guests: [],
       tasks: [],
+      budget: {
+        ...weddingData.budget,
+        spent: 0,
+        budgetCategories: DEFAULT_BUDGET_CATEGORIES.map((category) => ({
+          category,
+          tasks: [],
+        })),
+      },
     });
 
     const savedWedding = await wedding.save();
-
-    // Update the couples' wedding references
-    await User.updateMany(
-      { _id: { $in: weddingData.coupleIds } },
-      { $push: { weddings: savedWedding._id } }
-    );
-
     return savedWedding;
   }
 
@@ -117,114 +119,134 @@ export class WeddingService {
       firstName: string;
       lastName: string;
       email?: string;
-      relationship: "wife" | "husband" | "both";
-      weddingRole:
-        | "Guest"
-        | "Maid of Honor"
-        | "Best Man"
-        | "Bridesmaid"
-        | "Groomsman"
-        | "Flower girl"
-        | "Ring bearer"
-        | "Parent"
-        | "Family"
-        | "Other";
-      rsvpStatus: "pending" | "confirmed" | "declined";
+      connection: {
+        partnerIds: string[];
+      };
+      partyRole: WeddingPartyRoleType;
+      rsvpStatus: RSVPStatusType;
       dietaryPreferences?: string;
       trivia?: string;
     },
     userId: string
   ) {
-    try {
-      const wedding = await Wedding.findById(weddingId);
-      if (!wedding) throw new NotFoundError("Wedding not found");
+    const wedding = await Wedding.findById(weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
 
-      // Only couples of the wedding or admins can add guests
-      const isCouple = wedding.couple.some((id) => id.toString() === userId);
-      const user = await User.findById(userId);
-      if (!isCouple && user?.role !== "admin") {
-        throw new ForbiddenError("Only couples or admins can add guests");
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    const userWedding = user.weddings.find(
+      (w) => w.weddingId.toString() === weddingId
+    );
+
+    if (userWedding?.accessLevel !== "couple" && !user.isAdmin) {
+      throw new ForbiddenError("Only couples or admins can add guests");
+    }
+
+    // Ensure that wedding.couple exists and is valid.
+    if (!wedding.couple || wedding.couple.length === 0) {
+      throw new ValidationError("Wedding couple information is missing");
+    }
+
+    // Now validate that each partnerId in guestData exists in wedding.couple.
+    for (const partnerId of guestData.connection.partnerIds) {
+      if (!wedding.couple.some((id) => id.toString() === partnerId)) {
+        throw new ValidationError(`Invalid partner ID: ${partnerId}`);
       }
+    }
 
-      // Clean the email field - if it's empty or just whitespace, make it undefined
-      const cleanedEmail = guestData.email?.trim() || undefined;
+    // Clean the email field
+    const cleanedEmail = guestData.email?.trim() || undefined;
 
-      // If email is provided and not empty, check if user exists
-      let guest;
-      if (cleanedEmail) {
-        guest = await User.findOne({ email: cleanedEmail });
-      }
+    // Check for existing user
+    let guest;
+    if (cleanedEmail) {
+      guest = await User.findOne({ email: cleanedEmail });
+    }
 
-      // If no existing user found or no email provided, create a new one
-      if (!guest) {
-        // Create user data object without email field
-        const userData: any = {
-          role: "guest",
-          profile: {
-            firstName: guestData.firstName,
-            lastName: guestData.lastName,
-          },
-          guestDetails: [
-            {
-              weddingId: wedding._id as Types.ObjectId,
+    if (!guest) {
+      // Create new user
+      const userData = {
+        profile: {
+          firstName: guestData.firstName,
+          lastName: guestData.lastName,
+        },
+        email: cleanedEmail,
+        weddings: [
+          {
+            weddingId: new Types.ObjectId(weddingId),
+            accessLevel: "guest",
+            guestDetails: {
               rsvpStatus: guestData.rsvpStatus,
               dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
-              relationship: guestData.relationship,
-              weddingRole: guestData.weddingRole,
+              connection: {
+                partnerIds: guestData.connection.partnerIds.map(
+                  (id) => new Types.ObjectId(id)
+                ),
+              },
+              partyRole: guestData.partyRole,
               trivia: guestData.trivia?.trim() || "",
             },
-          ],
-        };
+          },
+        ],
+      };
 
-        // Only add email field if it exists and is not empty
-        if (cleanedEmail) {
-          userData.email = cleanedEmail;
-        }
+      guest = await User.create(userData);
+    } else {
+      // Update existing user's wedding role
+      const existingWeddingRole = guest.weddings?.find(
+        (wr) => wr.weddingId && wr.weddingId.toString() === weddingId
+      );
 
-        guest = await User.create(userData);
+      if (!existingWeddingRole) {
+        guest.weddings.push({
+          weddingId: new Types.ObjectId(weddingId),
+          accessLevel: "guest",
+          guestDetails: {
+            rsvpStatus: guestData.rsvpStatus,
+            dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
+            connection: {
+              partnerIds: guestData.connection.partnerIds.map(
+                (id) => new Types.ObjectId(id)
+              ),
+            },
+            partyRole: guestData.partyRole,
+            trivia: guestData.trivia?.trim() || "",
+          },
+        });
       } else {
-        // Update existing user's guest details
-        const existingGuestDetail = guest.guestDetails?.find(
-          (detail) =>
-            detail.weddingId.toString() ===
-            (wedding._id as Types.ObjectId).toString()
-        );
-
-        if (!existingGuestDetail) {
-          guest.guestDetails = guest.guestDetails || [];
-          guest.guestDetails.push({
-            weddingId: wedding._id as Types.ObjectId,
-            rsvpStatus: guestData.rsvpStatus,
-            dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
-            relationship: guestData.relationship,
-            weddingRole: guestData.weddingRole,
-            trivia: guestData.trivia?.trim() || "",
-          });
-        } else {
-          Object.assign(existingGuestDetail, {
-            rsvpStatus: guestData.rsvpStatus,
-            dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
-            relationship: guestData.relationship,
-            weddingRole: guestData.weddingRole,
-            trivia: guestData.trivia?.trim() || "",
-          });
-        }
-        await guest.save();
+        // Update existing guest details
+        existingWeddingRole.guestDetails = {
+          rsvpStatus: guestData.rsvpStatus,
+          dietaryPreferences: guestData.dietaryPreferences?.trim() || "",
+          connection: {
+            partnerIds: guestData.connection.partnerIds.map(
+              (id) => new Types.ObjectId(id)
+            ),
+          },
+          partyRole: guestData.partyRole,
+          trivia: guestData.trivia?.trim() || "",
+        };
       }
-
-      // Add guest to wedding if not already added
-      if (
-        !wedding.guests.some((id) => id.toString() === guest._id.toString())
-      ) {
-        wedding.guests.push(guest._id as Types.ObjectId);
-        await wedding.save();
-      }
-
-      return wedding;
-    } catch (error) {
-      console.error("Error in addGuest:", error);
-      throw error;
+      await guest.save();
     }
+
+    // Add guest to wedding if not already there
+    if (!wedding.guests.some((id) => id.toString() === guest._id.toString())) {
+      wedding.guests.push(guest._id as Types.ObjectId);
+      await wedding.save();
+    }
+
+    // Return populated wedding
+    return Wedding.findById(wedding._id)
+      .populate(
+        "couple",
+        "profile.firstName profile.lastName email isRegistered"
+      )
+      .populate(
+        "guests",
+        "profile.firstName profile.lastName email isRegistered guestDetails"
+      );
   }
 
   static async updateRSVP(
@@ -233,20 +255,24 @@ export class WeddingService {
     rsvpStatus: unknown
   ): Promise<User> {
     try {
-      const validatedStatus = weddingSchemas.rsvpStatus.parse(rsvpStatus);
+      const validatedStatus = weddingSchemas.rsvpStatus.parse(
+        rsvpStatus
+      ) as RSVPStatusType;
       const user = await User.findById(userId);
       if (!user) throw new NotFoundError("User not found");
 
-      const guestDetail = user.guestDetails.find(
-        (detail) => detail.weddingId.toString() === weddingId
+      const guestDetail = user.weddings.find(
+        (wr) => wr.weddingId.toString() === weddingId
       );
 
       if (!guestDetail) {
         throw new ForbiddenError("You are not invited to this wedding");
       }
 
-      guestDetail.rsvpStatus = validatedStatus;
-      await user.save();
+      if (guestDetail.guestDetails) {
+        guestDetail.guestDetails.rsvpStatus = validatedStatus;
+        await user.save();
+      }
 
       return user;
     } catch (error) {
@@ -261,18 +287,17 @@ export class WeddingService {
     const user = (await User.findById(userId)) as User | null;
     if (!user) throw new NotFoundError("User not found");
 
-    // Populate both couple/guest info AND tasks for budget calculations
     const wedding = await Wedding.findOne({ slug })
       .populate(
         "couple",
-        "profile.firstName profile.lastName email isRegistered"
+        "profile.firstName profile.lastName email isRegistered _id"
       )
       .populate(
         "guests",
-        "profile.firstName profile.lastName email isRegistered guestDetails"
+        "profile.firstName profile.lastName email isRegistered weddings"
       )
       .populate({
-        path: "budget.allocated",
+        path: "budget.budgetCategories",
         populate: {
           path: "tasks",
           model: "Task",
@@ -282,58 +307,35 @@ export class WeddingService {
 
     if (!wedding) throw new NotFoundError("Wedding not found");
 
-    // If user is a guest, remove sensitive information
-    if (user.role === "guest") {
-      return wedding.toObject({
-        transform: (_, ret) => {
-          delete ret.budget;
-          return ret;
-        },
-      });
-    }
-
     // Calculate budget totals and progress for each category
-    if (wedding.budget?.allocated) {
-      wedding.budget.allocated = wedding.budget.allocated.map((category) => {
-        // Type the populated tasks array properly
-        const tasks = (category.tasks || []) as unknown as Array<
-          Task & { _id: mongoose.Types.ObjectId }
-        >;
-
-        const totalTasks = tasks.length;
-        const completedTasks = tasks.filter((task) => task.completed).length;
-
-        // Create a properly typed category object
-        const transformedCategory = {
+    if (wedding.budget?.budgetCategories) {
+      const populatedBudgetCategories = wedding.budget.budgetCategories.map(
+        async (category) => ({
           _id: category._id,
-          category: category.category,
-          progress: totalTasks ? (completedTasks / totalTasks) * 100 : 0,
-          estimatedCost: tasks.reduce(
-            (sum, task) => sum + (task.budget || 0),
-            0
-          ),
-          spent: tasks.reduce((sum, task) => sum + (task.actualCost || 0), 0),
-          tasks: tasks.map((task) => ({
-            _id: task._id,
-            title: task.title,
-            budget: task.budget || 0,
-            actualCost: task.actualCost,
-            completed: task.completed,
-            dueDate: task.dueDate,
-          })),
-        };
+          ...(category as unknown as mongoose.Document).toObject(),
+          spent: await (category as any).calculatedSpent,
+        })
+      );
+      const budgetCategoriesWithSpent = await Promise.all(
+        populatedBudgetCategories
+      );
+      wedding.budget.budgetCategories = budgetCategoriesWithSpent;
 
-        return transformedCategory;
-      });
-
-      // Calculate overall budget totals with type safety
-      wedding.budget.spent = wedding.budget.allocated.reduce(
+      // Calculate overall budget totals
+      wedding.budget.spent = wedding.budget.budgetCategories.reduce(
         (sum, category) => sum + (category.spent || 0),
         0
       );
     }
 
-    return wedding;
+    return {
+      _id: wedding._id,
+      title: wedding.title,
+      slug: wedding.slug,
+      couple: wedding.couple,
+      guests: wedding.guests,
+      budget: wedding.budget,
+    };
   }
 
   static async updateTask(taskId: string, completed: boolean, userId: string) {
@@ -350,7 +352,7 @@ export class WeddingService {
 
     // Check if user has permission (is admin or part of couple)
     const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    if (!isCouple && user.role !== "admin") {
+    if (!isCouple && !user.isAdmin) {
       throw new ForbiddenError("Only couples or admins can update tasks");
     }
 
@@ -362,98 +364,149 @@ export class WeddingService {
   }
 
   static async createTask(
+    weddingId: string,
     taskData: {
       title: string;
-      budget: number;
-      actualCost: number;
-      dueDate: string;
-      budgetItem: string;
-      weddingId: string;
+      budget?: number;
+      actualCost?: number;
+      dueDate?: Date;
+      budgetCategoryId: string;
     },
     userId: string
   ) {
-    const wedding = await Wedding.findById(taskData.weddingId);
+    const wedding = await Wedding.findById(weddingId).populate({
+      path: "budget.budgetCategories.tasks",
+      select: "actualCost",
+    });
     if (!wedding) throw new NotFoundError("Wedding not found");
 
+    // Check permissions
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
     const user = await User.findById(userId);
     if (!user) throw new NotFoundError("User not found");
 
-    const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    if (!isCouple && user.role !== "admin") {
+    if (!isCouple && !user.isAdmin) {
       throw new ForbiddenError("Only couples or admins can create tasks");
     }
 
-    const task = await Task.create(taskData);
-
-    // Update the wedding's budget category with the new task
-    await Wedding.findOneAndUpdate(
-      {
-        _id: taskData.weddingId,
-        "budget.allocated._id": taskData.budgetItem,
-      },
-      {
-        $push: {
-          "budget.allocated.$.tasks": task._id,
-        },
-      }
+    // Find the budget category by ID instead of name
+    const budgetCategory = wedding.budget.budgetCategories.find(
+      (cat) => cat?._id?.toString() === taskData.budgetCategoryId
     );
+    if (!budgetCategory) {
+      throw new ValidationError("Invalid budget category");
+    }
 
-    return task;
+    // Create task
+    const task = await Task.create({
+      weddingId: wedding._id,
+      title: taskData.title,
+      budget: taskData.budget || 0,
+      actualCost: taskData.actualCost || 0,
+      dueDate: taskData.dueDate,
+      budgetCategoryId: budgetCategory._id,
+    });
+
+    // Add task to budget category
+    budgetCategory.tasks.push(task._id as Types.ObjectId);
+    await wedding.save();
+
+    // Return created task with wedding budget info
+    return {
+      ...task.toObject(),
+      wedding: {
+        budget: await this.getBudgetDetails(weddingId),
+      },
+    };
   }
 
   static async deleteTask(taskId: string, userId: string) {
     const task = await Task.findById(taskId);
     if (!task) throw new NotFoundError("Task not found");
 
-    const wedding = await Wedding.findById(task.weddingId);
+    const wedding = await Wedding.findById(task.weddingId).populate({
+      path: "budget.budgetCategories.tasks",
+      select: "actualCost",
+    });
     if (!wedding) throw new NotFoundError("Wedding not found");
 
+    // Check permissions
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
     const user = await User.findById(userId);
     if (!user) throw new NotFoundError("User not found");
 
-    const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    if (!isCouple && user.role !== "admin") {
+    if (!isCouple && !user.isAdmin) {
       throw new ForbiddenError("Only couples or admins can delete tasks");
     }
 
-    // Remove task reference from wedding
-    await Wedding.findOneAndUpdate(
-      { _id: task.weddingId },
-      { $pull: { "budget.allocated.$[].tasks": task._id } }
+    // Remove task from budget category
+    const budgetCategory = wedding.budget.budgetCategories.find(
+      (cat) => cat._id?.toString() === task.budgetCategoryId.toString()
     );
+    if (budgetCategory) {
+      budgetCategory.tasks = budgetCategory.tasks.filter(
+        (t) => t.toString() !== task._id?.toString()
+      );
+    }
 
-    // Delete the task
-    await Task.findByIdAndDelete(taskId);
+    // Delete task and save wedding
+    await Task.deleteOne({ _id: task._id });
+    await wedding.save();
 
-    return { message: "Task deleted successfully" };
+    // Return updated budget info
+    return this.getBudgetDetails(wedding._id as string);
   }
 
   static async updateTaskDetails(
     taskId: string,
-    taskData: Partial<Task>,
+    taskData: {
+      title?: string;
+      budget?: number;
+      actualCost?: number;
+      completed?: boolean;
+      dueDate?: Date;
+    },
     userId: string
   ) {
     const task = await Task.findById(taskId);
     if (!task) throw new NotFoundError("Task not found");
 
-    const wedding = await Wedding.findById(task.weddingId);
+    const wedding = await Wedding.findById(task.weddingId).populate({
+      path: "budget.budgetCategories.tasks",
+      select: "actualCost",
+    });
     if (!wedding) throw new NotFoundError("Wedding not found");
 
+    // Check permissions
+    const isCouple = wedding.couple.some((id) => id.toString() === userId);
     const user = await User.findById(userId);
     if (!user) throw new NotFoundError("User not found");
 
-    const isCouple = wedding.couple.some((id) => id.toString() === userId);
-    if (!isCouple && user.role !== "admin") {
+    if (!isCouple && !user.isAdmin) {
       throw new ForbiddenError("Only couples or admins can update tasks");
     }
 
+    // Update task
     Object.assign(task, taskData);
     await task.save();
-    return task;
+
+    // Let the virtual handle spent calculation
+    await wedding.save();
+
+    // Return updated task with wedding budget info
+    return {
+      ...task.toObject(),
+      wedding: {
+        budget: await this.getBudgetDetails(wedding._id as string),
+      },
+    };
   }
 
   static async updateBudget(weddingId: string, total: number, userId: string) {
-    const wedding = await Wedding.findById(weddingId);
+    const wedding = await Wedding.findById(weddingId).populate({
+      path: "budget.budgetCategories.tasks",
+      select: "actualCost",
+    });
     if (!wedding) throw new NotFoundError("Wedding not found");
 
     // Check if user has permission (is admin or part of couple)
@@ -461,7 +514,7 @@ export class WeddingService {
     const user = await User.findById(userId);
     if (!user) throw new NotFoundError("User not found");
 
-    if (!isCouple && user.role !== "admin") {
+    if (!isCouple && !user.isAdmin) {
       throw new ForbiddenError("Only couples or admins can update the budget");
     }
 
@@ -470,9 +523,32 @@ export class WeddingService {
     }
 
     wedding.budget.total = total;
+    // Let the virtual handle spent calculation
     await wedding.save();
 
     return wedding;
+  }
+
+  static async getBudgetDetails(weddingId: string) {
+    const wedding = await Wedding.findById(weddingId).populate({
+      path: "budget.budgetCategories.tasks",
+      select: "actualCost",
+    });
+
+    if (!wedding) throw new NotFoundError("Wedding not found");
+
+    // Force virtual field calculation
+    const populatedBudgetCategories = await Promise.all(
+      wedding.budget.budgetCategories.map(async (category) => ({
+        ...(category as unknown as mongoose.Document).toObject(),
+        spent: await (category as any).calculatedSpent,
+      }))
+    );
+
+    return {
+      ...(wedding.budget as unknown as mongoose.Document).toObject(),
+      budgetCategories: populatedBudgetCategories,
+    };
   }
 
   static async createWeddingFromOnboarding(
@@ -484,7 +560,8 @@ export class WeddingService {
         partnerFirstName: string;
         partnerLastName: string;
         partnerEmail: string;
-        role: string;
+        role: "Wife" | "Husband";
+        partnerRole: "Wife" | "Husband";
       };
       weddingInfo: {
         date: string;
@@ -495,47 +572,73 @@ export class WeddingService {
   ) {
     const { coupleInfo, weddingInfo } = data;
 
-    // Create partner user shell regardless of email
-    const partnerUser = await User.create({
-      email: coupleInfo.partnerEmail, // This might be undefined, which is fine
-      role: "couple",
-      profile: {
-        firstName: coupleInfo.partnerFirstName,
-        lastName: coupleInfo.partnerLastName,
-      },
-    });
+    // Validate roles
+    if (!coupleInfo.role || !coupleInfo.partnerRole) {
+      throw new ValidationError("Roles must be specified for both partners");
+    }
 
-    // Create the wedding with both users
-    const wedding = new Wedding({
-      title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s wedding`,
-      date: weddingInfo.date || null,
-      location: {
-        address: "",
-        coordinates: {
-          lat: 0,
-          lng: 0,
+    // Find or create the partner shell user
+    let partner;
+    if (coupleInfo.partnerEmail && coupleInfo.partnerEmail.trim() !== "") {
+      partner = await User.findOne({ email: coupleInfo.partnerEmail });
+    }
+
+    if (!partner) {
+      partner = await User.create({
+        email: coupleInfo.partnerEmail,
+        role: "couple",
+        isRegistered: false,
+        isActive: false,
+        profile: {
+          firstName: coupleInfo.partnerFirstName,
+          lastName: coupleInfo.partnerLastName,
         },
+        weddings: [],
+      });
+    }
+
+    // Prepare wedding data. Ensure that your wedding model uses 'coupleIds' (or 'couple') consistently.
+    const weddingData = {
+      title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s wedding`,
+      date: weddingInfo.date ? new Date(weddingInfo.date) : new Date(),
+      location: {
+        venue: "",
+        address: "",
+        city: "",
+        country: "",
       },
       budget: {
         total: weddingInfo.estimatedBudget || 0,
-        spent: 0,
-        allocated: DEFAULT_BUDGET_CATEGORIES.map((category: string) => ({
-          category,
-          spent: 0,
-          tasks: [],
-        })),
       },
-      couple: [userId, partnerUser._id], // Always include both users
-      guests: [],
-    });
+      couple: [userId, partner._id as string] as unknown as string[],
+    };
 
+    // Create and save the wedding.
+    // (Ensure that createWedding either saves internally or returns an unsaved document.)
+    const wedding = await WeddingService.createWedding(weddingData);
     const savedWedding = await wedding.save();
 
-    // Update both users' weddings arrays
-    await User.updateMany(
-      { _id: { $in: savedWedding.couple } },
-      { $push: { weddings: savedWedding._id } }
-    );
+    // Update both users' weddings arrays individually to set the correct wedding structure.
+    await Promise.all([
+      User.findByIdAndUpdate(userId, {
+        $push: {
+          weddings: {
+            weddingId: savedWedding._id,
+            accessLevel: "couple",
+            role: coupleInfo.role,
+          },
+        },
+      }),
+      User.findByIdAndUpdate(partner._id, {
+        $push: {
+          weddings: {
+            weddingId: savedWedding._id,
+            accessLevel: "couple",
+            role: coupleInfo.partnerRole,
+          },
+        },
+      }),
+    ]);
 
     return savedWedding;
   }
@@ -549,78 +652,87 @@ export class WeddingService {
         lastName: string;
       };
       email?: string;
-      guestDetails: Array<{
-        relationship: "wife" | "husband" | "both";
-        rsvpStatus: "pending" | "confirmed" | "declined";
+      guestDetails: {
+        connection: {
+          partnerIds: string[];
+        };
+        rsvpStatus: RSVPStatusType;
         dietaryPreferences?: string;
-        weddingRole:
-          | "Guest"
-          | "Maid of Honor"
-          | "Best Man"
-          | "Bridesmaid"
-          | "Groomsman"
-          | "Flower girl"
-          | "Ring bearer"
-          | "Parent"
-          | "Family"
-          | "Other";
-      }>;
+        trivia?: string;
+        partyRole: WeddingPartyRoleType;
+      };
     },
     userId: string
   ) {
-    try {
-      const wedding = await Wedding.findById(weddingId);
-      if (!wedding) throw new NotFoundError("Wedding not found");
+    const wedding = await Wedding.findById(weddingId);
+    if (!wedding) throw new NotFoundError("Wedding not found");
 
-      // Only couples of the wedding or admins can update guests
-      const isCouple = wedding.couple.some((id) => id.toString() === userId);
-      const user = await User.findById(userId);
-      if (!isCouple && user?.role !== "admin") {
-        throw new ForbiddenError("Only couples or admins can update guests");
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    const userWedding = user.weddings.find(
+      (w) => w.weddingId.toString() === weddingId
+    );
+
+    if (userWedding?.accessLevel !== "couple" && !user.isAdmin) {
+      throw new ForbiddenError("Only couples or admins can update guests");
+    }
+
+    // Validate that partnerIds exist in the wedding's couple array
+    if (guestData.guestDetails?.connection.partnerIds) {
+      for (const partnerId of guestData.guestDetails.connection.partnerIds) {
+        if (!wedding.couple.some((id) => id.toString() === partnerId)) {
+          throw new ValidationError(`Invalid partner ID: ${partnerId}`);
+        }
       }
+    }
 
-      const guest = await User.findById(guestId);
-      if (!guest) throw new NotFoundError("Guest not found");
+    const guest = await User.findById(guestId);
+    if (!guest) throw new NotFoundError("Guest not found");
 
-      // Update the guest's profile and email
+    // Update profile and email
+    if (guestData.profile) {
       guest.profile = {
         ...guest.profile,
         ...guestData.profile,
       };
-      if (guestData.email) guest.email = guestData.email;
-
-      // Update or add guest details for this wedding
-      const guestDetailIndex = guest.guestDetails.findIndex(
-        (detail) => detail.weddingId.toString() === weddingId
-      );
-
-      if (guestDetailIndex >= 0) {
-        // Update existing guest details
-        guest.guestDetails[guestDetailIndex] = {
-          ...guest.guestDetails[guestDetailIndex],
-          ...guestData.guestDetails[0],
-          weddingId: wedding._id as Types.ObjectId,
-          dietaryPreferences:
-            guestData.guestDetails[0].dietaryPreferences || "",
-          trivia: "", // Add default trivia field
-        };
-      } else {
-        // Add new guest details
-        guest.guestDetails.push({
-          ...guestData.guestDetails[0],
-          weddingId: wedding._id as Types.ObjectId,
-          dietaryPreferences:
-            guestData.guestDetails[0].dietaryPreferences || "",
-          trivia: "", // Add default trivia field
-        });
-      }
-
-      await guest.save();
-      return wedding;
-    } catch (error) {
-      console.error("Error in updateGuest:", error);
-      throw error;
     }
+    if (guestData.email) guest.email = guestData.email;
+
+    // Update wedding-specific details
+    const weddingIndex = guest.weddings.findIndex(
+      (w) => w.weddingId.toString() === weddingId
+    );
+
+    if (weddingIndex === -1) {
+      // If guest doesn't have this wedding yet, add it
+      guest.weddings.push({
+        weddingId: new Types.ObjectId(weddingId),
+        accessLevel: "guest",
+        guestDetails: {
+          ...guestData.guestDetails,
+          connection: {
+            partnerIds: guestData.guestDetails.connection.partnerIds.map(
+              (id) => new Types.ObjectId(id)
+            ),
+          },
+        },
+      });
+    } else if (guestData.guestDetails) {
+      // Update existing wedding details
+      guest.weddings[weddingIndex].guestDetails = {
+        ...guest.weddings[weddingIndex].guestDetails,
+        ...guestData.guestDetails,
+        connection: {
+          partnerIds: guestData.guestDetails.connection.partnerIds.map(
+            (id) => new Types.ObjectId(id)
+          ),
+        },
+      };
+    }
+
+    await guest.save();
+    return guest;
   }
 
   static async deleteGuests(
@@ -635,7 +747,7 @@ export class WeddingService {
       // Only couples of the wedding or admins can delete guests
       const isCouple = wedding.couple.some((id) => id.toString() === userId);
       const user = await User.findById(userId);
-      if (!isCouple && user?.role !== "admin") {
+      if (!isCouple && !user?.isAdmin) {
         throw new ForbiddenError("Only couples or admins can delete guests");
       }
 
@@ -664,8 +776,8 @@ export class WeddingService {
       email: string;
       firstName: string;
       lastName: string;
-      role: "weddingAdmin" | "couple" | "guest";
-      weddingRole: string;
+      accessLevel: WeddingAccessLevelType;
+      partyRole?: WeddingPartyRoleType;
     },
     userId: string
   ) {
@@ -678,77 +790,92 @@ export class WeddingService {
     const isCouple = wedding.couple.some(
       (partner) => partner._id.toString() === userId
     );
-    if (!isCouple) {
-      throw new ForbiddenError("Only couples can invite users");
+
+    // Only allow couples to assign weddingAdmin role
+    if (inviteData.accessLevel === "weddingAdmin" && !isCouple) {
+      throw new ForbiddenError("Only couples can assign wedding admin roles");
     }
 
     // Check if email already exists
-    const existingUser = await User.findOne({ email: inviteData.email });
+    const existingUser = (await User.findOne({
+      email: inviteData.email,
+    })) as User;
 
     if (existingUser) {
-      // Update role only if it's being set to weddingAdmin
-      if (inviteData.role === "weddingAdmin" && existingUser.role !== "admin") {
-        existingUser.role = "weddingAdmin";
-      }
-
-      // Find and update existing guest details or create new ones
-      const existingGuestDetails = existingUser.guestDetails?.find(
-        (d) => d.weddingId.toString() === weddingId
+      const existingRole = existingUser.weddings.find(
+        (wr) => wr.weddingId.toString() === weddingId
       );
 
-      if (existingGuestDetails) {
-        // Update existing guest details
-        existingGuestDetails.weddingRole = inviteData.weddingRole as
-          | "Maid of Honor"
-          | "Best Man"
-          | "Bridesmaid"
-          | "Groomsman"
-          | "Parent"
-          | "Other";
-        // Remove old role field if it exists
-        if ("role" in existingGuestDetails) {
-          delete (existingGuestDetails as any).role;
+      if (existingRole) {
+        // If already has a role in this wedding
+        if (existingRole.accessLevel === "couple") {
+          throw new ValidationError(
+            "User is already a couple member in this wedding"
+          );
+        }
+        // Allow upgrading from guest to weddingAdmin while preserving guest details
+        if (
+          inviteData.accessLevel === "weddingAdmin" &&
+          existingRole.accessLevel === "guest"
+        ) {
+          existingRole.accessLevel = "weddingAdmin";
+          // Keep existing guestDetails intact
         }
       } else {
-        // Add new guest details
-        existingUser.guestDetails = existingUser.guestDetails || [];
-        existingUser.guestDetails.push({
-          weddingId: wedding._id as Types.ObjectId,
-          weddingRole: inviteData.weddingRole as
-            | "Maid of Honor"
-            | "Best Man"
-            | "Bridesmaid"
-            | "Groomsman"
-            | "Parent"
-            | "Other",
-          rsvpStatus: "pending",
-          relationship: "both",
-          dietaryPreferences: "",
-          trivia: "",
+        // Add new role for this wedding while preserving other wedding roles
+        existingUser.weddings.push({
+          weddingId: new Types.ObjectId(weddingId),
+          accessLevel: inviteData.accessLevel,
+          guestDetails: {
+            rsvpStatus: "pending",
+            dietaryPreferences: "",
+            connection: {
+              partnerIds: [], // Empty array until connections are set
+            },
+            partyRole: inviteData.partyRole || "Guest",
+            trivia: "",
+          },
         });
+      }
+
+      // Add user to wedding's guests array if not already there
+      if (
+        !wedding.guests.some(
+          (id: Types.ObjectId) =>
+            id.toString() === (existingUser._id as Types.ObjectId).toString()
+        )
+      ) {
+        wedding.guests.push(existingUser._id as Types.ObjectId);
+        await wedding.save();
       }
 
       await existingUser.save();
     } else {
       // Create new user
-      await User.create({
+      const newUser = await User.create({
         email: inviteData.email,
-        role: inviteData.role,
         profile: {
           firstName: inviteData.firstName,
           lastName: inviteData.lastName,
         },
+        isRegistered: false,
+        isActive: false,
         guestDetails: [
           {
-            weddingId: wedding._id,
-            weddingRole: inviteData.weddingRole,
+            weddingId: new Types.ObjectId(weddingId),
+            accessLevel: inviteData.accessLevel,
+            partyRole: inviteData.partyRole,
             rsvpStatus: "pending",
-            relationship: "both",
-            dietaryPreferences: "",
-            trivia: "",
+            connection: {
+              partnerIds: [], // Empty array until connections are set
+            },
           },
         ],
       });
+
+      // Add new user to wedding's guests array
+      wedding.guests.push(newUser._id as Types.ObjectId);
+      await wedding.save();
     }
 
     return wedding;
@@ -757,7 +884,7 @@ export class WeddingService {
   static async updateGuestsRSVP(
     weddingId: string,
     guestIds: string[],
-    rsvpStatus: "pending" | "confirmed" | "declined",
+    rsvpStatus: RSVPStatusType,
     userId: string
   ) {
     const wedding = await Wedding.findById(weddingId);
@@ -768,7 +895,15 @@ export class WeddingService {
     const user = await User.findById(userId);
     if (!user) throw new NotFoundError("User not found");
 
-    if (!isCouple && user.role !== "admin") {
+    const userWeddingRole = user.weddings.find(
+      (wr) => wr.weddingId.toString() === weddingId
+    );
+
+    if (
+      !isCouple &&
+      userWeddingRole?.accessLevel !== "weddingAdmin" &&
+      !user.isAdmin
+    ) {
       throw new ForbiddenError(
         "Only couples or admins can update guest RSVP status"
       );
@@ -778,11 +913,11 @@ export class WeddingService {
     await User.updateMany(
       {
         _id: { $in: guestIds },
-        "guestDetails.weddingId": wedding._id,
+        "weddings.weddingId": wedding._id,
       },
       {
         $set: {
-          "guestDetails.$.rsvpStatus": rsvpStatus,
+          "weddings.$.guestDetails.rsvpStatus": rsvpStatus,
         },
       }
     );
@@ -795,7 +930,7 @@ export class WeddingService {
       )
       .populate(
         "guests",
-        "profile.firstName profile.lastName email isRegistered guestDetails"
+        "profile.firstName profile.lastName email isRegistered weddings"
       );
   }
 
@@ -806,17 +941,8 @@ export class WeddingService {
       firstName?: string;
       lastName?: string;
       email?: string;
-      weddingRole?:
-        | "Guest"
-        | "Maid of Honor"
-        | "Best Man"
-        | "Bridesmaid"
-        | "Groomsman"
-        | "Flower girl"
-        | "Ring bearer"
-        | "Parent"
-        | "Family"
-        | "Other";
+      accessLevel?: WeddingAccessLevelType;
+      partyRole?: WeddingPartyRoleType;
     },
     requestingUserId: string
   ) {
@@ -845,12 +971,12 @@ export class WeddingService {
     if (userData.email) user.email = userData.email;
 
     // Update role if user is a guest
-    if (userData.weddingRole && user.guestDetails?.length > 0) {
-      const guestDetail = user.guestDetails.find(
-        (detail) => detail.weddingId.toString() === weddingId
+    if (userData.accessLevel && user.weddings?.length > 0) {
+      const guestDetail = user.weddings.find(
+        (wr) => wr.weddingId.toString() === weddingId
       );
-      if (guestDetail) {
-        guestDetail.weddingRole = userData.weddingRole;
+      if (guestDetail?.guestDetails) {
+        guestDetail.guestDetails.partyRole = userData.partyRole || "Guest";
       }
     }
 
@@ -874,9 +1000,9 @@ export class WeddingService {
     }
 
     // If user is a guest, remove their guest details for this wedding
-    if (user.guestDetails?.length > 0) {
-      user.guestDetails = user.guestDetails.filter(
-        (detail) => detail.weddingId.toString() !== weddingId
+    if (user.weddings?.length > 0) {
+      user.weddings = user.weddings.filter(
+        (wr) => wr.weddingId.toString() !== weddingId
       );
       await user.save();
     }
@@ -888,5 +1014,52 @@ export class WeddingService {
     }
 
     return { message: "User removed from wedding successfully" };
+  }
+
+  static async getUserWeddingAccess(userId: string, weddingId: string) {
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    if (user.isAdmin) return "admin";
+
+    const weddingAccess = user.weddings.find(
+      (wr) => wr.weddingId.toString() === weddingId
+    );
+
+    return weddingAccess?.accessLevel || null;
+  }
+
+  static async addUserToWedding(
+    userId: string,
+    weddingId: string,
+    accessLevel: WeddingAccessLevelType,
+    partyRole?: WeddingPartyRoleType // e.g., "Maid of Honor", "Best Man", etc.
+  ) {
+    const user = await User.findById(userId);
+    if (!user) throw new NotFoundError("User not found");
+
+    // Remove any existing role for this wedding
+    user.weddings = user.weddings.filter(
+      (wr) => wr.weddingId.toString() !== weddingId
+    );
+
+    // Add new role
+    user.weddings.push({
+      weddingId: new mongoose.Types.ObjectId(weddingId),
+      accessLevel,
+      guestDetails:
+        accessLevel === "guest"
+          ? {
+              rsvpStatus: "pending",
+              dietaryPreferences: "",
+              connection: {
+                partnerIds: [], // Empty array until connections are set
+              },
+              partyRole: partyRole || "Guest",
+            }
+          : undefined,
+    });
+
+    await user.save();
   }
 }

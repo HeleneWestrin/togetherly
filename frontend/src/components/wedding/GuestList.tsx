@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { GuestUser } from "../../types/wedding";
+import { GuestUser, UserWedding, Wedding } from "../../types/wedding";
 import { Typography } from "../ui/Typography";
 import { Button } from "../ui/Button";
 import { Edit2, Trash2, ChevronUp, ChevronDown } from "lucide-react";
@@ -9,6 +9,7 @@ import { BadgeProps } from "../ui/Badge";
 
 interface GuestListProps {
   guests: GuestUser[];
+  wedding: Wedding;
   onDeleteGuests: (guestIds: string[]) => void;
   onUpdateRSVP: (
     guestIds: string[],
@@ -22,6 +23,7 @@ type SortDirection = "asc" | "desc";
 
 const GuestList: React.FC<GuestListProps> = ({
   guests,
+  wedding,
   onDeleteGuests,
   onUpdateRSVP,
   onEditGuest,
@@ -42,6 +44,7 @@ const GuestList: React.FC<GuestListProps> = ({
       setSortDirection("asc");
     }
   };
+  console.log("Guests 1:", guests);
 
   // Memoized sorted guest list to prevent unnecessary re-renders
   const sortedGuests = useMemo(() => {
@@ -60,16 +63,16 @@ const GuestList: React.FC<GuestListProps> = ({
           }`.trim();
           break;
         case "role":
-          aValue = a.guestDetails?.[0]?.weddingRole || "";
-          bValue = b.guestDetails?.[0]?.weddingRole || "";
+          aValue = a.weddings[0]?.guestDetails?.partyRole || "";
+          bValue = b.weddings[0]?.guestDetails?.partyRole || "";
           break;
         case "rsvpStatus":
-          aValue = a.guestDetails?.[0]?.rsvpStatus || "";
-          bValue = b.guestDetails?.[0]?.rsvpStatus || "";
+          aValue = a.weddings[0]?.guestDetails?.rsvpStatus || "";
+          bValue = b.weddings[0]?.guestDetails?.rsvpStatus || "";
           break;
         case "dietaryPreferences":
-          aValue = a.guestDetails?.[0]?.dietaryPreferences || "";
-          bValue = b.guestDetails?.[0]?.dietaryPreferences || "";
+          aValue = a.weddings[0]?.guestDetails?.dietaryPreferences || "";
+          bValue = b.weddings[0]?.guestDetails?.dietaryPreferences || "";
           break;
       }
 
@@ -195,7 +198,10 @@ const GuestList: React.FC<GuestListProps> = ({
           </thead>
           <tbody className="text-sm lg:text-base text-dark-600">
             {sortedGuests.map((guest) => {
-              const guestDetails = guest.guestDetails?.[0] || {};
+              console.log(wedding);
+              const guestDetails =
+                guest.weddings?.find((w) => w.weddingId === wedding._id)
+                  ?.guestDetails || ({} as UserWedding["guestDetails"]);
 
               return (
                 <tr
@@ -225,17 +231,24 @@ const GuestList: React.FC<GuestListProps> = ({
                   </td>
                   <td className="px-3 py-4 whitespace-nowrap">
                     <p className="text-dark-800 font-medium">
-                      {guestDetails.weddingRole || "Guest"}
+                      {guestDetails.partyRole || "Guest"}
                     </p>
-                    {guestDetails.relationship && (
+                    {guestDetails.connection && (
                       <p className="text-sm text-dark-600">
-                        {guestDetails.relationship === "both"
-                          ? "Mutual friends"
-                          : guestDetails.relationship === "wife"
-                          ? "Bride's side"
-                          : guestDetails.relationship === "husband"
-                          ? "Groom's side"
-                          : guestDetails.relationship}
+                        {guestDetails.connection.partnerIds.length > 1
+                          ? "Mutual guest"
+                          : guestDetails.connection.partnerIds.length === 1
+                          ? (() => {
+                              const partner = wedding.couple.find(
+                                (partner) =>
+                                  partner._id ===
+                                  guestDetails.connection.partnerIds[0]
+                              );
+                              return partner
+                                ? `${partner.profile.firstName}'s side`
+                                : "Unknown side";
+                            })()
+                          : ""}
                       </p>
                     )}
                   </td>

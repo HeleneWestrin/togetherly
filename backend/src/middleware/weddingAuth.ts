@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user.model";
+import { ForbiddenError, NotFoundError } from "../utils/errors";
 import { Wedding } from "../models/wedding.model";
-import { ForbiddenError } from "../utils/errors";
 import { Task } from "../models/task.model";
 
 export const requireWeddingAccess = async (
@@ -11,56 +11,68 @@ export const requireWeddingAccess = async (
 ): Promise<void> => {
   try {
     const userId = (req as any).userId;
-    const weddingId = req.params.weddingId;
-    const slug = req.params.slug;
-    const taskId = req.params.taskId;
-
     const user = await User.findById(userId);
-    if (!user) throw new ForbiddenError("User not found");
 
-    // Admins have access to all operations
-    if (user.role === "admin") return next();
+    if (!user) {
+      throw new NotFoundError("User not found");
+    }
+
+    // Check for admin first
+    if (user.isAdmin) {
+      (req as any).userWeddingAccess = "admin";
+      return next();
+    }
 
     let wedding;
-
-    // For task creation, use weddingId directly
-    if (req.method === "POST" && weddingId) {
-      wedding = await Wedding.findById(weddingId);
-      if (!wedding) throw new ForbiddenError("Wedding not found");
-
-      const isCouple = wedding.couple.some((id) => id.toString() === userId);
-      if (!isCouple) {
-        throw new ForbiddenError("Only couples or admins can create tasks");
+    // Handle routes with slug
+    if (req.params.slug) {
+      wedding = await Wedding.findOne({ slug: req.params.slug });
+    }
+    // Handle routes with taskId
+    else if (req.params.taskId) {
+      const task = await Task.findById(req.params.taskId);
+      if (!task) {
+        throw new NotFoundError("Task not found");
       }
-    } else if (taskId) {
-      const task = await Task.findById(taskId);
-      if (!task) throw new ForbiddenError("Task not found");
       wedding = await Wedding.findById(task.weddingId);
+    }
+    // Handle routes with weddingId
+    else if (req.params.weddingId) {
+      wedding = await Wedding.findById(req.params.weddingId);
+    }
 
-      // For task operations, only allow couples
-      const isCouple = wedding?.couple.some((id) => id.toString() === userId);
-      if (!isCouple) {
-        throw new ForbiddenError("Only couples can perform task operations");
-      }
-    } else {
-      // Find wedding by ID or slug
-      wedding = slug
-        ? await Wedding.findOne({ slug })
-        : await Wedding.findById(weddingId);
+    if (!wedding) {
+      throw new NotFoundError("Wedding not found");
+    }
 
-      if (!wedding) throw new ForbiddenError("Wedding not found");
+    const targetWeddingId = (wedding._id as string).toString();
 
-      // For non-task operations, check if user is part of the couple or a guest
-      const isCouple = wedding.couple.some((id) => id.toString() === userId);
-      const isGuest = wedding.guests.some((id) => id.toString() === userId);
+    if (wedding.couple.some((coupleId) => coupleId.toString() === userId)) {
+      (req as any).userWeddingAccess = "couple";
+      return next();
+    }
 
-      if (!isCouple && !isGuest) {
-        throw new ForbiddenError("You don't have access to this wedding");
+    const userWeddingRole = user.weddings?.find((wr) => {
+      return wr.weddingId?.toString() === targetWeddingId;
+    });
+
+    if (!userWeddingRole) {
+      throw new ForbiddenError("No access to this wedding");
+    }
+
+    // Store the user's access level for use in the route handlers
+    (req as any).userWeddingAccess = userWeddingRole.accessLevel;
+
+    // For certain operations, we might want to restrict access
+    if (req.method === "POST" || req.method === "DELETE") {
+      if (userWeddingRole.accessLevel === "guest") {
+        throw new ForbiddenError("Insufficient permissions for this operation");
       }
     }
 
     next();
   } catch (error) {
+    console.error("Auth Error:", error);
     next(error);
   }
 };
