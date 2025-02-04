@@ -25,8 +25,22 @@ function isGuestUser(user: CoupleUser | GuestUser): user is GuestUser {
   );
 }
 
+const getCoupleRole = (user: CoupleUser | GuestUser): string => {
+  // Ensure the weddings array exists and is non-empty.
+  if (user.weddings && user.weddings.length > 0) {
+    const coupleRole = user.weddings[0].coupleDetails?.role;
+    if (coupleRole) {
+      // Capitalize the first letter and append the rest.
+      return coupleRole.charAt(0).toUpperCase() + coupleRole.slice(1);
+    }
+  }
+  // Fallback if no role exists
+  return "Couple";
+};
+
 const UserList: React.FC<UserListProps> = ({
   users,
+  type,
   onEditUser,
   onDeleteUser,
 }) => {
@@ -52,9 +66,14 @@ const UserList: React.FC<UserListProps> = ({
         <tbody className="text-sm lg:text-base text-dark-600">
           {users.map((user) => {
             const isGuest = isGuestUser(user);
-            const role = isGuest
-              ? user.weddings[0].guestDetails?.partyRole
-              : "Guest";
+            const role =
+              type === "couple"
+                ? getCoupleRole(user)
+                : isGuest
+                ? user.weddings && user.weddings.length > 0
+                  ? user.weddings[0].guestDetails?.partyRole ?? "Guest"
+                  : "Guest"
+                : "Guest";
             const status = determineUserStatus(user);
 
             return (

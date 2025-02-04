@@ -44,7 +44,6 @@ const GuestList: React.FC<GuestListProps> = ({
       setSortDirection("asc");
     }
   };
-  console.log("Guests 1:", guests);
 
   // Memoized sorted guest list to prevent unnecessary re-renders
   const sortedGuests = useMemo(() => {
@@ -198,7 +197,6 @@ const GuestList: React.FC<GuestListProps> = ({
           </thead>
           <tbody className="text-sm lg:text-base text-dark-600">
             {sortedGuests.map((guest) => {
-              console.log(wedding);
               const guestDetails =
                 guest.weddings?.find((w) => w.weddingId === wedding._id)
                   ?.guestDetails || ({} as UserWedding["guestDetails"]);

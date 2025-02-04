@@ -159,6 +159,15 @@ const WeddingUsers: React.FC = () => {
   if (!wedding) return <div className="p-5">No wedding data available.</div>;
 
   // Filter guests with weddingAdmin access for the current wedding
+  const weddingCouple =
+    wedding.couple?.filter((couple) =>
+      couple.weddings?.some(
+        (w) =>
+          w.weddingId.toString() === wedding._id.toString() &&
+          w.accessLevel === WeddingAccessLevel.COUPLE
+      )
+    ) || [];
+
   const weddingAdmins =
     wedding.guests?.filter((guest) =>
       guest.weddings?.some(
@@ -190,7 +199,7 @@ const WeddingUsers: React.FC = () => {
                 The couple
               </Typography>
               <UserList
-                users={wedding.couple}
+                users={weddingCouple}
                 type="couple"
                 onEditUser={handleEditUser}
                 onDeleteUser={handleDeleteUser}

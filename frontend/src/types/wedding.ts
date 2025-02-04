@@ -46,14 +46,6 @@ export interface CoupleProfile {
   lastName: string;
 }
 
-export interface CoupleUser {
-  _id: string;
-  email?: string;
-  profile: CoupleProfile;
-  accessLevel: WeddingAccessLevelType;
-  isRegistered?: boolean;
-}
-
 export interface GuestProfile {
   firstName: string;
   lastName: string;
@@ -77,6 +69,14 @@ export interface UserWedding {
     trivia?: string;
     dietaryPreferences?: string;
   };
+}
+export interface CoupleUser {
+  _id: string;
+  email?: string;
+  profile: CoupleProfile;
+  accessLevel: WeddingAccessLevelType;
+  weddings: UserWedding[];
+  isRegistered?: boolean;
 }
 
 export interface GuestUser {

@@ -124,7 +124,21 @@ const userSchema: Schema<User> = new mongoose.Schema(
               ref: "User",
               validate: {
                 validator: function (partnerIds: mongoose.Types.ObjectId[]) {
-                  return partnerIds.length >= 1 && partnerIds.length <= 2;
+                  const parent = this.$parent() as unknown as
+                    | { accessLevel: string }
+                    | undefined;
+                  if (
+                    parent &&
+                    parent.accessLevel !== "guest" &&
+                    parent.accessLevel !== "weddingAdmin"
+                  ) {
+                    return true;
+                  }
+                  return (
+                    Array.isArray(partnerIds) &&
+                    partnerIds.length >= 1 &&
+                    partnerIds.length <= 2
+                  );
                 },
                 message:
                   "Must be connected to at least one partner and no more than two",

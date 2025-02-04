@@ -18,6 +18,8 @@ import {
   DEFAULT_BUDGET_CATEGORIES,
   WeddingAccessLevelType,
   WeddingPartyRoleType,
+  RSVPStatus,
+  WeddingPartyRoles,
 } from "../types/constants";
 
 export class WeddingService {
@@ -54,11 +56,11 @@ export class WeddingService {
     const wedding = await Wedding.findById(weddingId)
       .populate(
         "couple",
-        "profile.firstName profile.lastName email isRegistered"
+        "profile.firstName profile.lastName email isRegistered weddings"
       )
       .populate(
         "guests",
-        "profile.firstName profile.lastName email isRegistered"
+        "profile.firstName profile.lastName email isRegistered weddings"
       );
 
     if (!wedding) throw new NotFoundError("Wedding not found");
@@ -241,11 +243,11 @@ export class WeddingService {
     return Wedding.findById(wedding._id)
       .populate(
         "couple",
-        "profile.firstName profile.lastName email isRegistered"
+        "profile.firstName profile.lastName email isRegistered weddings"
       )
       .populate(
         "guests",
-        "profile.firstName profile.lastName email isRegistered guestDetails"
+        "profile.firstName profile.lastName email isRegistered weddings"
       );
   }
 
@@ -290,7 +292,7 @@ export class WeddingService {
     const wedding = await Wedding.findOne({ slug })
       .populate(
         "couple",
-        "profile.firstName profile.lastName email isRegistered _id"
+        "_id profile.firstName profile.lastName email isRegistered weddings"
       )
       .populate(
         "guests",
@@ -586,7 +588,6 @@ export class WeddingService {
     if (!partner) {
       partner = await User.create({
         email: coupleInfo.partnerEmail,
-        role: "couple",
         isRegistered: false,
         isActive: false,
         profile: {
@@ -597,7 +598,7 @@ export class WeddingService {
       });
     }
 
-    // Prepare wedding data. Ensure that your wedding model uses 'coupleIds' (or 'couple') consistently.
+    // Prepare wedding data
     const weddingData = {
       title: `${coupleInfo.firstName} & ${coupleInfo.partnerFirstName}'s wedding`,
       date: weddingInfo.date ? new Date(weddingInfo.date) : new Date(),
@@ -610,22 +611,26 @@ export class WeddingService {
       budget: {
         total: weddingInfo.estimatedBudget || 0,
       },
-      couple: [userId, partner._id as string] as unknown as string[],
+      // Ensure a valid couple array – using both user IDs here
+      couple: [userId, partner._id] as unknown as string[],
     };
 
     // Create and save the wedding.
-    // (Ensure that createWedding either saves internally or returns an unsaved document.)
     const wedding = await WeddingService.createWedding(weddingData);
     const savedWedding = await wedding.save();
 
-    // Update both users' weddings arrays individually to set the correct wedding structure.
+    // Update both users' weddings arrays with the correct defaults.
     await Promise.all([
       User.findByIdAndUpdate(userId, {
         $push: {
           weddings: {
             weddingId: savedWedding._id,
             accessLevel: "couple",
-            role: coupleInfo.role,
+            coupleDetails: { role: coupleInfo.role },
+            guestDetails: {
+              rsvpStatus: RSVPStatus.CONFIRMED,
+              partyRole: WeddingPartyRoles.COUPLE,
+            },
           },
         },
       }),
@@ -634,7 +639,11 @@ export class WeddingService {
           weddings: {
             weddingId: savedWedding._id,
             accessLevel: "couple",
-            role: coupleInfo.partnerRole,
+            coupleDetails: { role: coupleInfo.partnerRole },
+            guestDetails: {
+              rsvpStatus: RSVPStatus.CONFIRMED,
+              partyRole: WeddingPartyRoles.COUPLE,
+            },
           },
         },
       }),
@@ -926,7 +935,7 @@ export class WeddingService {
     return Wedding.findById(weddingId)
       .populate(
         "couple",
-        "profile.firstName profile.lastName email isRegistered"
+        "profile.firstName profile.lastName email isRegistered weddings"
       )
       .populate(
         "guests",

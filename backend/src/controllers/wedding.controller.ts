@@ -37,12 +37,20 @@ export class WeddingController {
       // Create the wedding
       const wedding = await WeddingService.createWedding(weddingInfo);
 
-      // Add wedding role for the creating user
+      // Add wedding role for the creating user with defaults for couple users:
+      // - accessLevel set to "couple"
+      // - coupleDetails role is "Couple"
+      // - (Optional) guestDetails for UI purposes: rsvpStatus "confirmed" (Attending) and partyRole "Couple"
       await User.findByIdAndUpdate(userId, {
         $push: {
           weddings: {
             weddingId: wedding._id,
             accessLevel: "couple",
+            coupleDetails: { role: "Couple" },
+            guestDetails: {
+              rsvpStatus: RSVPStatus.CONFIRMED,
+              partyRole: WeddingPartyRoles.COUPLE,
+            },
           },
         },
       });

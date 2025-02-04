@@ -14,6 +14,7 @@ export const CoupleRole = {
 
 // Wedding Roles
 export const WeddingPartyRoles = {
+  COUPLE: "Couple",
   GUEST: "Guest",
   MAID_OF_HONOR: "Maid of Honor",
   BEST_MAN: "Best Man",
