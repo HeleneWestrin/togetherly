@@ -18,10 +18,15 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({ budget }) => {
   // Calculate remaining budget (can be negative if overspent)
   const remaining = budget.total - budget.spent;
 
-  // Sum up all estimated costs across all categories
+  // Calculate total estimated cost by summing up all task budgets
   const totalEstimatedCost =
     budget.budgetCategories?.reduce(
-      (sum, category) => sum + category.estimatedCost,
+      (sum, category) =>
+        sum +
+        (category.tasks?.reduce(
+          (taskSum, task) => taskSum + (task.budget || 0),
+          0
+        ) || 0),
       0
     ) ?? 0;
 

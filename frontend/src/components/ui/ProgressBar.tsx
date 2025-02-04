@@ -52,7 +52,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div
-      className={`w-full ${colors.bg} rounded-full ${heightClass} ${className}`}
+      className={`w-full ${colors.bg} rounded-full overflow-hidden ${heightClass} ${className}`}
     >
       <div className="flex w-full gap-2">
         <div
