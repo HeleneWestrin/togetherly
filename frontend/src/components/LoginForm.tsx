@@ -38,7 +38,10 @@ export const LoginForm: React.FC = () => {
         `/api/users/auth/${provider}/token`,
         { token }
       );
-      login(response.data.token, response.data.user);
+      login(response.data.token, {
+        ...response.data.user,
+        isNewUser: response.data.isNewUser,
+      });
     } catch (error) {
       console.error(`${provider} login failed:`, error);
       if (error instanceof AxiosError) {

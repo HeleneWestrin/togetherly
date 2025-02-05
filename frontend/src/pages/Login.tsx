@@ -19,7 +19,7 @@ const Login: React.FC = () => {
    */
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isNewUser !== undefined) {
       if (isNewUser) {
         navigate("/onboarding");
       } else {

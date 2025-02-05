@@ -219,7 +219,46 @@ const Onboarding: React.FC = () => {
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-svh flex flex-col items-center lg:items-stretch lg:flex-row relative">
+        <div className="w-full lg:flex-1 lg:p-6 xl:p-8 2xl:p-12">
+          <div className="bg-gradient h-full rounded-br-3xl rounded-bl-3xl lg:rounded-3xl flex flex-col justify-center items-center pt-8 pb-10 px-6 lg:p-6 xl:p-8 2xl:p-12">
+            <div className="flex relative items-center gap-8 after:content-[''] after:absolute after:top-1/2 after:bg-dark-800 after:left-0 after:w-full after:h-[2px] mb-8 lg:mb-0">
+              <div className="w-8 h-8 rounded-full bg-pink-600 text-white font-bold flex items-center justify-center z-10">
+                1
+              </div>
+              <div className="w-8 h-8 rounded-full bg-white border-2 border-dark-800 font-bold flex items-center justify-center z-10">
+                2
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center grow w-full">
+              <WeddingRings className="w-5/6 lg:w-3/5 mb-8" />
+              <Typography
+                element="h1"
+                styledAs="h1Large"
+                className="text-center mb-3 lg:mb-6"
+              >
+                Welcome to Togetherly!
+              </Typography>
+              <Typography
+                element="p"
+                styledAs="bodyLarge"
+                className="text-center text-pretty"
+              >
+                ...and congratulations to your upcoming wedding!
+              </Typography>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 w-full md:max-w-2xl lg:max-w-none px-6 py-10 lg:px-6 xl:px-8 2xl:px-12 lg:py-16 xl:py-20 2xl:py-32 space-y-6 lg:space-y-8 xl:space-y-12 2xl:space-y-16 flex flex-col items-center justify-center">
+          <BouncingBall
+            color="#000"
+            width={44}
+            height={44}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (step === 1) {
@@ -370,9 +409,21 @@ const Onboarding: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
+              disabled={updateProgressMutation.isPending}
+              aria-busy={updateProgressMutation.isPending}
             >
-              Continue to the last step{" "}
-              <ArrowRightIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+              {updateProgressMutation.isPending ||
+              updateProgressMutation.isSuccess ? (
+                <BouncingBall
+                  color="#fff"
+                  width={24}
+                  height={24}
+                />
+              ) : (
+                <>
+                  Continue <ArrowRightIcon className="w-5 h-5 lg:w-6 lg:h-6" />
+                </>
+              )}
             </Button>
           </form>
         </div>
@@ -437,6 +488,9 @@ const Onboarding: React.FC = () => {
                 setWeddingInfo({ ...weddingInfo, date: inputDate });
               }
             }}
+            disabled={
+              createWeddingMutation.isPending || createWeddingMutation.isSuccess
+            }
           />
           <FormInput
             id="estimatedGuests"
@@ -467,6 +521,9 @@ const Onboarding: React.FC = () => {
                 });
               }
             }}
+            disabled={
+              createWeddingMutation.isPending || createWeddingMutation.isSuccess
+            }
           />
           <FormInput
             id="estimatedBudget"
@@ -483,32 +540,29 @@ const Onboarding: React.FC = () => {
                 estimatedBudget: Number(e.target.value),
               })
             }
+            disabled={
+              createWeddingMutation.isPending || createWeddingMutation.isSuccess
+            }
           />
           <div className="flex flex-col-reverse md:flex-row gap-4">
             <Button
               type="submit"
               className="w-full"
               disabled={
-                updateProgressMutation.isPending ||
-                createWeddingMutation.isPending
+                createWeddingMutation.isPending ||
+                createWeddingMutation.isSuccess
               }
               aria-busy={
-                updateProgressMutation.isPending ||
-                createWeddingMutation.isPending
+                createWeddingMutation.isPending ||
+                createWeddingMutation.isSuccess
               }
             >
-              {updateProgressMutation.isPending ||
-              createWeddingMutation.isPending ? (
+              {createWeddingMutation.isPending ||
+              createWeddingMutation.isSuccess ? (
                 <BouncingBall
                   color="#fff"
                   width={24}
                   height={24}
-                />
-              ) : updateProgressMutation.isSuccess &&
-                createWeddingMutation.isSuccess ? (
-                <CheckIcon
-                  color="#fff"
-                  className="w-6 h-6"
                 />
               ) : (
                 <>

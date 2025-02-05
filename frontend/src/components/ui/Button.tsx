@@ -46,7 +46,7 @@ export const Button = forwardRef<
 
     const sizeClasses = {
       default:
-        "font-slab text-base md:text-md px-5 py-3 md:px-6 2xl:px-7 2xl:py-4 min-h-12 md:min-h-14",
+        "font-slab text-base md:text-md px-5 py-3 md:px-6 2xl:px-7 2xl:py-4 min-h-14 md:min-h-16",
       small: "text-sm px-3 py-1.5 md:px-4 md:py-2",
       tiny: "px-1 py-1",
       icon: "p-2 rounded-full",
