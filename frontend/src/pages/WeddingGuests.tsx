@@ -13,6 +13,7 @@ import WeddingHeader from "../components/wedding/WeddingHeader";
 import { GuestUser, Wedding } from "../types/wedding";
 import { RSVPStatusType, WeddingPartyRoles } from "../types/constants";
 import { WeddingPartyRoleType } from "../types/constants";
+import WeddingGuestsSkeleton from "../components/wedding/WeddingGuestsSkeleton";
 
 const WeddingGuests: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -215,7 +216,7 @@ const WeddingGuests: React.FC = () => {
     updateRSVPMutation.mutate({ guestIds, rsvpStatus });
   };
 
-  if (isLoading) return <div className="p-5">Loading wedding details...</div>;
+  if (isLoading) return <WeddingGuestsSkeleton />;
 
   if (fetchError) {
     const axiosError = fetchError as { response?: { status: number } };
@@ -257,6 +258,7 @@ const WeddingGuests: React.FC = () => {
             </div>
             {wedding?.guests && wedding.guests.length > 0 ? (
               <GuestList
+                isLoading={isLoading}
                 guests={wedding.guests}
                 wedding={wedding}
                 onDeleteGuests={handleDeleteGuests}

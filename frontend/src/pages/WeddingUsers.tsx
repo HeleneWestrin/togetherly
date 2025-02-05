@@ -18,6 +18,7 @@ import {
   WeddingAccessLevelType,
   WeddingPartyRoleType,
 } from "../types/constants";
+import WeddingUsersSkeleton from "../components/wedding/WeddingUsersSkeleton";
 
 const WeddingUsers: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -136,8 +137,6 @@ const WeddingUsers: React.FC = () => {
     }
   };
 
-  if (isLoading) return <div className="p-5">Loading wedding details...</div>;
-
   if (fetchError) {
     const axiosError = fetchError as { response?: { status: number } };
     if (
@@ -156,7 +155,13 @@ const WeddingUsers: React.FC = () => {
     );
   }
 
-  if (!wedding) return <div className="p-5">No wedding data available.</div>;
+  if (isLoading) {
+    return <WeddingUsersSkeleton />;
+  }
+
+  if (!wedding) {
+    return <div className="p-5">No wedding data available.</div>;
+  }
 
   // Filter guests with weddingAdmin access for the current wedding
   const weddingCouple =
@@ -186,7 +191,7 @@ const WeddingUsers: React.FC = () => {
         <WeddingHeader
           title="Users"
           onClick={handleOpenPanel}
-          buttonText="Invite user"
+          buttonText="Add wedding admin"
         />
         <div className="px-5 lg:px-8 py-6 lg:py-12 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-y-8">
@@ -199,6 +204,7 @@ const WeddingUsers: React.FC = () => {
                 The couple
               </Typography>
               <UserList
+                isLoading={isLoading}
                 users={weddingCouple}
                 type="couple"
                 onEditUser={handleEditUser}
@@ -238,7 +244,7 @@ const WeddingUsers: React.FC = () => {
       <SidePanel
         isOpen={!!activePanels.inviteUser}
         onClose={handleClosePanel}
-        title="Invite user"
+        title="Add wedding admin"
       >
         <InviteUserForm
           onSubmit={(data) => inviteUserMutation.mutateAsync(data)}

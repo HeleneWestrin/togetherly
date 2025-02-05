@@ -2,10 +2,12 @@ import { CoupleUser, GuestUser } from "../../types/wedding";
 import Badge from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Edit2, Trash2 } from "lucide-react";
+import UserListSkeleton from "./UserListSkeleton";
 
 interface UserListProps {
   users: (CoupleUser | GuestUser)[];
   type: "couple" | "admin" | "weddingAdmin";
+  isLoading?: boolean;
   onEditUser?: (user: CoupleUser | GuestUser) => void;
   onDeleteUser?: (userId: string) => void;
 }
@@ -41,9 +43,14 @@ const getCoupleRole = (user: CoupleUser | GuestUser): string => {
 const UserList: React.FC<UserListProps> = ({
   users,
   type,
+  isLoading,
   onEditUser,
   onDeleteUser,
 }) => {
+  if (isLoading) {
+    return <UserListSkeleton />;
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-dark-500 overflow-hidden overflow-x-auto">
       <table className="w-full">

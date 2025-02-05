@@ -6,6 +6,7 @@ import { Edit2, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import FormCheckbox from "../ui/FormCheckbox";
 import Badge from "../ui/Badge";
 import { BadgeProps } from "../ui/Badge";
+import GuestListSkeleton from "./GuestListSkeleton";
 
 interface GuestListProps {
   guests: GuestUser[];
@@ -16,6 +17,7 @@ interface GuestListProps {
     status: "pending" | "confirmed" | "declined"
   ) => void;
   onEditGuest: (guest: GuestUser) => void;
+  isLoading?: boolean;
 }
 
 type SortField = "name" | "role" | "dietaryPreferences" | "rsvpStatus";
@@ -27,7 +29,12 @@ const GuestList: React.FC<GuestListProps> = ({
   onDeleteGuests,
   onUpdateRSVP,
   onEditGuest,
+  isLoading,
 }) => {
+  if (isLoading) {
+    return <GuestListSkeleton />;
+  }
+
   // Track selected guests for batch operations
   const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
 
@@ -155,7 +162,7 @@ const GuestList: React.FC<GuestListProps> = ({
         <table className="w-full">
           <thead className="bg-dark-100">
             <tr className="border-b border-dark-300">
-              <th className="px-5 lg:px-7 py-3 lg:py-5 text-left">
+              <th className="flex items-center px-5 lg:px-7 py-3 lg:py-5 text-left">
                 <FormCheckbox
                   label=""
                   size="small"

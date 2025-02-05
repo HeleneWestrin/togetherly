@@ -1,22 +1,28 @@
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
-import { axiosInstance } from "../services/axiosService";
-import { Typography } from "../components/ui/Typography";
-import { forceLogout } from "../utils/logoutHandler";
-import BudgetOverview from "../components/wedding/BudgetOverview";
-import BudgetCategory from "../components/wedding/BudgetCategory";
-import { fetchWeddingDetails } from "../services/weddingService";
-import WeddingHeader from "../components/wedding/WeddingHeader";
 import { CheckIcon, Edit2 } from "lucide-react";
+import { BouncingBall } from "react-svg-spinners";
+
 import { useUIStore } from "../stores/useUIStore";
+import { AxiosError } from "axios";
+import { axiosInstance } from "../services/axiosService";
+import { fetchWeddingDetails } from "../services/weddingService";
+import { offlineStorage } from "../services/offlineStorage";
+import { forceLogout } from "../utils/logoutHandler";
+
+import { Typography } from "../components/ui/Typography";
 import SidePanel from "../components/ui/SidePanel";
 import FormInput from "../components/ui/FormInput";
 import { Button } from "../components/ui/Button";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { offlineStorage } from "../services/offlineStorage";
+
+import BudgetOverview from "../components/wedding/BudgetOverview";
+import BudgetCategory from "../components/wedding/BudgetCategory";
+import WeddingHeader from "../components/wedding/WeddingHeader";
 import BudgetCategorySkeleton from "../components/wedding/BudgetCategorySkeleton";
 import BudgetOverviewSkeleton from "../components/wedding/BudgetOverviewSkeleton";
-import { BouncingBall } from "react-svg-spinners";
+
+import type { Wedding } from "../types/wedding";
 
 const WeddingBudget: React.FC = () => {
   const { weddingSlug } = useParams<{ weddingSlug: string }>();
@@ -29,7 +35,7 @@ const WeddingBudget: React.FC = () => {
     isLoading: isWeddingLoading,
     error: queryError,
     data: wedding,
-  } = useQuery({
+  } = useQuery<Wedding, AxiosError>({
     queryKey: ["wedding", weddingSlug],
     queryFn: () => fetchWeddingDetails(weddingSlug!),
     enabled: !!weddingSlug,
@@ -200,13 +206,6 @@ const WeddingBudget: React.FC = () => {
       forceLogout();
       return null;
     }
-    return (
-      <div className="p-5">
-        <p className="text-red-600">
-          Error loading wedding details: {(queryError as Error).message}
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -228,6 +227,20 @@ const WeddingBudget: React.FC = () => {
         />
         <div className="px-5 lg:px-8 py-6 lg:py-8 2xl:py-12 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 gap-y-6 lg:gap-y-8">
+            {queryError && (
+              <div className="space-y-4">
+                <Typography element="h1">
+                  {queryError.response?.status === 404 && "Wedding not found"}
+                </Typography>
+                <Typography
+                  element="p"
+                  styledAs="bodyLarge"
+                >
+                  {queryError.response?.status === 404 &&
+                    "This wedding doesn't seem to exist."}
+                </Typography>
+              </div>
+            )}
             {isWeddingLoading ? (
               <div className="space-y-8">
                 <BudgetOverviewSkeleton />
@@ -243,19 +256,14 @@ const WeddingBudget: React.FC = () => {
                 </div>
               </div>
             ) : !wedding ? (
-              <div className="p-3 bg-gray-50 rounded">
-                <Typography element="p">No wedding data available.</Typography>
-              </div>
+              <div></div>
             ) : (
               <div className="space-y-8">
                 <BudgetOverview budget={wedding.budget} />
                 <div className="grid grid-cols-1 lg:grid-cols-2 items-start gap-4">
-                  <Typography
-                    element="h2"
-                    className="lg:col-span-2"
-                  >
-                    Wedding checklist
-                  </Typography>
+                  <div className="flex justify-between items-center lg:col-span-2">
+                    <Typography element="h2">Wedding checklist</Typography>
+                  </div>
                   {wedding.budget.budgetCategories.map((budgetCategory) => (
                     <BudgetCategory
                       key={budgetCategory._id}
