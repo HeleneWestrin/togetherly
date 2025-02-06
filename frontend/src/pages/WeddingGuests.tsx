@@ -116,7 +116,9 @@ const WeddingGuests: React.FC = () => {
           },
           rsvpStatus: data.updates.rsvpStatus,
           dietaryPreferences:
-            data.updates.dietaryPreferences?.trim() || undefined,
+            data.updates.dietaryPreferences?.trim() === ""
+              ? ""
+              : data.updates.dietaryPreferences?.trim(),
           partyRole: data.updates.partyRole,
         },
       };

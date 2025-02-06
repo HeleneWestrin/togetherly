@@ -21,32 +21,58 @@ import {
   RSVPStatus,
   WeddingPartyRoles,
 } from "../types/constants";
+import { leanQuery } from "../utils/leanQuery";
 
 export class WeddingService {
   static async getWeddingsForUser(userId: string) {
-    const user = await User.findById(userId);
-    if (!user) throw new NotFoundError("User not found");
+    try {
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError("User not found");
 
-    let weddings;
-    const populateOptions =
-      "profile.firstName profile.lastName email isRegistered";
+      const populateOptions =
+        "profile.firstName profile.lastName email isRegistered";
+      let weddings;
 
-    if (user.isAdmin) {
-      // Admins can see all weddings
-      weddings = await Wedding.find()
-        .populate("couple", populateOptions)
-        .populate("guests", populateOptions)
-        .select("title slug date location couple");
-    } else {
-      // Find all weddings where user has any role
-      const weddingIds = user.weddings.map((wr) => wr.weddingId);
-      weddings = await Wedding.find({ _id: { $in: weddingIds } })
-        .populate("couple", populateOptions)
-        .populate("guests", populateOptions)
-        .select("title slug date location couple guests");
+      if (user.isAdmin) {
+        // Admins can see all weddings
+        weddings = await leanQuery(
+          Wedding.find()
+            .populate("couple", populateOptions)
+            .populate("guests", populateOptions)
+            .select("title slug date location couple")
+        );
+      } else {
+        // Non-admins: find all weddings where the user has any role
+        const weddingIds = user.weddings.map((wr) => wr.weddingId);
+        weddings = await leanQuery(
+          Wedding.find({ _id: { $in: weddingIds } })
+            .populate("couple", populateOptions)
+            .populate("guests", populateOptions)
+            .select("title slug date location couple guests")
+        );
+      }
+
+      // Process nested fields like "categories" if they exist.
+      if (weddings && Array.isArray(weddings)) {
+        weddings.forEach((wedding) => {
+          const w = wedding as any; // cast to any to bypass TS errors for untyped properties
+          if (w.categories && Array.isArray(w.categories)) {
+            w.categories = w.categories.map((category: any) =>
+              category &&
+              category.toObject &&
+              typeof category.toObject === "function"
+                ? category.toObject()
+                : category
+            );
+          }
+        });
+      }
+
+      return weddings;
+    } catch (error) {
+      console.error("Error in WeddingService.getWeddingsForUser:", error);
+      throw error;
     }
-
-    return weddings;
   }
 
   static async getWeddingById(weddingId: string, userId: string) {
@@ -286,58 +312,68 @@ export class WeddingService {
   }
 
   static async getWeddingBySlug(slug: string, userId: string) {
-    const user = (await User.findById(userId)) as User | null;
-    if (!user) throw new NotFoundError("User not found");
+    try {
+      // Verify that the user exists.
+      const user = await User.findById(userId);
+      if (!user) throw new NotFoundError("User not found");
 
-    const wedding = await Wedding.findOne({ slug })
-      .populate(
-        "couple",
-        "_id profile.firstName profile.lastName email isRegistered weddings"
-      )
-      .populate(
-        "guests",
-        "profile.firstName profile.lastName email isRegistered weddings"
-      )
-      .populate({
-        path: "budget.budgetCategories",
-        populate: {
-          path: "tasks",
-          model: "Task",
-          select: "title completed budget actualCost dueDate",
-        },
-      });
+      // Retrieve the wedding by slug, populating nested fields.
+      const wedding = await Wedding.findOne({ slug })
+        .populate(
+          "couple",
+          "_id profile.firstName profile.lastName email isRegistered weddings"
+        )
+        .populate(
+          "guests",
+          "profile.firstName profile.lastName email isRegistered weddings"
+        )
+        .populate({
+          path: "budget.budgetCategories",
+          populate: {
+            path: "tasks",
+            model: "Task",
+            select: "title completed budget actualCost dueDate",
+          },
+        });
 
-    if (!wedding) throw new NotFoundError("Wedding not found");
+      if (!wedding) throw new NotFoundError("Wedding not found");
 
-    // Calculate budget totals and progress for each category
-    if (wedding.budget?.budgetCategories) {
-      const populatedBudgetCategories = wedding.budget.budgetCategories.map(
-        async (category) => ({
-          _id: category._id,
-          ...(category as unknown as mongoose.Document).toObject(),
-          spent: await (category as any).calculatedSpent,
-        })
-      );
-      const budgetCategoriesWithSpent = await Promise.all(
-        populatedBudgetCategories
-      );
-      wedding.budget.budgetCategories = budgetCategoriesWithSpent;
+      // Calculate budget totals and progress for each category.
+      if (wedding.budget?.budgetCategories) {
+        const populatedBudgetCategories = wedding.budget.budgetCategories.map(
+          async (category) => ({
+            _id: category._id,
+            // Convert category to a plain object if possible.
+            ...(typeof (category as any).toObject === "function"
+              ? (category as unknown as mongoose.Document).toObject()
+              : category),
+            spent: await (category as any).calculatedSpent,
+          })
+        );
+        const budgetCategoriesWithSpent = await Promise.all(
+          populatedBudgetCategories
+        );
+        wedding.budget.budgetCategories = budgetCategoriesWithSpent;
 
-      // Calculate overall budget totals
-      wedding.budget.spent = wedding.budget.budgetCategories.reduce(
-        (sum, category) => sum + (category.spent || 0),
-        0
-      );
+        // Calculate overall budget totals.
+        wedding.budget.spent = wedding.budget.budgetCategories.reduce(
+          (sum, category) => sum + (category.spent || 0),
+          0
+        );
+      }
+
+      return {
+        _id: wedding._id,
+        title: wedding.title,
+        slug: wedding.slug,
+        couple: wedding.couple,
+        guests: wedding.guests,
+        budget: wedding.budget,
+      };
+    } catch (error) {
+      console.error("Error in WeddingService.getWeddingBySlug:", error);
+      throw error;
     }
-
-    return {
-      _id: wedding._id,
-      title: wedding.title,
-      slug: wedding.slug,
-      couple: wedding.couple,
-      guests: wedding.guests,
-      budget: wedding.budget,
-    };
   }
 
   static async updateTask(taskId: string, completed: boolean, userId: string) {
@@ -655,93 +691,60 @@ export class WeddingService {
   static async updateGuest(
     weddingId: string,
     guestId: string,
-    guestData: {
-      profile: {
-        firstName: string;
-        lastName: string;
-      };
-      email?: string;
-      guestDetails: {
-        connection: {
-          partnerIds: string[];
-        };
-        rsvpStatus: RSVPStatusType;
-        dietaryPreferences?: string;
-        trivia?: string;
-        partyRole: WeddingPartyRoleType;
-      };
-    },
+    guestData: any,
     userId: string
-  ) {
-    const wedding = await Wedding.findById(weddingId);
-    if (!wedding) throw new NotFoundError("Wedding not found");
-
-    const user = await User.findById(userId);
-    if (!user) throw new NotFoundError("User not found");
-
-    const userWedding = user.weddings.find(
-      (w) => w.weddingId.toString() === weddingId
-    );
-
-    if (userWedding?.accessLevel !== "couple" && !user.isAdmin) {
-      throw new ForbiddenError("Only couples or admins can update guests");
+  ): Promise<any> {
+    // Find the guest's user document
+    const guestUser = await User.findById(guestId);
+    if (!guestUser) {
+      throw new NotFoundError("Guest not found");
     }
 
-    // Validate that partnerIds exist in the wedding's couple array
-    if (guestData.guestDetails?.connection.partnerIds) {
-      for (const partnerId of guestData.guestDetails.connection.partnerIds) {
-        if (!wedding.couple.some((id) => id.toString() === partnerId)) {
-          throw new ValidationError(`Invalid partner ID: ${partnerId}`);
-        }
+    // Update the guest's profile fields if provided
+    if (guestData.profile) {
+      if (guestData.profile.firstName !== undefined) {
+        guestUser.profile.firstName = guestData.profile.firstName.trim();
+      }
+      if (guestData.profile.lastName !== undefined) {
+        guestUser.profile.lastName = guestData.profile.lastName.trim();
       }
     }
 
-    const guest = await User.findById(guestId);
-    if (!guest) throw new NotFoundError("Guest not found");
-
-    // Update profile and email
-    if (guestData.profile) {
-      guest.profile = {
-        ...guest.profile,
-        ...guestData.profile,
-      };
+    if (guestData.email !== undefined) {
+      guestUser.email = guestData.email ? guestData.email.trim() : undefined;
     }
-    if (guestData.email) guest.email = guestData.email;
 
-    // Update wedding-specific details
-    const weddingIndex = guest.weddings.findIndex(
-      (w) => w.weddingId.toString() === weddingId
+    // Look for the wedding entry in the guest's weddings array
+    const weddingEntry = guestUser.weddings.find(
+      (entry: any) => entry.weddingId.toString() === weddingId
     );
+    if (!weddingEntry) {
+      throw new NotFoundError("Guest wedding entry not found");
+    }
 
-    if (weddingIndex === -1) {
-      // If guest doesn't have this wedding yet, add it
-      guest.weddings.push({
-        weddingId: new Types.ObjectId(weddingId),
-        accessLevel: "guest",
-        guestDetails: {
-          ...guestData.guestDetails,
-          connection: {
-            partnerIds: guestData.guestDetails.connection.partnerIds.map(
-              (id) => new Types.ObjectId(id)
-            ),
-          },
-        },
-      });
-    } else if (guestData.guestDetails) {
-      // Update existing wedding details
-      guest.weddings[weddingIndex].guestDetails = {
-        ...guest.weddings[weddingIndex].guestDetails,
+    // Update guestDetails using the provided guestData.guestDetails
+    if (guestData.guestDetails) {
+      weddingEntry.guestDetails = {
+        ...weddingEntry.guestDetails,
         ...guestData.guestDetails,
-        connection: {
-          partnerIds: guestData.guestDetails.connection.partnerIds.map(
-            (id) => new Types.ObjectId(id)
-          ),
-        },
       };
     }
 
-    await guest.save();
-    return guest;
+    // Save the updated guest user document
+    await guestUser.save();
+
+    // Re-fetch and return the updated wedding details (with population as needed)
+    const updatedWedding = await Wedding.findById(weddingId)
+      .populate(
+        "couple",
+        "profile.firstName profile.lastName email isRegistered"
+      )
+      .populate(
+        "guests",
+        "profile.firstName profile.lastName email isRegistered"
+      );
+
+    return updatedWedding;
   }
 
   static async deleteGuests(

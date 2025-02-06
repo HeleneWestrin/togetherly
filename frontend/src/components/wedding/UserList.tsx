@@ -54,7 +54,7 @@ const UserList: React.FC<UserListProps> = ({
   return (
     <div className="bg-white rounded-2xl border border-dark-500 overflow-hidden overflow-x-auto">
       <table className="w-full">
-        <thead className="bg-dark-100">
+        <thead className="bg-dark-200">
           <tr className="border-b border-dark-300">
             <th className="p-3 lg:pl-8 text-left text-sm lg:text-base font-semibold text-gray-800">
               Name

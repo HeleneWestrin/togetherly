@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { AuthService } from "./auth.service";
 import { ValidationError, NotFoundError } from "../utils/errors";
 import { WeddingAccessLevel } from "../types/constants";
+import { leanQuery } from "../utils/leanQuery";
 
 /**
  * Service class handling user-related business logic
@@ -73,7 +74,7 @@ export class UserService {
       throw new ValidationError("Incorrect email or password");
     }
 
-    // Set isRegistered to true on first successful login
+    // Update isRegistered on first successful login
     if (!user.isRegistered) {
       user.isRegistered = true;
       await user.save();
@@ -99,55 +100,38 @@ export class UserService {
    * @returns Array of sanitized user objects
    */
   static async getActiveUsers() {
-    // Find all active users and populate their wedding information
-    const users = await User.find(
-      { isActive: true },
-      {
-        email: 1,
-        profile: 1,
-        weddings: 1,
-        isActive: 1,
-        isAdmin: 1,
-      }
-    ).populate({
-      path: "weddings.weddingId",
-      select: "title date location couple",
-    });
+    try {
+      const users = await leanQuery(
+        User.find(
+          { isActive: true },
+          {
+            email: 1,
+            profile: 1,
+            weddings: 1,
+            isActive: 1,
+            isAdmin: 1,
+            isRegistered: 1,
+          }
+        ).populate({
+          path: "weddings.weddingId",
+          select: "title date location couple",
+        })
+      );
 
-    // Sanitize user data before returning
-    return users.map(this.sanitizeUser);
-  }
-
-  /**
-   * Sanitizes user data for safe client-side consumption
-   * Removes sensitive information and formats data consistently
-   * @param user - Raw user document from database
-   * @returns Cleaned user object with only necessary information
-   */
-  private static sanitizeUser(user: any) {
-    return {
-      id: user._id,
-      email: user.email,
-      profile: user.profile,
-      isActive: user.isActive,
-      isRegistered: user.isRegistered,
-      isAdmin: user.isAdmin,
-      weddings: user.weddings?.map((wedding: any) => ({
-        id: wedding.weddingId._id,
-        title: wedding.weddingId.title,
-        date: wedding.weddingId.date,
-        location: wedding.weddingId.location,
-        accessLevel: wedding.accessLevel,
-        coupleDetails:
-          wedding.accessLevel === WeddingAccessLevel.COUPLE
-            ? wedding.coupleDetails
-            : undefined,
-        guestDetails:
-          wedding.accessLevel !== WeddingAccessLevel.COUPLE
-            ? wedding.guestDetails
-            : undefined,
-      })),
-    };
+      // Sanitize and return user data for client consumption
+      return users.map((user: any) => ({
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        isActive: user.isActive,
+        isRegistered: user.isRegistered,
+        isAdmin: user.isAdmin,
+        weddings: user.weddings,
+      }));
+    } catch (error) {
+      console.error("Error in UserService.getActiveUsers:", error);
+      throw error;
+    }
   }
 
   /**
