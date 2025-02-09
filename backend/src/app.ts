@@ -1,4 +1,5 @@
 import express from "express";
+import listEndpoints from "express-list-endpoints";
 import cors from "cors";
 import helmet from "helmet";
 import { userRouter } from "./routes/user.routes";
@@ -25,7 +26,10 @@ app.use(helmet());
 
 // Health check endpoint
 app.get("/api/", (req, res) => {
-  res.json({ message: "Welcome to the Togetherly API" });
+  res.json({
+    message: "Welcome to the Togetherly API",
+    endpoints: listEndpoints(app),
+  });
 });
 
 // Register route modules

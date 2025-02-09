@@ -47,8 +47,8 @@ const WeddingMore: React.FC = () => {
                       element="p"
                       styledAs="bodyDefault"
                     >
-                      <span className="font-bold">In the mean time,</span>{" "}
-                      please share your feedback on the product thus far. Any
+                      <span className="font-bold">In the meantime,</span> please
+                      share your feedback on the product thus far. Any
                       suggestions are welcome!
                     </Typography>
                     <Typography element="p">
