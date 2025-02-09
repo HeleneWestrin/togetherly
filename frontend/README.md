@@ -1,8 +1,22 @@
-# Frontend part of Final Project
+# Togetherly — Frontend
 
-This boilerplate is designed to give you a head start in your React projects, with a focus on understanding the structure and components. As a student of Technigo, you'll find this guide helpful in navigating and utilizing the repository.
+Togetherly is your digital wedding planner that helps couples plan, manage, and bring their dream wedding to life.
 
-## Getting Started
+## Features
 
-1.  Install the required dependencies using `npm install`.
-2.  Start the development server using `npm run dev`.
+- **User Authentication:** Secure sign-up and login flows including Google Auth.
+- **Budget Management:** Monitor wedding expenses, track spending, and visualize overall budget progress.
+- **Task Organization:** Manage checklists and to-dos for every aspect of your wedding.
+- **Guest Management:** Add your guests, track RSVPs and dietary restrictions.
+- **Responsive Design:** Optimized experience across mobile and desktop devices.
+
+## Tech Stack
+
+- **React & TypeScript**: Build modern, scalable web applications.
+- **Vite**: Next-generation build tool that offers a fast development experience.
+- **Tailwind CSS**: Utility-first CSS framework to design responsive interfaces.
+- **React Router**: Manage advanced client-side routing with support for public and private routes.
+- **Axios**: Handle HTTP requests to interact with the backend API.
+- **React Query**: Simplify data fetching and caching.
+- **Zustand**: Lightweight state management solution.
+- **ESLint**: Enforce code quality and consistency.
