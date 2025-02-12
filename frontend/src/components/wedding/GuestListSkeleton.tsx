@@ -5,7 +5,7 @@ const GuestListSkeleton: React.FC = () => {
   return (
     <div className="bg-white rounded-2xl border border-dark-500 overflow-hidden overflow-x-auto">
       <table className="w-full">
-        <thead className="bg-dark-100">
+        <thead className="bg-dark-200">
           <tr className="border-b border-dark-300">
             <th className="flex items-center px-5 lg:px-7 py-3 lg:py-4 min-h-[60px] text-left">
               <Skeleton
