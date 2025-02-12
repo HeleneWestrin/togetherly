@@ -1,0 +1,62 @@
+---
+description: Rules for the Togetherly project
+globs: 
+---
+# Cursor AI Rules
+
+## Key Principles
+- Write concise, technical TypeScript code with clear and accurate examples.
+- Use functional and declarative programming patterns; avoid classes entirely.
+- Favor iteration and modularization to minimize code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Organize files so that each contains the primary exported component, its subcomponents, helpers, static content, and associated types.
+
+## Naming Conventions
+- Use lowercase with dashes for directory names (e.g., `components/auth-wizard`).
+- Favor named exports for components.
+- Use clear, descriptive names that reflect the purpose and functionality of variables, functions, and components.
+
+## TypeScript Usage
+- Write all code in TypeScript.
+- Prefer interfaces over type aliases when defining data structures and component props.
+- Avoid using enums; instead, use objects or maps for key-value associations.
+- Implement React components as functional components with TypeScript interfaces for props.
+
+## Syntax and Formatting
+- Use the `function` keyword for pure functions.
+- Use ES6 arrow functions for inline callbacks or event handlers.
+- Write conditionals using concise syntax where applicable, avoiding unnecessary curly braces.
+- Use declarative JSX to clearly define the UI structure.
+
+## UI and Styling
+- Use existing components when applicable.
+- Style with Tailwind CSS, adopting a mobile-first approach for responsive design.
+- Maintain consistency by adhering to defined design tokens and Tailwind utility classes.
+
+## Performance Optimization
+- Minimize excessive use of client-side state hooks (e.g., `useEffect`, `setState`) by isolating state management.
+- Implement code splitting and dynamic imports for non-critical components.
+- Wrap heavy or asynchronously loaded components in React’s `Suspense` with a fallback UI.
+- Optimize images by using the WebP format, specifying dimensions, and applying lazy loading techniques.
+
+## Data Fetching and State Management
+- Use Axios or a wrapped native `fetch` for API calls, encapsulating the logic within custom hooks or service modules.
+- Manage state with libraries such as React Query or Zustand based on the specific requirements.
+- Adopt a consistent approach (e.g., using `nuqs`) for managing URL search parameters across the application.
+
+## File Organization
+- Each file should export a primary component along with any related subcomponents, helpers, static content, and associated types.
+- Isolate shared functions, hooks, or utilities into dedicated helper files or directories.
+- Organize static assets (e.g., images, SVGs) into designated folders.
+- Keep TypeScript interfaces and types either alongside their associated components or in a shared types directory if reused across modules.
+
+## Backend Guidelines (Node.js with Express & TypeScript)
+- Structure backend code into routes, controllers, services, models, and utilities.
+- Use async/await with try/catch blocks for error handling in asynchronous operations.
+- Validate incoming data using libraries like Zod to ensure data integrity.
+- Apply consistent naming conventions and modularization principles as used on the frontend.
+
+## Code Reviews and Documentation
+- Conduct regular peer code reviews to ensure adherence to these guidelines.
+- Use inline documentation (e.g., JSDoc) to explain components, functions, and APIs.
+- Maintain comprehensive documentation (e.g., README, onboarding guides) detailing project architecture, coding conventions, and setup instructions.

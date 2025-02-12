@@ -1,169 +1,139 @@
 import { User } from "../models/user.model";
 import { Types } from "mongoose";
-import { AuthService } from "./auth.service";
-import { ValidationError, NotFoundError } from "../utils/errors";
-import { WeddingAccessLevel } from "../types/constants";
+import * as AuthService from "./auth.service";
+import { createValidationError, createNotFoundError } from "../utils/errors";
 import { leanQuery } from "../utils/leanQuery";
 
 /**
  * Service class handling user-related business logic
  * Manages user creation, authentication, and data retrieval
  */
-export class UserService {
-  /**
-   * Creates a new user account
-   * @param email - User's email address
-   * @param password - User's plain text password (will be hashed)
-   * @returns Object containing userId and JWT token
-   */
-  static async createUser(email: string, password: string) {
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new ValidationError("Email already registered");
-    }
+export const createUser = async (email: string, password: string) => {
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw createValidationError("Email already registered");
+  }
 
-    // Hash the password before storing
-    const hashedPassword = await AuthService.hashPassword(password);
-    const newUser = new User({
-      email,
-      password: hashedPassword,
-      isActive: true,
-      isRegistered: true,
-      isAdmin: false,
-      weddings: [], // Initialize empty weddings array
-    });
+  const hashedPassword = await AuthService.hashPassword(password);
+  const newUser = new User({
+    email,
+    password: hashedPassword,
+    isActive: true,
+    isRegistered: true,
+    isAdmin: false,
+    weddings: [],
+  });
 
-    // Save user to database and generate authentication token
-    const savedUser = await newUser.save();
-    const token = AuthService.generateToken(
-      (savedUser._id as Types.ObjectId).toString()
+  const savedUser = await newUser.save();
+  const token = AuthService.generateToken(
+    (savedUser._id as Types.ObjectId).toString()
+  );
+
+  return {
+    token,
+    user: {
+      id: savedUser._id,
+      email: savedUser.email,
+      isAdmin: savedUser.isAdmin,
+    },
+    isNewUser: true,
+  };
+};
+
+export const loginUser = async (email: string, password: string) => {
+  const user = (await User.findOne({ email })) as
+    | (User & { _id: Types.ObjectId })
+    | null;
+  if (!user) {
+    throw createValidationError("Incorrect email or password");
+  }
+
+  const isPasswordValid = await AuthService.comparePasswords(
+    password,
+    user.password as string
+  );
+  if (!isPasswordValid) {
+    throw createValidationError("Incorrect email or password");
+  }
+
+  if (!user.isRegistered) {
+    user.isRegistered = true;
+    await user.save();
+  }
+
+  const token = AuthService.generateToken(user._id.toString());
+
+  return {
+    token,
+    user: {
+      id: user._id.toString(),
+      email: user.email,
+      isAdmin: user.isAdmin,
+      profile: user.profile,
+      weddings: user.weddings,
+    },
+  };
+};
+
+export const getActiveUsers = async () => {
+  try {
+    const users = await leanQuery(
+      User.find(
+        { isActive: true },
+        {
+          email: 1,
+          profile: 1,
+          weddings: 1,
+          isActive: 1,
+          isAdmin: 1,
+          isRegistered: 1,
+        }
+      ).populate({
+        path: "weddings.weddingId",
+        select: "title date location couple",
+      })
     );
 
-    return {
-      token,
-      user: {
-        id: savedUser._id,
-        email: savedUser.email,
-        isAdmin: savedUser.isAdmin,
-      },
-      isNewUser: true, // Always true for new user creation
+    return users.map((user: any) => ({
+      id: user._id,
+      email: user.email,
+      profile: user.profile,
+      isActive: user.isActive,
+      isRegistered: user.isRegistered,
+      isAdmin: user.isAdmin,
+      weddings: user.weddings,
+    }));
+  } catch (error) {
+    console.error("Error in getActiveUsers:", error);
+    throw error;
+  }
+};
+
+export const completeOnboarding = async (
+  userId: string,
+  data: {
+    profile: {
+      firstName: string;
+      lastName: string;
+      phoneNumber?: string;
+      address?: string;
     };
   }
-
-  /**
-   * Authenticates a user's login attempt
-   * @param email - User's email address
-   * @param password - User's plain text password
-   * @returns Object containing userId and JWT token
-   * @throws ValidationError if credentials are invalid
-   */
-  static async loginUser(email: string, password: string) {
-    const user = (await User.findOne({ email })) as
-      | (User & { _id: Types.ObjectId })
-      | null;
-    if (!user) {
-      throw new ValidationError("Incorrect email or password");
-    }
-
-    const isPasswordValid = await AuthService.comparePasswords(
-      password,
-      user.password as string
-    );
-    if (!isPasswordValid) {
-      throw new ValidationError("Incorrect email or password");
-    }
-
-    // Update isRegistered on first successful login
-    if (!user.isRegistered) {
-      user.isRegistered = true;
-      await user.save();
-    }
-
-    const token = AuthService.generateToken(user._id.toString());
-
-    // Return the response in the expected format
-    return {
-      token,
-      user: {
-        id: user._id.toString(),
-        email: user.email,
-        isAdmin: user.isAdmin,
-        profile: user.profile,
-        weddings: user.weddings,
+) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        profile: data.profile,
+        isNewUser: false,
       },
-    };
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    throw createNotFoundError("User not found");
   }
 
-  /**
-   * Retrieves all active users with their wedding information
-   * @returns Array of sanitized user objects
-   */
-  static async getActiveUsers() {
-    try {
-      const users = await leanQuery(
-        User.find(
-          { isActive: true },
-          {
-            email: 1,
-            profile: 1,
-            weddings: 1,
-            isActive: 1,
-            isAdmin: 1,
-            isRegistered: 1,
-          }
-        ).populate({
-          path: "weddings.weddingId",
-          select: "title date location couple",
-        })
-      );
-
-      // Sanitize and return user data for client consumption
-      return users.map((user: any) => ({
-        id: user._id,
-        email: user.email,
-        profile: user.profile,
-        isActive: user.isActive,
-        isRegistered: user.isRegistered,
-        isAdmin: user.isAdmin,
-        weddings: user.weddings,
-      }));
-    } catch (error) {
-      console.error("Error in UserService.getActiveUsers:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Updates user's status after completing onboarding
-   * @param userId - ID of the user completing onboarding
-   */
-  static async completeOnboarding(
-    userId: string,
-    data: {
-      profile: {
-        firstName: string;
-        lastName: string;
-        phoneNumber?: string;
-        address?: string;
-      };
-    }
-  ) {
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        $set: {
-          profile: data.profile,
-          isNewUser: false,
-        },
-      },
-      { new: true }
-    );
-
-    if (!user) {
-      throw new NotFoundError("User not found");
-    }
-
-    return user;
-  }
-}
+  return user;
+};

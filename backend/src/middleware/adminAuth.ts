@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user.model";
-import { ForbiddenError } from "../utils/errors";
+import { createForbiddenError } from "../utils/errors";
 
 /**
  * Middleware to ensure the authenticated user has admin privileges
@@ -25,7 +25,7 @@ export const requireAdmin = async (
 
     // Check if user exists and has admin role
     if (!user || !user.isAdmin) {
-      throw new ForbiddenError("Admin access required");
+      throw createForbiddenError("Admin access required");
     }
 
     // If user is admin, continue to next middleware/route handler

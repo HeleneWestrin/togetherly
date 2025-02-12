@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { ValidationError } from "../utils/errors";
+import { createValidationError } from "../utils/errors";
 
 export const validateRequest = (
   schema: z.ZodTypeAny,
@@ -18,7 +18,7 @@ export const validateRequest = (
           return `${field}: ${err.message}`;
         });
 
-        next(new ValidationError(errorMessages.join(", ")));
+        next(createValidationError(errorMessages.join(", ")));
       } else {
         next(error);
       }

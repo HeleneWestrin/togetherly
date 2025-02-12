@@ -1,40 +1,49 @@
-export class AppError extends Error {
-  constructor(
-    public statusCode: number,
-    public message: string,
-    public isOperational = true
-  ) {
-    super(message);
-    Object.setPrototypeOf(this, AppError.prototype);
-  }
-}
+const createError = (
+  statusCode: number,
+  message: string,
+  isOperational: boolean = true
+): Error => {
+  const error = new Error(message);
+  // Attach additional properties
+  (error as any).statusCode = statusCode;
+  (error as any).isOperational = isOperational;
+  return error;
+};
 
-export class ValidationError extends AppError {
-  constructor(message: string) {
-    super(400, message);
-  }
-}
+export const createValidationError = (message: string): Error => {
+  const error = createError(400, message);
+  error.name = "ValidationError";
+  return error;
+};
 
-export class AuthenticationError extends AppError {
-  constructor(message: string = "Authentication failed") {
-    super(401, message);
-  }
-}
+export const createAuthenticationError = (
+  message: string = "Authentication failed"
+): Error => {
+  const error = createError(401, message);
+  error.name = "AuthenticationError";
+  return error;
+};
 
-export class NotFoundError extends AppError {
-  constructor(message: string = "Resource not found") {
-    super(404, message);
-  }
-}
+export const createNotFoundError = (
+  message: string = "Resource not found"
+): Error => {
+  const error = createError(404, message);
+  error.name = "NotFoundError";
+  return error;
+};
 
-export class ForbiddenError extends AppError {
-  constructor(message: string = "Access denied") {
-    super(403, message);
-  }
-}
+export const createForbiddenError = (
+  message: string = "Access denied"
+): Error => {
+  const error = createError(403, message);
+  error.name = "ForbiddenError";
+  return error;
+};
 
-export class InternalServerError extends AppError {
-  constructor(message: string = "Internal server error") {
-    super(500, message);
-  }
-}
+export const createInternalServerError = (
+  message: string = "Internal server error"
+): Error => {
+  const error = createError(500, message);
+  error.name = "InternalServerError";
+  return error;
+};

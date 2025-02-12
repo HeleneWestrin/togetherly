@@ -1,5 +1,5 @@
 import express from "express";
-import { OnboardingController } from "../controllers/onboarding.controller";
+import * as OnboardingController from "../controllers/onboarding.controller";
 import { authenticateUser } from "../middleware/authentication";
 
 export const onboardingRouter = express.Router();

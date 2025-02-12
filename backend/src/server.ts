@@ -1,7 +1,6 @@
 import { app } from "./app";
 import { connectDB } from "./config/database";
 import { env } from "./config/env";
-import { AppError } from "./utils/errors";
 import { seedDatabase } from "./utils/seedDatabase";
 
 const startServer = async (): Promise<void> => {
@@ -22,8 +21,12 @@ const startServer = async (): Promise<void> => {
 };
 
 startServer().catch((error) => {
-  if (error instanceof AppError) {
-    console.error(`${error.statusCode} - ${error.message}`);
+  if (
+    error &&
+    typeof (error as any).statusCode === "number" &&
+    (error as any).isOperational
+  ) {
+    console.error(`${(error as any).statusCode} - ${(error as any).message}`);
   } else {
     console.error("Failed to start server:", error);
   }

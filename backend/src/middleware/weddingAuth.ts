@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { User } from "../models/user.model";
-import { ForbiddenError, NotFoundError } from "../utils/errors";
+import { createForbiddenError, createNotFoundError } from "../utils/errors";
 import { Wedding } from "../models/wedding.model";
 import { Task } from "../models/task.model";
 
@@ -14,7 +14,7 @@ export const requireWeddingAccess = async (
     const user = await User.findById(userId);
 
     if (!user) {
-      throw new NotFoundError("User not found");
+      throw createNotFoundError("User not found");
     }
 
     // Check for admin first
@@ -32,7 +32,7 @@ export const requireWeddingAccess = async (
     else if (req.params.taskId) {
       const task = await Task.findById(req.params.taskId);
       if (!task) {
-        throw new NotFoundError("Task not found");
+        throw createNotFoundError("Task not found");
       }
       wedding = await Wedding.findById(task.weddingId);
     }
@@ -42,7 +42,7 @@ export const requireWeddingAccess = async (
     }
 
     if (!wedding) {
-      throw new NotFoundError("Wedding not found");
+      throw createNotFoundError("Wedding not found");
     }
 
     const targetWeddingId = (wedding._id as string).toString();
@@ -57,7 +57,7 @@ export const requireWeddingAccess = async (
     });
 
     if (!userWeddingRole) {
-      throw new ForbiddenError("No access to this wedding");
+      throw createForbiddenError("No access to this wedding");
     }
 
     // Store the user's access level for use in the route handlers
@@ -66,7 +66,9 @@ export const requireWeddingAccess = async (
     // For certain operations, we might want to restrict access
     if (req.method === "POST" || req.method === "DELETE") {
       if (userWeddingRole.accessLevel === "guest") {
-        throw new ForbiddenError("Insufficient permissions for this operation");
+        throw createForbiddenError(
+          "Insufficient permissions for this operation"
+        );
       }
     }
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
-import { AuthenticationError } from "../utils/errors";
+import { createAuthenticationError } from "../utils/errors";
 
 // Secret key used for JWT verification, loaded from environment variables
 const JWT_SECRET = env.JWT_SECRET;
@@ -25,27 +25,27 @@ export const authenticateUser = (
     // Check if Authorization header exists and starts with "Bearer "
     const authHeader = req.header("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      throw new AuthenticationError("Invalid Authorization header format");
+      throw createAuthenticationError("Invalid Authorization header format");
     }
 
     // Extract the token from the Authorization header
     const token = authHeader.split(" ")[1];
     if (!token) {
-      throw new AuthenticationError("Bearer token missing");
+      throw createAuthenticationError("Bearer token missing");
     }
 
     try {
       // Verify the JWT token and decode its payload
       const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
       if (!decoded.userId) {
-        throw new AuthenticationError("Invalid token payload");
+        throw createAuthenticationError("Invalid token payload");
       }
       // Add the userId to the request object for use in subsequent middleware/routes
       (req as any).userId = decoded.userId;
       next();
     } catch (jwtError) {
       // Handle specific JWT verification errors
-      throw new AuthenticationError(
+      throw createAuthenticationError(
         jwtError instanceof jwt.TokenExpiredError
           ? "Token expired"
           : "Invalid token"

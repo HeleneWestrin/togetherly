@@ -9,9 +9,9 @@ import { requireAdmin } from "../middleware/adminAuth";
 import { userSchemas } from "../validators/schemas";
 import { validateRequest } from "../middleware/validateRequest";
 import { z } from "zod";
-import { AuthService } from "../services/auth.service";
+import * as AuthService from "../services/auth.service";
 import { User } from "../models/user.model";
-import { UserController } from "../controllers/user.controller";
+import * as UserController from "../controllers/user.controller";
 
 // Initialize Express Router for user-related routes
 export const userRouter = Router();

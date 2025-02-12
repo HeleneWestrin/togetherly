@@ -1,5 +1,4 @@
 import { ErrorRequestHandler, Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/errors";
 
 export const errorHandler: ErrorRequestHandler = (
   err: Error,
@@ -7,21 +6,21 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({
-      status: "error",
-      message: err.message,
-      code: err.constructor.name,
-      path: req.path,
-    });
-    return;
-  }
+  // Extract statusCode if available, default to 500
+  const statusCode = (err as any).statusCode || 500;
 
-  console.error("Unexpected error:", err);
-  res.status(500).json({
+  // Determine error code; if statusCode exists, use the error's constructor name, else default to 'InternalServerError'
+  const code = (err as any).statusCode
+    ? err.constructor.name
+    : "InternalServerError";
+
+  // Log the error
+  console.error("Error occurred:", err);
+
+  res.status(statusCode).json({
     status: "error",
-    message: "Internal server error",
-    code: "InternalServerError",
+    message: err.message,
+    code: code,
     path: req.path,
   });
 };
