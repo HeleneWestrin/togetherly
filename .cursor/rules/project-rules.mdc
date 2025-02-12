@@ -1,5 +1,5 @@
 ---
-description: Rules for the Togetherly project
+description: Rules for the Togetherly projectWrap client components in Suspense with fallback.
 globs: 
 ---
 # Cursor AI Rules
@@ -18,6 +18,7 @@ globs:
 
 ## TypeScript Usage
 - Write all code in TypeScript.
+- Use proper TypeScript types for all variables, functions and return types.
 - Prefer interfaces over type aliases when defining data structures and component props.
 - Avoid using enums; instead, use objects or maps for key-value associations.
 - Implement React components as functional components with TypeScript interfaces for props.
@@ -40,8 +41,13 @@ globs:
 - Optimize images by using the WebP format, specifying dimensions, and applying lazy loading techniques.
 
 ## Data Fetching and State Management
-- Use Axios or a wrapped native `fetch` for API calls, encapsulating the logic within custom hooks or service modules.
-- Manage state with libraries such as React Query or Zustand based on the specific requirements.
+- **React Query:**  
+  Use React Query for asynchronous data fetching, caching, and synchronizing server state. It is ideal for handling API calls, managing loading/error states, and keeping remote data in sync with the UI.
+  
+- **Zustand:**  
+  Use Zustand for managing local or UI state that does not require asynchronous handling or caching. This includes state such as modal visibility, theme toggles, or other ephemeral UI states that are not directly tied to remote data.
+  
+- For API calls, encapsulate the logic within custom hooks or service modules.
 - Adopt a consistent approach (e.g., using `nuqs`) for managing URL search parameters across the application.
 
 ## File Organization

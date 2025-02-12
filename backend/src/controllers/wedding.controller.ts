@@ -13,7 +13,7 @@ export const getWeddings = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const weddings = await WeddingService.getWeddingsForUser(userId);
     sendSuccess(res, weddings);
   } catch (error) {
@@ -27,7 +27,7 @@ export const getWedding = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const wedding = await WeddingService.getWeddingById(weddingId, userId);
     sendSuccess(res, wedding);
@@ -42,7 +42,7 @@ export const createWedding = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingInfo } = req.body;
 
     // Create the wedding
@@ -75,7 +75,7 @@ export const getWeddingBySlug = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { slug } = req.params;
     const wedding = await WeddingService.getWeddingBySlug(slug, userId);
     sendSuccess(res, wedding);
@@ -90,7 +90,7 @@ export const updateTask = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { taskId } = req.params;
     const { completed } = req.body;
 
@@ -107,7 +107,7 @@ export const createTask = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const task = await WeddingService.createTask(weddingId, req.body, userId);
     sendSuccess(res, task, 201);
@@ -122,7 +122,7 @@ export const deleteTask = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { taskId } = req.params;
     const result = await WeddingService.deleteTask(taskId, userId);
     sendSuccess(res, result);
@@ -137,7 +137,7 @@ export const updateTaskDetails = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { taskId } = req.params;
     const task = await WeddingService.updateTaskDetails(
       taskId,
@@ -156,7 +156,7 @@ export const updateBudget = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const { total } = req.body;
 
@@ -173,7 +173,7 @@ export const createWeddingFromOnboarding = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const wedding = await WeddingService.createWeddingFromOnboarding(
       userId,
       req.body
@@ -190,7 +190,7 @@ export const addGuest = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
 
     const guestData = {
@@ -222,7 +222,7 @@ export const updateRSVP = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const { rsvpStatus } = req.body;
     const user = await WeddingService.updateRSVP(weddingId, userId, rsvpStatus);
@@ -238,7 +238,7 @@ export const updateGuest = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId, guestId } = req.params;
     const guestData = req.body;
 
@@ -260,7 +260,7 @@ export const deleteGuests = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const { guestIds } = req.body;
 
@@ -281,7 +281,7 @@ export const inviteUser = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const inviteData = req.body;
 
@@ -311,7 +311,7 @@ export const updateGuestsRSVP = async (
   next: NextFunction
 ) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { weddingId } = req.params;
     const { guestIds, rsvpStatus } = req.body;
 
@@ -334,7 +334,7 @@ export const updateUser = async (
 ) => {
   try {
     const { weddingId, userId } = req.params;
-    const requestingUserId = (req as any).userId;
+    const requestingUserId = req.user.id;
     const userData = req.body;
 
     const requestingUser = await WeddingService.getUserWeddingAccess(
@@ -373,7 +373,7 @@ export const deleteUser = async (
 ) => {
   try {
     const { weddingId, userId } = req.params;
-    const requestingUserId = (req as any).userId;
+    const requestingUserId = req.user.id;
 
     const result = await WeddingService.deleteUser(
       weddingId,

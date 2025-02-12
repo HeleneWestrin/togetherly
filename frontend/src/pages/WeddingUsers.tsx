@@ -232,7 +232,8 @@ const WeddingUsers: React.FC = () => {
                   element="p"
                   className="text-dark-600"
                 >
-                  No wedding admins added yet.
+                  Wedding admins can be existing guests or someone you invite
+                  just to help you manage the wedding.
                 </Typography>
               )}
             </div>

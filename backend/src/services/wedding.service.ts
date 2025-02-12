@@ -846,6 +846,9 @@ export const inviteUser = async (
   userId: string
 ) => {
   const wedding = await Wedding.findById(weddingId).populate("couple");
+  const user = await User.findById(userId);
+  if (!user) throw createNotFoundError("User not found");
+
   if (!wedding) {
     throw createNotFoundError("Wedding not found");
   }
@@ -855,9 +858,14 @@ export const inviteUser = async (
     (partner) => partner._id.toString() === userId
   );
 
-  // Only allow couples to assign weddingAdmin role
-  if (inviteData.accessLevel === "weddingAdmin" && !isCouple) {
-    throw createForbiddenError("Only couples can assign wedding admin roles");
+  // Only allow couples and admins to assign weddingAdmin role
+  if (
+    inviteData.accessLevel === "weddingAdmin" &&
+    !(isCouple || user.isAdmin)
+  ) {
+    throw createForbiddenError(
+      "Only couples or admins can assign wedding admin roles"
+    );
   }
 
   // Check if email already exists

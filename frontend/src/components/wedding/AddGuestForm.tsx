@@ -55,17 +55,18 @@ const AddGuestForm: React.FC<AddGuestFormProps> = ({
     return <div>Error: No couple information available</div>;
   }
 
-  // Use the first partner's _id as default
   const defaultPartnerId = couple[0]._id;
-  const existingPartnerIds =
-    guest?.weddings?.[0]?.guestDetails?.connection?.partnerIds;
+  const initialPartnerIds = guest?.weddings?.[0]?.guestDetails?.connection
+    ?.partnerIds?.length
+    ? guest.weddings[0].guestDetails.connection.partnerIds
+    : [defaultPartnerId];
 
   const [formData, setFormData] = useState({
     firstName: guest?.profile?.firstName || "",
     lastName: guest?.profile?.lastName || "",
     email: guest?.email || "",
     connection: {
-      partnerIds: existingPartnerIds || [defaultPartnerId],
+      partnerIds: initialPartnerIds,
     },
     rsvpStatus:
       guest?.weddings?.[0]?.guestDetails?.rsvpStatus || RSVPStatus.PENDING,

@@ -18,7 +18,7 @@ export const requireAdmin = async (
 ): Promise<void> => {
   try {
     // Get userId that was attached by the authentication middleware
-    const userId = (req as any).userId;
+    const userId = req.user.id;
 
     // Find the user in the database
     const user = await User.findById(userId);

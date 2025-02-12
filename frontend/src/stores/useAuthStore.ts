@@ -2,21 +2,23 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 /**
- * Interface defining the structure of a user in the auth store
+ * Interface defining the structure of a user in the auth store.
+ * Notice there is no "role" field at this level.
  */
-interface User {
+interface AuthUser {
   id: string;
   email: string;
-  role: "admin" | "couple" | "guest" | "weddingAdmin"; // Strict union type for user roles
+  isAdmin: boolean;
   isNewUser?: boolean;
   profile?: {
     firstName?: string;
     lastName?: string;
   };
+  weddings?: any[]; // You can replace 'any' with a proper type if available
 }
 
 /**
- * Interface defining the complete auth store state and actions
+ * Interface defining the complete auth store state and actions.
  *
  * State properties:
  * - token: JWT token for API authentication
@@ -32,18 +34,18 @@ interface User {
  */
 interface AuthState {
   token: string | null;
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: any) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<AuthUser>) => void;
 }
 
 /**
- * Zustand store for managing authentication state
- * Uses persist middleware to save auth state to localStorage
+ * Zustand store for managing authentication state.
+ * This store uses the persist middleware to save the auth state to localStorage.
  *
  * Features:
  * - Persists auth state across page reloads
@@ -61,12 +63,18 @@ export const useAuthStore = create<AuthState>()(
 
       // Actions
       login: (token, user) => {
+        // Normalize the user without a global "role". Instead, each wedding will have its own role info.
+        const normalizedUser: AuthUser = {
+          id: user.id,
+          email: user.email,
+          isAdmin: user.isAdmin,
+          isNewUser: user.isNewUser || false,
+          profile: user.profile,
+          weddings: user.weddings,
+        };
         set({
           token,
-          user: {
-            ...user,
-            isNewUser: user.isNewUser || false,
-          },
+          user: normalizedUser,
           isAuthenticated: true,
         });
       },

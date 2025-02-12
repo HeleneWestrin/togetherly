@@ -65,7 +65,7 @@ export const completeOnboarding = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.user.id;
     const { firstName, lastName, phoneNumber, address } = req.body;
 
     await UserService.completeOnboarding(userId, {

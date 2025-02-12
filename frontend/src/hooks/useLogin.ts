@@ -17,14 +17,14 @@ interface LoginResponse {
   token: string;
   user: {
     id: string;
+    isAdmin: boolean;
     email: string;
-    role: "admin" | "couple" | "guest" | "weddingAdmin";
+    profile: {
+      firstName: string;
+      lastName: string;
+    };
+    weddings: [];
   };
-}
-
-// Define the error response structure
-interface ErrorResponse {
-  message: string;
 }
 
 // Define the required credentials for login
