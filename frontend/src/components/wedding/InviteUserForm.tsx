@@ -42,7 +42,6 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
     existingGuestId: "",
   });
 
-  // Use React Query's useMutation instead of managing a local isLoading state
   const mutation = useMutation({
     mutationFn: (data: {
       email: string;
@@ -50,23 +49,38 @@ const InviteUserForm: React.FC<InviteUserFormProps> = ({
       lastName: string;
       accessLevel: WeddingAccessLevelType;
       partyRole: WeddingPartyRoleType;
+      existingGuestId?: string;
     }) => onSubmit(data),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const existingGuest = existingGuests?.find(
-      (g) => g._id === formData.existingGuestId
-    );
-    mutation.mutate({
-      email: existingGuest?.email || formData.email,
-      firstName: existingGuest?.profile.firstName || formData.firstName,
-      lastName: existingGuest?.profile.lastName || formData.lastName,
-      accessLevel: formData.accessLevel,
-      partyRole: existingGuest
-        ? existingGuest.weddings[0]?.guestDetails?.partyRole || "Guest"
-        : formData.partyRole,
-    });
+
+    if (formData.existingGuestId) {
+      const existingGuest = existingGuests?.find(
+        (guest) => guest._id === formData.existingGuestId
+      );
+
+      // Handling existing guest promotion
+      mutation.mutate({
+        existingGuestId: formData.existingGuestId,
+        accessLevel: "weddingAdmin",
+        email: existingGuest?.email || "",
+        firstName: existingGuest?.profile.firstName || "",
+        lastName: existingGuest?.profile.lastName || "",
+        partyRole:
+          existingGuest?.weddings[0]?.guestDetails?.partyRole || "Guest",
+      });
+    } else {
+      // Handling new user invitation
+      mutation.mutate({
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        accessLevel: "weddingAdmin",
+        partyRole: formData.partyRole,
+      });
+    }
   };
 
   return (

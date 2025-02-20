@@ -14,3 +14,14 @@ onboardingRouter.put(
   authenticateUser,
   OnboardingController.updateProgress
 );
+onboardingRouter.post(
+  "/progress",
+  authenticateUser,
+  OnboardingController.updateProgress
+);
+
+onboardingRouter.delete(
+  "/progress",
+  authenticateUser,
+  OnboardingController.deleteProgress
+);

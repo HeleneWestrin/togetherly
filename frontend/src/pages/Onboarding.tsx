@@ -1,222 +1,25 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { axiosInstance } from "../services/axiosService";
 import { Typography } from "../components/ui/Typography";
 import { Button } from "../components/ui/Button";
 import FormInput from "../components/ui/FormInput";
-import { useAuthStore } from "../stores/useAuthStore";
 import WeddingRings from "../assets/illustrations/wedding-rings-divider.svg?react";
 import RadioButtonToggle from "../components/ui/RadioButtonToggle";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
 import { BouncingBall } from "react-svg-spinners";
-
-interface CoupleInfo {
-  firstName: string;
-  lastName: string;
-  partnerFirstName: string;
-  partnerLastName: string;
-  partnerEmail: string;
-  role: "wife" | "husband" | "";
-  partnerRole: "wife" | "husband" | "";
-}
-
-interface WeddingInfo {
-  date: string;
-  estimatedGuests: number;
-  estimatedBudget: number;
-  location?: string;
-}
-
-const STORAGE_KEYS = {
-  COUPLE_INFO: "onboarding_couple_info",
-  WEDDING_INFO: "onboarding_wedding_info",
-} as const;
+import { useOnboarding } from "../hooks/useOnboarding";
 
 const Onboarding: React.FC = () => {
-  const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-
-  // Fetch existing onboarding progress
-  const { data: onboardingData, isLoading } = useQuery({
-    queryKey: ["onboardingProgress"],
-    queryFn: async () => {
-      const response = await axiosInstance.get("/api/onboarding/progress");
-      return response.data.data;
-    },
-  });
-
-  // State initialization with backend data
-  const [step, setStep] = useState(1);
-  const [coupleInfo, setCoupleInfo] = useState<CoupleInfo>({
-    firstName: "",
-    lastName: "",
-    partnerFirstName: "",
-    partnerLastName: "",
-    partnerEmail: "",
-    role: "wife",
-    partnerRole: "wife",
-  });
-  const [weddingInfo, setWeddingInfo] = useState<WeddingInfo>({
-    date: "",
-    estimatedGuests: 0,
-    estimatedBudget: 0,
-  });
-
-  // Initialize state from backend data
-  useEffect(() => {
-    if (onboardingData) {
-      setStep(onboardingData.step);
-      if (onboardingData.coupleInfo) {
-        setCoupleInfo(onboardingData.coupleInfo);
-      } else if (!onboardingData.coupleInfo && user?.profile) {
-        // Only set from user profile if no onboarding data exists
-        setCoupleInfo((current) => ({
-          ...current,
-          firstName: user.profile?.firstName || "",
-          lastName: user.profile?.lastName || "",
-        }));
-      }
-      if (onboardingData.weddingInfo) {
-        setWeddingInfo(onboardingData.weddingInfo);
-      }
-    }
-  }, [onboardingData, user?.profile]);
-
-  // Save to localStorage whenever form data changes
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.COUPLE_INFO, JSON.stringify(coupleInfo));
-  }, [coupleInfo]);
-
-  useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEYS.WEDDING_INFO,
-      JSON.stringify(weddingInfo)
-    );
-  }, [weddingInfo]);
-
-  // Clear localStorage after successful submission
-  const clearLocalStorage = () => {
-    // Clear specific onboarding keys
-    localStorage.removeItem(STORAGE_KEYS.COUPLE_INFO);
-    localStorage.removeItem(STORAGE_KEYS.WEDDING_INFO);
-
-    // Clear any other potential onboarding-related data
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith("onboarding_")) {
-        localStorage.removeItem(key);
-      }
-    }
-
-    // Force a state reset
-    setCoupleInfo({
-      firstName: "",
-      lastName: "",
-      partnerFirstName: "",
-      partnerLastName: "",
-      partnerEmail: "",
-      role: "wife",
-      partnerRole: "husband",
-    });
-
-    setWeddingInfo({
-      date: "",
-      estimatedGuests: 0,
-      estimatedBudget: 0,
-    });
-  };
-
-  // Mutation to update progress
-  const updateProgressMutation = useMutation({
-    mutationFn: async (data: {
-      step: number;
-      coupleInfo?: CoupleInfo;
-      weddingInfo?: WeddingInfo;
-      completed?: boolean;
-    }) => {
-      const response = await axiosInstance.put(
-        "/api/onboarding/progress",
-        data
-      );
-      return response.data;
-    },
-  });
-
-  const handleCoupleInfoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await updateProgressMutation.mutateAsync({
-      step: 2,
-      coupleInfo,
-    });
-    setStep(2);
-  };
-
-  const handleWeddingInfoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Validate required roles before submission
-      if (!coupleInfo.role || !coupleInfo.partnerRole) {
-        throw new Error("Please select roles for both partners");
-      }
-
-      clearLocalStorage();
-
-      // Create wedding and wait for response
-      const weddingResponse = await createWeddingMutation.mutateAsync({
-        coupleInfo: {
-          ...coupleInfo,
-          role: coupleInfo.role as "wife" | "husband",
-          partnerRole: coupleInfo.partnerRole as "wife" | "husband",
-        },
-        weddingInfo,
-      });
-
-      // Wait for all updates to complete before navigation
-      await Promise.all([
-        updateProgressMutation.mutateAsync({
-          step: 2,
-          weddingInfo,
-          completed: true,
-        }),
-
-        axiosInstance.patch("/api/users/complete-onboarding", {
-          firstName: coupleInfo.firstName,
-          lastName: coupleInfo.lastName,
-        }),
-      ]);
-
-      // Update local user state
-      useAuthStore.getState().updateUser({
-        isNewUser: false,
-        profile: {
-          firstName: coupleInfo.firstName,
-          lastName: coupleInfo.lastName,
-        },
-      });
-
-      // Add small delay to ensure backend updates are complete
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Navigate to wedding page
-      navigate(`/wedding/${weddingResponse.data.slug}/budget`);
-    } catch (error) {
-      console.error("Failed to complete onboarding:", error);
-      throw error;
-    }
-  };
-
-  const createWeddingMutation = useMutation({
-    mutationFn: async (data: {
-      coupleInfo: CoupleInfo;
-      weddingInfo: WeddingInfo;
-    }) => {
-      const response = await axiosInstance.post(
-        "/api/weddings/onboarding",
-        data
-      );
-      return response.data;
-    },
-  });
+  const {
+    step,
+    coupleInfo,
+    weddingInfo,
+    isLoading,
+    setCoupleInfo,
+    setWeddingInfo,
+    handleCoupleInfoSubmit,
+    handleWeddingInfoSubmit,
+    updateProgressMutation,
+    createWeddingMutation,
+  } = useOnboarding();
 
   if (isLoading) {
     return (

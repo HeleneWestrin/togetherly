@@ -1,9 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import {
-  Wedding,
-  PopulatedBudgetCategory,
-  BudgetCategory,
-} from "../models/wedding.model";
+import { Wedding } from "../models/wedding.model";
 import { User } from "../models/user.model";
 import { Task } from "../models/task.model";
 import {
@@ -84,17 +80,14 @@ export const getWeddingById = async (weddingId: string, userId: string) => {
   const user = await User.findById(userId);
   if (!user) throw createNotFoundError("User not found");
 
-  const wedding = await Wedding.findById(weddingId)
-    .populate(
-      "couple",
-      "profile.firstName profile.lastName email isRegistered weddings"
-    )
+  const populatedWedding = await Wedding.findById(weddingId)
+    .populate("couple", "profile.firstName profile.lastName email isRegistered")
     .populate(
       "guests",
-      "profile.firstName profile.lastName email isRegistered weddings"
+      "profile.firstName profile.lastName email isRegistered"
     );
 
-  if (!wedding) throw createNotFoundError("Wedding not found");
+  if (!populatedWedding) throw createNotFoundError("Wedding not found");
 
   const userWeddingRole = user.weddings.find(
     (wr) => wr.weddingId.toString() === weddingId
@@ -102,7 +95,7 @@ export const getWeddingById = async (weddingId: string, userId: string) => {
 
   // If user is a guest, remove sensitive information
   if (userWeddingRole?.accessLevel === "guest") {
-    return wedding.toObject({
+    return populatedWedding.toObject({
       transform: (_, ret) => {
         delete ret.budget;
         return ret;
@@ -110,7 +103,7 @@ export const getWeddingById = async (weddingId: string, userId: string) => {
     });
   }
 
-  return wedding;
+  return populatedWedding;
 };
 
 /**
@@ -841,113 +834,110 @@ export const inviteUser = async (
     firstName: string;
     lastName: string;
     accessLevel: WeddingAccessLevelType;
-    partyRole?: WeddingPartyRoleType;
+    existingGuestId?: string;
   },
   userId: string
-) => {
+): Promise<Wedding> => {
   const wedding = await Wedding.findById(weddingId).populate("couple");
-  const user = await User.findById(userId);
-  if (!user) throw createNotFoundError("User not found");
+  if (!wedding) throw createNotFoundError("Wedding not found");
 
-  if (!wedding) {
-    throw createNotFoundError("Wedding not found");
-  }
+  // Validate permissions
+  const requestingUser = await User.findById(userId);
+  if (!requestingUser) throw createNotFoundError("Requesting user not found");
 
-  // Check if user has permission to invite
   const isCouple = wedding.couple.some(
     (partner) => partner._id.toString() === userId
   );
 
-  // Only allow couples and admins to assign weddingAdmin role
-  if (
-    inviteData.accessLevel === "weddingAdmin" &&
-    !(isCouple || user.isAdmin)
-  ) {
-    throw createForbiddenError(
-      "Only couples or admins can assign wedding admin roles"
-    );
+  if (!isCouple && !requestingUser.isAdmin) {
+    throw createForbiddenError("Only couples or admins can invite users");
   }
 
-  // Check if email already exists
-  const existingUser = (await User.findOne({
-    email: inviteData.email,
-  })) as User;
+  // If we're promoting an existing guest
+  if (inviteData.existingGuestId) {
+    const existingGuest = await User.findById(inviteData.existingGuestId);
+    if (!existingGuest) throw createNotFoundError("Guest not found");
+
+    // Verify this guest belongs to this wedding
+    const existingRole = existingGuest.weddings.find(
+      (wr) => wr.weddingId.toString() === weddingId
+    );
+
+    if (!existingRole) {
+      throw createValidationError("Selected guest is not part of this wedding");
+    }
+
+    // Update the guest's role to weddingAdmin
+    existingRole.accessLevel = "weddingAdmin";
+    await existingGuest.save();
+
+    const updatedWedding = await Wedding.findById(weddingId)
+      .populate(
+        "couple",
+        "profile.firstName profile.lastName email isRegistered"
+      )
+      .populate(
+        "guests",
+        "profile.firstName profile.lastName email isRegistered"
+      );
+    if (!updatedWedding) throw createNotFoundError("Wedding not found");
+    return updatedWedding;
+  }
+
+  // Handle new user invitation
+  const cleanedEmail = inviteData.email.trim().toLowerCase();
+  const existingUser = await User.findOne({ email: cleanedEmail });
 
   if (existingUser) {
+    // Check if user already has a role in this wedding
     const existingRole = existingUser.weddings.find(
       (wr) => wr.weddingId.toString() === weddingId
     );
 
     if (existingRole) {
-      // If already has a role in this wedding
       if (existingRole.accessLevel === "couple") {
-        throw createValidationError(
-          "User is already a couple member in this wedding"
-        );
+        throw createValidationError("User is already a couple member");
       }
-      // Allow upgrading from guest to weddingAdmin while preserving guest details
-      if (
-        inviteData.accessLevel === "weddingAdmin" &&
-        existingRole.accessLevel === "guest"
-      ) {
-        existingRole.accessLevel = "weddingAdmin";
-        // Keep existing guestDetails intact
-      }
+      existingRole.accessLevel = inviteData.accessLevel;
     } else {
-      // Add new role for this wedding while preserving other wedding roles
       existingUser.weddings.push({
         weddingId: new Types.ObjectId(weddingId),
         accessLevel: inviteData.accessLevel,
         guestDetails: {
-          rsvpStatus: "pending",
-          dietaryPreferences: "",
-          connection: {
-            partnerIds: [], // Empty array until connections are set
-          },
-          partyRole: inviteData.partyRole || "Guest",
-          trivia: "",
+          rsvpStatus: "pending" as RSVPStatusType,
+          partyRole: "Guest" as WeddingPartyRoleType,
+          connection: { partnerIds: [] },
         },
       });
     }
-
-    // Add user to wedding's guests array if not already there
-    if (
-      !wedding.guests.some(
-        (id: Types.ObjectId) =>
-          id.toString() === (existingUser._id as Types.ObjectId).toString()
-      )
-    ) {
-      wedding.guests.push(existingUser._id as Types.ObjectId);
-      await wedding.save();
-    }
-
     await existingUser.save();
-  } else {
-    // Create new user
-    const newUser = await User.create({
-      email: inviteData.email,
-      profile: {
-        firstName: inviteData.firstName,
-        lastName: inviteData.lastName,
-      },
-      isRegistered: false,
-      isActive: false,
-      weddings: [
-        {
-          weddingId: new Types.ObjectId(weddingId),
-          accessLevel: inviteData.accessLevel,
-          guestDetails: {
-            rsvpStatus: "pending",
-            partyRole: inviteData.partyRole || "Guest",
-            connection: {
-              partnerIds: [], // Empty array until connections are set
-            },
-          },
-        },
-      ],
-    });
+    return wedding;
+  }
 
-    // Add new user to wedding's guests array
+  // Create new user
+  const newUser = await User.create({
+    email: cleanedEmail,
+    profile: {
+      firstName: inviteData.firstName,
+      lastName: inviteData.lastName,
+    },
+    isRegistered: false,
+    isActive: false,
+    weddings: [
+      {
+        weddingId: new Types.ObjectId(weddingId),
+        accessLevel: inviteData.accessLevel,
+        guestDetails: {
+          rsvpStatus: "pending",
+          partyRole: "Guest",
+          connection: { partnerIds: [] },
+        },
+      },
+    ],
+  });
+
+  // Only add to guests array if they should be a guest
+  if (inviteData.accessLevel === "guest") {
     wedding.guests.push(newUser._id as Types.ObjectId);
     await wedding.save();
   }
@@ -1082,11 +1072,29 @@ export const deleteUser = async (
     throw createNotFoundError("User not found");
   }
 
-  // If user is a guest, remove their guest details for this wedding
-  if (user.weddings?.length > 0) {
-    user.weddings = user.weddings.filter(
-      (wr) => wr.weddingId.toString() !== weddingId
-    );
+  // If user is a guest, update their role instead of removing it
+  const weddingRole = user.weddings?.find(
+    (wr) => wr.weddingId.toString() === weddingId
+  );
+
+  if (weddingRole) {
+    if (weddingRole.accessLevel === "weddingAdmin") {
+      // Preserve their existing guest details and party role
+      weddingRole.accessLevel = "guest";
+      // Ensure guestDetails exists
+      if (!weddingRole.guestDetails) {
+        weddingRole.guestDetails = {
+          rsvpStatus: "pending",
+          partyRole: "Guest",
+          connection: { partnerIds: [] },
+        };
+      }
+    } else {
+      // If they're not a weddingAdmin, remove them completely
+      user.weddings = user.weddings.filter(
+        (wr) => wr.weddingId.toString() !== weddingId
+      );
+    }
     await user.save();
   }
 

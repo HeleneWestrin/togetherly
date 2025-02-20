@@ -7,7 +7,16 @@ export const navigateBasedOnWeddings = async (
   // Only check for onboarding if user is new
   if (isNewUser) {
     try {
-      // Check if onboarding is already completed
+      // First, delete any existing onboarding progress
+      await axiosInstance.delete("/api/onboarding/progress");
+
+      // Then create fresh onboarding progress
+      await axiosInstance.post("/api/onboarding/progress", {
+        step: 1,
+        completed: false,
+      });
+
+      // Finally check the progress
       const onboardingResponse = await axiosInstance.get(
         "/api/onboarding/progress"
       );

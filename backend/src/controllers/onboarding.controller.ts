@@ -49,3 +49,20 @@ export const updateProgress = async (
     });
   }
 };
+
+export const deleteProgress = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    await OnboardingProgress.deleteOne({ userId: (req as any).userId });
+    res.json({ status: "success", message: "Onboarding progress deleted" });
+  } catch (error) {
+    console.error("Onboarding delete error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete onboarding progress",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};

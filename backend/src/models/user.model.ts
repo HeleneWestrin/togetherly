@@ -170,7 +170,14 @@ const userSchema: Schema<User> = new mongoose.Schema(
 );
 
 // Add these indexes to the userSchema before creating the model
-userSchema.index({ weddings: 1 });
+userSchema.index(
+  { email: 1, "weddings.weddingId": 1 },
+  {
+    unique: true,
+    sparse: true,
+    partialFilterExpression: { email: { $type: "string" } },
+  }
+);
 userSchema.index({ "weddings.weddingId": 1 });
 userSchema.index({ "weddings.accessLevel": 1 });
 
